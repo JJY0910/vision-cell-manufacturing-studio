@@ -78,7 +78,7 @@ VisionCell.Telemetry implements logging/event sinks.
 - Inspection algorithm contracts and deterministic Phase 1 2D engine
 - Defect model
 - Overlay generation
-- Height map simulation
+- Height map simulation and deterministic Phase 1 3D engine
 - AI/native extension points
 
 ### VisionCell.Persistence
@@ -155,7 +155,8 @@ Current implementation status:
 - Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
 - Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
 - 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.
-- 3D inspection, result persistence, and UI overlay rendering remain separate follow-up slices.
+- 3D inspection now flows through `SyntheticHeightMapFactory`, `IHeightMapInspectionEngine`, and `DeterministicHeightMapInspectionEngine`, using Recipe ROI and height parameters before Judge.
+- Result persistence and UI overlay rendering remain separate follow-up slices.
 
 ## Error Handling Policy
 
@@ -193,4 +194,5 @@ User Button
 | Real motion | IAxisController | Vendor SDK wrapper |
 | Real camera | ICameraDevice | GigE/USB camera SDK |
 | Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
+| Native height-map vision | IHeightMapInspectionEngine | 3D sensor SDK/OpenCV DLL |
 | AI classifier | IDefectClassifier | ONNX Runtime |

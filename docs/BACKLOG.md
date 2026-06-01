@@ -332,9 +332,17 @@ Priority: P0
 Status: In progress on `codex/feature/fr-160-deterministic-2d-inspection`.
 
 Date: 2026-06-01
-Source: FR-170/FR-200 Inspection follow-up slices
-Problem: 2D inspection and Judge can now run, but 3D height-map inspection, overlay rendering, and SQLite result persistence are still pending.
-Proposed improvement: Add synthetic 3D height-map evaluation, image overlay artifact generation, and `InspectionResult` persistence with Recipe/Lot/Judge/Defect/timing records.
-Requirement impact: FR-170, FR-171, FR-172, FR-180, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Source: FR-162 Synthetic height-map inspection
+Problem: 2D inspection and Judge can run, but Inspect 3D still needs deterministic height-map evidence for Lift, Dent, and LeadBent-like defects.
+Proposed improvement: Add synthetic height-map generation, deterministic 3D inspection, Application Inspect 3D execution, and final Judge aggregation across 2D/3D results.
+Requirement impact: FR-162, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-170-deterministic-3d-inspection`.
+
+Date: 2026-06-01
+Source: FR-200 Inspection result persistence
+Problem: 2D/3D inspection and Judge can now run, but overlay rendering and SQLite result persistence are still pending.
+Proposed improvement: Add image overlay artifact generation and `InspectionResult` persistence with Recipe/Lot/Judge/Defect/timing records.
+Requirement impact: FR-180, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
 Status: Open.

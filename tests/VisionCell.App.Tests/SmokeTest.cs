@@ -116,6 +116,12 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IVisionInspectionEngine>()
                 .Should()
                 .BeOfType<Deterministic2DInspectionEngine>();
+            provider.GetRequiredService<IHeightMapInspectionEngine>()
+                .Should()
+                .BeOfType<DeterministicHeightMapInspectionEngine>();
+            provider.GetRequiredService<SyntheticHeightMapFactory>()
+                .Should()
+                .NotBeNull();
         }
         finally
         {
@@ -961,7 +967,8 @@ public sealed class DashboardAndShellViewModelTests
         string message,
         RecipeIndexEntry? recipe = null,
         CameraGrabResult? cameraGrabResult = null,
-        VisionInspectionResult? visionResult = null)
+        VisionInspectionResult? visionResult = null,
+        VisionInspectionResult? heightMapResult = null)
     {
         var timestamp = DateTimeOffset.UtcNow;
         var request = recipe is null
@@ -989,6 +996,16 @@ public sealed class DashboardAndShellViewModelTests
                 recipe.Version,
                 TimeSpan.FromMilliseconds(2),
                 timestamp.AddMilliseconds(11)));
+        var resolvedHeightMapResult = heightMapResult ?? (request is null || status != InspectionRunStatus.Accepted
+            ? null
+            : new VisionInspectionResult(
+                Judgment.Pass,
+                Array.Empty<Defect>(),
+                "3D inspection Pass: 1 ROI(s) evaluated.",
+                recipe!.RecipeId,
+                recipe.Version,
+                TimeSpan.FromMilliseconds(2),
+                timestamp.AddMilliseconds(12)));
 
         return new InspectionRunResult(
             status,
@@ -999,6 +1016,7 @@ public sealed class DashboardAndShellViewModelTests
             null,
             cameraGrabResult,
             resolvedVisionResult,
+            resolvedHeightMapResult,
             new[]
             {
                 new InspectionSequenceStepRecord("Load Recipe", recipe is null ? InspectionSequenceStepStatus.Failed : InspectionSequenceStepStatus.Success, message, TimeSpan.FromMilliseconds(1)),
@@ -1006,7 +1024,8 @@ public sealed class DashboardAndShellViewModelTests
                 new InspectionSequenceStepRecord("Start Sequence", status == InspectionRunStatus.Accepted ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, message, TimeSpan.FromMilliseconds(1)),
                 new InspectionSequenceStepRecord("Grab Image", cameraGrabResult?.IsSuccess == true ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, cameraGrabResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1)),
                 new InspectionSequenceStepRecord("Inspect 2D", resolvedVisionResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedVisionResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1)),
-                new InspectionSequenceStepRecord("Judge", resolvedVisionResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedVisionResult is null ? "Skipped" : $"Judge: {resolvedVisionResult.Judgment}.", TimeSpan.Zero)
+                new InspectionSequenceStepRecord("Inspect 3D", resolvedHeightMapResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedHeightMapResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Judge", resolvedVisionResult is null || resolvedHeightMapResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedVisionResult is null || resolvedHeightMapResult is null ? "Skipped" : "Judge: Pass.", TimeSpan.Zero)
             },
             timestamp,
             timestamp.AddMilliseconds(12));

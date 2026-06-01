@@ -48,6 +48,8 @@ public static class AppServiceConfiguration
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
         services.AddSingleton<ICameraDevice, VirtualCameraDevice>();
         services.AddSingleton<IVisionInspectionEngine, Deterministic2DInspectionEngine>();
+        services.AddSingleton<IHeightMapInspectionEngine, DeterministicHeightMapInspectionEngine>();
+        services.AddSingleton<SyntheticHeightMapFactory>();
         services.AddSingleton<ICommandInterlockService, CommandInterlockService>();
         services.AddSingleton<RecipeValidator>();
         services.AddSingleton(_ => new SqliteConnectionFactory(databasePath));

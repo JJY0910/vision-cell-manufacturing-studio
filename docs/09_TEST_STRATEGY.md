@@ -58,6 +58,9 @@ tests/VisionCell.App.Tests
 - Scratch defect FAIL
 - Invalid ROI returns invalid judgment
 - Height lift FAIL
+- Height dent FAIL
+- Height local gradient FAIL LeadBent
+- Invalid height-map ROI returns invalid judgment
 - Overlay output generated
 
 ### Application Sequence
@@ -72,6 +75,8 @@ tests/VisionCell.App.Tests
 - Camera timeout failure path returns CAM-001 and skips downstream vision/judge/persist steps.
 - 2D inspection success path runs the Vision engine, records Inspect 2D, and records Judge Pass/Fail timeline state.
 - Invalid Vision result returns an explicit `VisionInspectionFailed` status and skips Judge/Persist.
+- 3D inspection success path creates a synthetic height map, runs the height-map engine, records Inspect 3D, and aggregates final Judge from 2D and 3D results.
+- Invalid height-map result returns an explicit `HeightMapInspectionFailed` status and skips Judge/Persist.
 - Persist result after judge remains open until FR-200 persistence is implemented.
 
 ### Persistence
