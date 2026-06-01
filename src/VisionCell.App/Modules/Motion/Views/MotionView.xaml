@@ -110,6 +110,8 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Motion Commands" Style="{DynamicResource Text.CardTitle}" />
           <WrapPanel Grid.Row="1">
@@ -131,18 +133,6 @@
                     Height="36"
                     MinWidth="94"
                     Margin="0,0,8,8" />
-            <Button Content="Jog X +1"
-                    Command="{Binding JogXPositiveCommand}"
-                    ToolTip="{Binding JogDisabledReason}"
-                    Height="36"
-                    MinWidth="94"
-                    Margin="0,0,8,8" />
-            <Button Content="Move Preset"
-                    Command="{Binding MoveAbsoluteCommand}"
-                    ToolTip="{Binding MoveAbsoluteDisabledReason}"
-                    Height="36"
-                    MinWidth="112"
-                    Margin="0,0,8,8" />
             <Button Content="Stop"
                     Command="{Binding StopCommand}"
                     ToolTip="{Binding StopDisabledReason}"
@@ -150,7 +140,104 @@
                     MinWidth="84"
                     Margin="0,0,8,8" />
           </WrapPanel>
-          <TextBlock Grid.Row="2"
+          <Grid Grid.Row="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="96" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="96" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Jog Axis"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding JogAxisOptions}"
+                      SelectedItem="{Binding SelectedJogAxis}"
+                      Height="32"
+                      Margin="0,0,12,8" />
+            <TextBlock Grid.Column="2"
+                       Text="Step"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="3"
+                     Text="{Binding JogStepText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <Button Grid.Column="4"
+                    Content="Jog -"
+                    Command="{Binding JogNegativeCommand}"
+                    ToolTip="{Binding JogDisabledReason}"
+                    Height="32"
+                    MinWidth="76"
+                    Margin="0,0,8,8" />
+            <Button Grid.Column="5"
+                    Content="Jog +"
+                    Command="{Binding JogPositiveCommand}"
+                    ToolTip="{Binding JogDisabledReason}"
+                    Height="32"
+                    MinWidth="76"
+                    Margin="0,0,8,8" />
+          </Grid>
+          <Grid Grid.Row="3" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="X"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="1"
+                     Text="{Binding MoveTargetXText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="2"
+                       Text="Y"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="3"
+                     Text="{Binding MoveTargetYText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="4"
+                       Text="Z"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="5"
+                     Text="{Binding MoveTargetZText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="6"
+                       Text="Theta"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="7"
+                     Text="{Binding MoveTargetThetaText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <Button Grid.Column="8"
+                    Content="Move Absolute"
+                    Command="{Binding MoveAbsoluteCommand}"
+                    ToolTip="{Binding MoveAbsoluteDisabledReason}"
+                    Height="32"
+                    MinWidth="120"
+                    Margin="0,0,8,8" />
+          </Grid>
+          <TextBlock Grid.Row="4"
                      Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Last snapshot: -}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />

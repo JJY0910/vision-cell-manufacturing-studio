@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] Motion typed axis target inputs and controller DTO support beyond simulator presets
+- [ ] Motion profile/tolerance inputs for velocity, acceleration, and arrival tolerance
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -90,4 +90,12 @@ Source: FR-063 MotionView command controls
 Problem: MotionView can now execute simulator-backed Servo/Home/Jog X +1/Move preset/Stop commands through `IMotionCommandUseCase`, but typed per-axis request DTOs are still needed before operator-entered jog steps and absolute targets can drive real adapters.
 Proposed improvement: Introduce typed motion command request DTOs for axis, direction, distance, profile, and absolute targets; validate operator-entered values against soft limits before dispatch and persist the typed payload in `motion_command_history`.
 Requirement impact: FR-062, FR-063, FR-066, FR-069, NFR-004
+Priority: P1
+Status: Addressed for axis, direction, step, and absolute target payloads by ADR-0003; profile/tolerance remains open.
+
+Date: 2026-06-01
+Source: FR-063 typed motion command payloads
+Problem: MotionView can now dispatch typed jog and absolute move targets, but velocity profile, acceleration, and arrival tolerance inputs are still fixed by the simulator/controller defaults.
+Proposed improvement: Add typed profile/tolerance payloads with UI validation, simulator acceptance checks, and command history persistence before real adapter integration.
+Requirement impact: FR-063, FR-064, FR-066, FR-067, FR-069, NFR-004
 Priority: P1

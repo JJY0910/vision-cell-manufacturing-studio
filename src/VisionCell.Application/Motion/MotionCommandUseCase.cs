@@ -81,7 +81,7 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
         var result = await _controller.ExecuteCommandAsync(
             request.Command,
             request.InterlockContext,
-            request.Timeout,
+            commandRequest,
             cancellationToken).ConfigureAwait(false);
 
         return result;

@@ -10,4 +10,14 @@ public interface IEquipmentController
     Task<MachineCommandResult> DisconnectAsync(TimeSpan timeout, CancellationToken cancellationToken);
     CommandAvailability GetCommandAvailability(CommandKind command, InterlockContext context);
     Task<MachineCommandResult> ExecuteCommandAsync(CommandKind command, InterlockContext context, TimeSpan timeout, CancellationToken cancellationToken);
+
+    Task<MachineCommandResult> ExecuteCommandAsync(
+        CommandKind command,
+        InterlockContext context,
+        MachineCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ExecuteCommandAsync(command, context, request.Timeout, cancellationToken);
+    }
 }

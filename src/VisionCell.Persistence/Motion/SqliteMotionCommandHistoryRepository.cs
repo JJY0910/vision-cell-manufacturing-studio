@@ -174,9 +174,15 @@ public sealed class SqliteMotionCommandHistoryRepository : IMotionCommandHistory
 
     private static string? GetAxisId(MotionCommandHistoryEntry entry)
     {
-        return entry.Request.Parameters.TryGetValue("axis", out var axisId)
-            ? axisId
-            : null;
+        if (entry.Request.Parameters.TryGetValue("Axis", out var axisId))
+        {
+            return axisId;
+        }
+
+        var item = entry.Request.Parameters.FirstOrDefault(
+            pair => string.Equals(pair.Key, "Axis", StringComparison.OrdinalIgnoreCase));
+
+        return item.Key is null ? null : item.Value;
     }
 
     private static JsonSerializerOptions CreateJsonOptions()

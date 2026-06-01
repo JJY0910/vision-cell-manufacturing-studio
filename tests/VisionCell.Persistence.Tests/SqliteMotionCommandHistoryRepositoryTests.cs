@@ -87,8 +87,8 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
             createdAt,
             new Dictionary<string, string>
             {
-                ["axis"] = "X",
-                ["target"] = "10.000"
+                ["Axis"] = "X",
+                ["X"] = "10.000"
             });
         var result = MachineCommandResult.Success(
             $"{commandName} completed.",
