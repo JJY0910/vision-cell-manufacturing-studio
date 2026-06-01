@@ -258,3 +258,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 21 tests; Debug/Release solution build and test passed with 124 tests; WPF hidden launch smoke passed.
 - Risks: Browser is read-only; create/import/save/activate Recipe workflows remain follow-up work.
+
+## 2026-06-01 19:00 - In progress
+- Branch: `codex/feature/fr-120-recipe-library-save`
+- Scope: Add ADR-backed Application Recipe library save use case that validates Recipe definitions, saves JSON documents, computes checksums, and upserts the SQLite Recipe index.
+- Validation target: Application targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 49 tests; Debug/Release solution build and test passed with 128 tests; WPF hidden launch smoke passed.
+- Risks: File-system document save and SQLite index update are coordinated but not atomic; active Recipe selection remains follow-up work.
