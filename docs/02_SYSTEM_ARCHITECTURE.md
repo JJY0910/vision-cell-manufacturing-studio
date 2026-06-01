@@ -152,6 +152,7 @@ Current implementation status:
 
 - `InspectionRunUseCase` owns the first Application-layer inspection sequence boundary.
 - The use case validates active Recipe context, evaluates Run Inspection interlocks, submits a correlated controller command, and returns ordered timeline state for WPF binding.
+- Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
 - Camera grab, 2D/3D inspection, judge, result persistence, and UI overlay rendering remain separate follow-up slices.
 
 ## Error Handling Policy

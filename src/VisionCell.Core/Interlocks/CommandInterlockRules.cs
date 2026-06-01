@@ -70,6 +70,27 @@ public static class CommandInterlockRules
                 Require(!context.EmergencyStopActive, "ILK-SAFETY-002", InterlockSeverity.Alarm, "Reset Alarm requires emergency stop released.", violations);
                 Require(context.DoorClosed, "ILK-SAFETY-003", InterlockSeverity.Alarm, "Reset Alarm requires door closed.", violations);
                 break;
+            case CommandKind.EnterManualMode:
+                RequireConnected(context, command, violations);
+                Require(!context.ControllerBusy, "ILK-COMMON-001", InterlockSeverity.Warning, "Enter Manual requires idle controller.", violations);
+                Require(!context.SequenceRunning, "ILK-SEQUENCE-001", InterlockSeverity.Warning, "Enter Manual requires sequence stopped.", violations);
+                Require(!context.AxisBusy, "ILK-MOTION-002", InterlockSeverity.Warning, "Enter Manual requires axis idle.", violations);
+                break;
+            case CommandKind.EnterAutoMode:
+                RequireConnected(context, command, violations);
+                Require(!context.ControllerBusy, "ILK-COMMON-001", InterlockSeverity.Warning, "Enter Auto requires idle controller.", violations);
+                Require(context.SafetyOk, "ILK-SAFETY-001", InterlockSeverity.Alarm, "Enter Auto requires safety OK.", violations);
+                Require(!context.EmergencyStopActive, "ILK-SAFETY-002", InterlockSeverity.Alarm, "Enter Auto requires emergency stop released.", violations);
+                Require(context.DoorClosed, "ILK-SAFETY-003", InterlockSeverity.Alarm, "Enter Auto requires door closed.", violations);
+                Require(context.ServoOn, "ILK-MOTION-003", InterlockSeverity.Warning, "Enter Auto requires servo on.", violations);
+                Require(context.AllRequiredAxesHomed, "ILK-MOTION-006", InterlockSeverity.Warning, "Enter Auto requires all required axes homed.", violations);
+                Require(!context.AxisBusy, "ILK-MOTION-002", InterlockSeverity.Warning, "Enter Auto requires axis idle.", violations);
+                Require(!context.AxisAlarm, "ILK-MOTION-001", InterlockSeverity.Alarm, "Enter Auto requires no active axis alarm.", violations);
+                Require(context.CameraConnected, "ILK-CAMERA-001", InterlockSeverity.Warning, "Enter Auto requires camera connected.", violations);
+                Require(context.IoReady, "ILK-IO-001", InterlockSeverity.Warning, "Enter Auto requires I/O ready.", violations);
+                Require(!context.AlarmActive, "ILK-ALARM-002", InterlockSeverity.Alarm, "Enter Auto requires no active alarm.", violations);
+                Require(!context.SequenceRunning, "ILK-SEQUENCE-001", InterlockSeverity.Warning, "Enter Auto requires sequence stopped.", violations);
+                break;
             case CommandKind.RunInspection:
                 RequireConnected(context, command, violations);
                 Require(context.AutoMode, "ILK-MODE-002", InterlockSeverity.Warning, "Run Inspection requires Auto mode.", violations);
@@ -112,6 +133,8 @@ public static class CommandInterlockRules
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
             CommandKind.ResetAlarm => "Reset Alarm",
+            CommandKind.EnterManualMode => "Enter Manual",
+            CommandKind.EnterAutoMode => "Enter Auto",
             CommandKind.RunInspection => "Run Inspection",
             _ => command.ToString()
         };

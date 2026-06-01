@@ -79,6 +79,44 @@ public sealed class VirtualEquipmentControllerTests
     }
 
     [Fact]
+    public async Task ExecuteCommandAsync_Should_Enter_Auto_And_Manual_Mode()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        var auto = await controller.ExecuteCommandAsync(CommandKind.EnterAutoMode, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var autoSnapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+        var runInspection = await controller.ExecuteCommandAsync(CommandKind.RunInspection, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var manual = await controller.ExecuteCommandAsync(CommandKind.EnterManualMode, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var manualSnapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        auto.Status.Should().Be(CommandStatus.Success);
+        autoSnapshot.Mode.Should().Be(MachineMode.Auto);
+        runInspection.Status.Should().Be(CommandStatus.Success);
+        manual.Status.Should().Be(CommandStatus.Success);
+        manualSnapshot.Mode.Should().Be(MachineMode.Manual);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Reject_EnterAuto_When_Axes_Not_Homed()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        var result = await controller.ExecuteCommandAsync(
+            CommandKind.EnterAutoMode,
+            ReadyManualContext() with { AllRequiredAxesHomed = false, AxisHomed = false },
+            TimeSpan.FromSeconds(1),
+            CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.Message.Should().Contain("all required axes homed");
+    }
+
+    [Fact]
     public async Task ExecuteCommandAsync_Should_Apply_Typed_Jog_Target()
     {
         var controller = new VirtualEquipmentController();

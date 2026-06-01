@@ -298,3 +298,11 @@ Proposed improvement: Add `IInspectionRunUseCase`, ordered sequence step records
 Requirement impact: FR-122, FR-180, FR-181, FR-182, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
 Status: In progress on `codex/feature/fr-181-inspection-run-use-case`.
+
+Date: 2026-06-01
+Source: FR-180 Simulator Auto mode transition
+Problem: InspectionRunUseCase enforces Auto mode, but the simulator previously reported connected equipment as Manual only.
+Proposed improvement: Add explicit Enter Manual/Enter Auto commands with interlock coverage and Dashboard bindings.
+Requirement impact: FR-004, FR-040, FR-041, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-180-simulator-auto-mode`.

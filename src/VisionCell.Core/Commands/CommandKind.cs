@@ -11,5 +11,7 @@ public enum CommandKind
     MoveAbsolute,
     Stop,
     ResetAlarm,
+    EnterManualMode,
+    EnterAutoMode,
     RunInspection
 }

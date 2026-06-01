@@ -137,5 +137,6 @@ ONNX integration is P2. Placeholder must not block P0/P1.
 - InspectionView has an active Recipe precheck surface backed by `IActiveRecipeContext`.
 - Run Inspection is routed through `IInspectionRunUseCase`, which rejects missing, invalid, or unavailable active Recipe context before any machine-like sequence can start.
 - `InspectionRunUseCase` reads the equipment snapshot, evaluates Run Inspection interlocks, submits a correlated `MachineCommandRequest`, and returns ordered timeline steps to WPF.
+- The simulator can now transition from Manual to Auto mode through Dashboard once servo, homing, safety, camera, and I/O interlocks are satisfied.
 - Stop Inspection requests cancellation for the active run token through `InspectionViewModel`.
 - Actual camera grab, 2D/3D inspection execution, result persistence, and overlay rendering remain follow-up work and are currently reported as skipped timeline steps after controller acceptance.
