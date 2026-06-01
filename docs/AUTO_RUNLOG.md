@@ -272,3 +272,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 22 tests; Debug/Release solution build and test passed with 129 tests; WPF hidden launch smoke passed.
 - Risks: RecipeView save/import buttons remain follow-up work; this slice only wires composition.
+
+## 2026-06-01 19:25 - In progress
+- Branch: `codex/feature/fr-120-recipe-view-save`
+- Scope: Bind RecipeView editor fields and Save Recipe command to `IRecipeLibraryUseCase`, then refresh/select the Recipe index row after save.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 25 tests; Debug/Release solution build and test passed with 132 tests; WPF hidden launch smoke passed.
+- Risks: Save surface handles one Camera Teaching point and one ROI; active Recipe activation and multi-row editors remain follow-up work.

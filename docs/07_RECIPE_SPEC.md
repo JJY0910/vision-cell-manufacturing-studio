@@ -74,7 +74,8 @@ Implementation status:
 - `SqliteRecipeIndexRepository` stores Recipe metadata, document path, checksum, active state, validation state, and updated timestamp for list/query workflows.
 - `RecipeViewModel` and `RecipeView` can refresh and display the SQLite Recipe index, including active state and validation summary.
 - `RecipeLibraryUseCase` validates a Recipe, saves its JSON document, computes a checksum, and upserts the SQLite Recipe index through Application-layer ports.
-- WPF App composition registers the JSON document store under `local-data/recipes` and the Recipe library save use case for future RecipeView save/import commands.
+- WPF App composition registers the JSON document store under `local-data/recipes` and the Recipe library save use case for RecipeView save and future import commands.
+- RecipeView can save a valid single-camera-position Recipe from operator-entered metadata, camera, Teaching, and ROI fields, then refresh/select the indexed row.
 - Active recipe settings and RecipeView editing remain follow-up work.
 
 ## Versioning Policy
@@ -101,3 +102,4 @@ Implementation status:
 - Current SQLite Recipe index stores metadata only; JSON document save and index update are not yet a single transaction.
 - Current RecipeView browser is read-only and depends on rows already present in the SQLite Recipe index.
 - Current Application Recipe save workflow reports document/index failures explicitly but does not make file-system and SQLite updates atomic.
+- Current RecipeView save surface creates one Camera Teaching point and one ROI row; multi-row editors remain follow-up work.

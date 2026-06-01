@@ -521,6 +521,82 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Recipe_SaveRecipeAsync_Should_Save_And_Refresh_Index()
+    {
+        var repository = new FakeRecipeIndexRepository();
+        var library = new FakeRecipeLibraryUseCase
+        {
+            SaveHandler = async (request, cancellationToken) =>
+            {
+                var saved = CreateRecipeIndexEntry(
+                    request.Recipe!.RecipeId,
+                    request.Recipe.Version,
+                    request.Recipe.ProductName,
+                    isActive: false,
+                    isValid: true,
+                    validationSummary: "Valid",
+                    updatedAt: request.Recipe.UpdatedAt);
+                await repository.SaveAsync(saved, cancellationToken);
+                return RecipeLibrarySaveResult.Success(saved);
+            }
+        };
+        var recipe = CreateRecipeViewModel(repository, library);
+        recipe.RecipeIdText = "PKG-NEW";
+        recipe.ProductNameText = "New Product";
+        recipe.VersionText = "1.2.3";
+        recipe.TeachingXText = "12.500";
+        recipe.RoiWidthText = "320";
+
+        await recipe.SaveRecipeAsync(CancellationToken.None);
+
+        library.SaveRequests.Should().ContainSingle();
+        var savedRecipe = library.SaveRequests[0].Recipe;
+        savedRecipe.Should().NotBeNull();
+        savedRecipe!.RecipeId.Should().Be("PKG-NEW");
+        savedRecipe.ProductName.Should().Be("New Product");
+        savedRecipe.Version.Should().Be("1.2.3");
+        savedRecipe.Motion.TeachingPoints[0].Position.X.Should().Be(12.5);
+        savedRecipe.Vision.Rois[0].Width.Should().Be(320);
+        recipe.Recipes.Should().ContainSingle();
+        recipe.SelectedRecipe.Should().NotBeNull();
+        recipe.SelectedRecipe!.RecipeId.Should().Be("PKG-NEW");
+        recipe.StatusText.Should().Be("Saved recipe 'PKG-NEW' v1.2.3");
+    }
+
+    [Fact]
+    public async Task Recipe_SaveRecipeAsync_Should_Reject_Invalid_Numeric_Input()
+    {
+        var library = new FakeRecipeLibraryUseCase();
+        var recipe = CreateRecipeViewModel(libraryUseCase: library);
+        recipe.CameraExposureText = "not-a-number";
+
+        await recipe.SaveRecipeAsync(CancellationToken.None);
+
+        library.SaveRequests.Should().BeEmpty();
+        recipe.StatusText.Should().Contain("Camera exposure must be a finite number");
+    }
+
+    [Fact]
+    public async Task Recipe_SaveRecipeAsync_Should_Surface_Library_Validation_Failure()
+    {
+        var library = new FakeRecipeLibraryUseCase
+        {
+            SaveHandler = (_, _) => Task.FromResult(RecipeLibrarySaveResult.ValidationFailed(new[]
+            {
+                new RecipeValidationIssue("Recipe.VersionInvalid", "Recipe version must use major.minor.patch format.")
+            }))
+        };
+        var recipe = CreateRecipeViewModel(libraryUseCase: library);
+        recipe.VersionText = "1.0";
+
+        await recipe.SaveRecipeAsync(CancellationToken.None);
+
+        library.SaveRequests.Should().ContainSingle();
+        recipe.StatusText.Should().Contain("Recipe version must use major.minor.patch format");
+        recipe.Recipes.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -565,9 +641,13 @@ public sealed class DashboardAndShellViewModelTests
             confirmationService ?? new FakeUserConfirmationService(true));
     }
 
-    private static RecipeViewModel CreateRecipeViewModel(FakeRecipeIndexRepository? repository = null)
+    private static RecipeViewModel CreateRecipeViewModel(
+        FakeRecipeIndexRepository? repository = null,
+        FakeRecipeLibraryUseCase? libraryUseCase = null)
     {
-        return new RecipeViewModel(repository ?? new FakeRecipeIndexRepository());
+        return new RecipeViewModel(
+            repository ?? new FakeRecipeIndexRepository(),
+            libraryUseCase ?? new FakeRecipeLibraryUseCase());
     }
 
     private static RecipeIndexEntry CreateRecipeIndexEntry(
@@ -660,6 +740,34 @@ public sealed class DashboardAndShellViewModelTests
                     .OrderByDescending(entry => entry.UpdatedAt)
                     .Take(limit)
                     .ToArray());
+        }
+    }
+
+    private sealed class FakeRecipeLibraryUseCase : IRecipeLibraryUseCase
+    {
+        public List<RecipeLibrarySaveRequest> SaveRequests { get; } = new();
+
+        public Func<RecipeLibrarySaveRequest, CancellationToken, Task<RecipeLibrarySaveResult>>? SaveHandler { get; init; }
+
+        public Task<RecipeLibrarySaveResult> SaveAsync(
+            RecipeLibrarySaveRequest request,
+            CancellationToken cancellationToken)
+        {
+            SaveRequests.Add(request);
+            if (SaveHandler is not null)
+            {
+                return SaveHandler(request, cancellationToken);
+            }
+
+            var recipe = request.Recipe!;
+            return Task.FromResult(RecipeLibrarySaveResult.Success(CreateRecipeIndexEntry(
+                recipe.RecipeId,
+                recipe.Version,
+                recipe.ProductName,
+                isActive: false,
+                isValid: true,
+                validationSummary: "Valid",
+                updatedAt: recipe.UpdatedAt)));
         }
     }
 
