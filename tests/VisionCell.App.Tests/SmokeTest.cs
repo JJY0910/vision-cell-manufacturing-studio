@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using VisionCell.App;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
@@ -69,6 +71,42 @@ public sealed class DashboardAndShellViewModelTests
 
         shell.CurrentViewModel.Should().BeOfType<MotionViewModel>();
         motionItem.IsSelected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AppServiceConfiguration_Should_Save_Recipe_Through_Registered_Library()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "VisionCellAppTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddVisionCellAppServices(
+                Path.Combine(root, "visioncell.db"),
+                Path.Combine(root, "recipes"));
+            using var provider = services.BuildServiceProvider();
+
+            var useCase = provider.GetRequiredService<IRecipeLibraryUseCase>();
+            var result = await useCase.SaveAsync(
+                new RecipeLibrarySaveRequest(CreateAppCompositionRecipe()),
+                CancellationToken.None);
+
+            result.IsSuccess.Should().BeTrue();
+            result.Entry.Should().NotBeNull();
+            File.Exists(result.Entry!.DocumentPath).Should().BeTrue();
+
+            var index = provider.GetRequiredService<IRecipeIndexRepository>();
+            var indexed = await index.FindAsync("APP-COMPOSITION-RCP", "1.0.0", CancellationToken.None);
+            indexed.Should().NotBeNull();
+            indexed!.Checksum.Should().Be(result.Entry.Checksum);
+            indexed.DocumentPath.Should().Be(result.Entry.DocumentPath);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -554,6 +592,30 @@ public sealed class DashboardAndShellViewModelTests
             validationSummary,
             timestamp.AddMinutes(-5),
             timestamp);
+    }
+
+    private static RecipeDefinition CreateAppCompositionRecipe()
+    {
+        return new RecipeDefinition(
+            "APP-COMPOSITION-RCP",
+            "App Composition Recipe",
+            "1.0.0",
+            new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 6, 1, 1, 0, 0, TimeSpan.Zero),
+            new RecipeMotionSection(new[]
+            {
+                new RecipeTeachingPoint(
+                    "CAMERA_POS_01",
+                    "Camera Position 01",
+                    TeachingRole.Camera,
+                    new Position4D(10.0, 20.0, 8.0, 0.0),
+                    new PositionTolerance(0.05, 0.05, 0.02, 0.1))
+            }),
+            new RecipeCameraSettings(5.0, 1.0, 80),
+            new RecipeVisionSection(
+                new[] { new RecipeRoi("IC_TOP", "IC Top", 120, 80, 300, 200) },
+                new RecipeVisionParameters(0.75, 8, 0.65, 1.0, 0.15, 0.15)),
+            new RecipeSequence(new[] { "SafetyCheck", "MoveToCamera", "Grab", "Inspect2D", "Inspect3D", "Judge", "Persist" }));
     }
 
     private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository

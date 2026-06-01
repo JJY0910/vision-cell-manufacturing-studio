@@ -233,4 +233,12 @@ Problem: Recipe JSON save and SQLite index update need one Application boundary 
 Proposed improvement: Add `IRecipeLibraryUseCase` to validate Recipe definitions, save JSON through `IRecipeDocumentStore`, compute a checksum, and upsert `IRecipeIndexRepository`.
 Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-008, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-120-recipe-library-save`.
+Status: Addressed by ADR-0011 and `RecipeLibraryUseCase`; App composition and UI binding remain open.
+
+Date: 2026-06-01
+Source: FR-120 Recipe App composition
+Problem: The Recipe library save use case exists, but WPF App startup must register it with the JSON document store and SQLite index repository before UI commands can use it.
+Proposed improvement: Extract App service registration into a testable composition helper and register Recipe document/library services with local app-data paths.
+Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-008, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-app-composition`.
