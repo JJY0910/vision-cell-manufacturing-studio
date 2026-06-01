@@ -111,6 +111,11 @@ CREATE TABLE IF NOT EXISTS motion_command_history (
 );
 ```
 
+Implementation note:
+
+- `VisionCell.Persistence` initializes `schema_version` and `motion_command_history` idempotently through `SqliteSchemaInitializer`.
+- `SqliteMotionCommandHistoryRepository` writes `MachineCommandRequest` and `MachineCommandResult` JSON with correlation ID and elapsed time.
+
 ## Migration Policy
 
 - Every schema change creates a new migration class/file.
