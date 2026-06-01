@@ -76,7 +76,16 @@ public static class MotionCommandParameterParser
             return false;
         }
 
-        target = new AbsoluteMoveTarget(x, y, z, theta, velocity, acceleration, deceleration, jerk, arrivalTolerance);
+        var profilePreset = TryGet(parameters, MotionCommandParameterKeys.ProfilePreset, out var rawPreset)
+            ? rawPreset
+            : fallback.ProfilePreset;
+        if (string.IsNullOrWhiteSpace(profilePreset))
+        {
+            error = "ProfilePreset must not be empty.";
+            return false;
+        }
+
+        target = new AbsoluteMoveTarget(x, y, z, theta, velocity, acceleration, deceleration, jerk, arrivalTolerance, profilePreset);
         return true;
     }
 

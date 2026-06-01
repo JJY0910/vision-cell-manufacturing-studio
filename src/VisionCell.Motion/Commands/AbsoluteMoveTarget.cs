@@ -11,7 +11,8 @@ public sealed record AbsoluteMoveTarget(
     double Acceleration = 200.0,
     double Deceleration = 200.0,
     double Jerk = 1000.0,
-    double ArrivalTolerance = 0.01)
+    double ArrivalTolerance = 0.01,
+    string ProfilePreset = "Standard")
 {
     public IReadOnlyDictionary<string, string> ToParameters()
     {
@@ -25,7 +26,8 @@ public sealed record AbsoluteMoveTarget(
             [MotionCommandParameterKeys.Acceleration] = Acceleration.ToString("0.###", CultureInfo.InvariantCulture),
             [MotionCommandParameterKeys.Deceleration] = Deceleration.ToString("0.###", CultureInfo.InvariantCulture),
             [MotionCommandParameterKeys.Jerk] = Jerk.ToString("0.###", CultureInfo.InvariantCulture),
-            [MotionCommandParameterKeys.ArrivalTolerance] = ArrivalTolerance.ToString("0.###", CultureInfo.InvariantCulture)
+            [MotionCommandParameterKeys.ArrivalTolerance] = ArrivalTolerance.ToString("0.###", CultureInfo.InvariantCulture),
+            [MotionCommandParameterKeys.ProfilePreset] = ProfilePreset
         };
     }
 }

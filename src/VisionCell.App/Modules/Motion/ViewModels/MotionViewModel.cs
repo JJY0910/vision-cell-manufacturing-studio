@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Interlocks;
@@ -42,6 +43,7 @@ public sealed partial class MotionViewModel : ObservableObject
     }
 
     public IReadOnlyList<string> JogAxisOptions { get; } = new[] { "X", "Y", "Z", "Theta" };
+    public IReadOnlyList<MotionProfilePreset> MoveProfilePresets { get; } = MotionProfilePreset.Defaults;
     public ObservableCollection<MotionAxisStatusViewModel> Axes { get; } = new();
     public ObservableCollection<MotionCommandHistoryItemViewModel> RecentCommands { get; } = new();
 
@@ -125,6 +127,9 @@ public sealed partial class MotionViewModel : ObservableObject
 
     [ObservableProperty]
     private string _moveArrivalToleranceText = "0.010";
+
+    [ObservableProperty]
+    private MotionProfilePreset _selectedMoveProfilePreset = MotionProfilePreset.Standard;
 
     public async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -423,8 +428,32 @@ public sealed partial class MotionViewModel : ObservableObject
             return false;
         }
 
-        target = new AbsoluteMoveTarget(x, y, z, theta, velocity, acceleration, deceleration, jerk, arrivalTolerance);
+        target = new AbsoluteMoveTarget(
+            x,
+            y,
+            z,
+            theta,
+            velocity,
+            acceleration,
+            deceleration,
+            jerk,
+            arrivalTolerance,
+            SelectedMoveProfilePreset.Name);
         return true;
+    }
+
+    partial void OnSelectedMoveProfilePresetChanged(MotionProfilePreset value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        MoveVelocityText = FormatProfileNumber(value.Velocity);
+        MoveAccelerationText = FormatProfileNumber(value.Acceleration);
+        MoveDecelerationText = FormatProfileNumber(value.Deceleration);
+        MoveJerkText = FormatProfileNumber(value.Jerk);
+        MoveArrivalToleranceText = FormatProfileNumber(value.ArrivalTolerance);
     }
 
     private static IReadOnlyDictionary<string, string> CreateServoParameters(string state)
@@ -488,7 +517,7 @@ public sealed partial class MotionViewModel : ObservableObject
     {
         error = string.Empty;
 
-        if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value) &&
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value) &&
             double.IsFinite(value))
         {
             return true;
@@ -512,5 +541,10 @@ public sealed partial class MotionViewModel : ObservableObject
 
         error = $"{label} must be greater than zero.";
         return false;
+    }
+
+    private static string FormatProfileNumber(double value)
+    {
+        return value.ToString("0.###", CultureInfo.InvariantCulture);
     }
 }

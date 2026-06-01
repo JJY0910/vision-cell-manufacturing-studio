@@ -16,4 +16,5 @@ public static class MotionCommandParameterKeys
     public const string Deceleration = "Deceleration";
     public const string Jerk = "Jerk";
     public const string ArrivalTolerance = "ArrivalTolerance";
+    public const string ProfilePreset = "ProfilePreset";
 }
