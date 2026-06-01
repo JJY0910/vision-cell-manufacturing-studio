@@ -182,3 +182,9 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Teaching edit history, active recipe ownership, delete/update UI, and import/export remain open.
 - Next selected work: `codex/feature/fr-104-teaching-history-contract` for edit history traceability contract.
+
+## 2026-06-01 16:38 - In progress
+- Branch: `codex/feature/fr-104-teaching-history-sqlite`
+- Scope: Add SQLite schema bootstrap and repository coverage for append-only Teaching History rows.
+- Validation target: Persistence tests, full Debug/Release build/test, GitHub Actions after PR creation.
+- Risks: Use-case integration and active recipe ownership remain intentionally outside this small persistence slice.

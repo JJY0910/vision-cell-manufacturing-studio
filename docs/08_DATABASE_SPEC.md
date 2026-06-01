@@ -48,14 +48,20 @@ CREATE TABLE IF NOT EXISTS recipes (
 ```sql
 CREATE TABLE IF NOT EXISTS teaching_history (
   id TEXT PRIMARY KEY,
-  recipe_id TEXT NOT NULL,
-  point_id TEXT NOT NULL,
+  teaching_point_id TEXT NOT NULL,
+  recipe_id TEXT NULL,
   action TEXT NOT NULL,
   before_json TEXT NULL,
   after_json TEXT NULL,
   created_at TEXT NOT NULL
 );
 ```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `teaching_history` through migration id `003_teaching_history`.
+- `SqliteTeachingHistoryRepository` implements `ITeachingHistoryRepository` for append-only save and latest-first per-point history queries.
+- `recipe_id` is nullable until active recipe ownership is wired into the teaching workflow.
 
 ### inspection_results
 
@@ -140,7 +146,7 @@ CREATE TABLE IF NOT EXISTS motion_command_history (
 
 Implementation note:
 
-- `VisionCell.Persistence` initializes `schema_version`, `motion_command_history`, and `teaching_points` idempotently through `SqliteSchemaInitializer`.
+- `VisionCell.Persistence` initializes `schema_version`, `motion_command_history`, `teaching_points`, and `teaching_history` idempotently through `SqliteSchemaInitializer`.
 - `SqliteMotionCommandHistoryRepository` writes `MachineCommandRequest` and `MachineCommandResult` JSON with correlation ID and elapsed time.
 
 ## Migration Policy
