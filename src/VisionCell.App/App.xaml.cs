@@ -1,6 +1,8 @@
+using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Motion;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -13,6 +15,8 @@ using VisionCell.App.Modules.Teaching.ViewModels;
 using VisionCell.App.Navigation;
 using VisionCell.App.Shell;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Persistence.Motion;
+using VisionCell.Persistence.Sqlite;
 using VisionCell.Simulator;
 
 namespace VisionCell.App;
@@ -43,6 +47,11 @@ public partial class App : System.Windows.Application
     {
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
         services.AddSingleton<ICommandInterlockService, CommandInterlockService>();
+        services.AddSingleton(_ => new SqliteConnectionFactory(GetDefaultDatabasePath()));
+        services.AddSingleton<SqliteSchemaInitializer>();
+        services.AddSingleton<SqliteMotionCommandHistoryRepository>();
+        services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
+        services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<EquipmentViewModel>();
         services.AddSingleton<MotionViewModel>();
@@ -58,5 +67,10 @@ public partial class App : System.Windows.Application
         {
             DataContext = provider.GetRequiredService<ShellViewModel>()
         });
+    }
+
+    private static string GetDefaultDatabasePath()
+    {
+        return Path.Combine(AppContext.BaseDirectory, "local-data", "visioncell.db");
     }
 }

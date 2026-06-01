@@ -2,11 +2,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Data.Sqlite;
 using VisionCell.Application.Motion;
+using VisionCell.Core.Commands;
 using VisionCell.Persistence.Sqlite;
 
 namespace VisionCell.Persistence.Motion;
 
-public sealed class SqliteMotionCommandHistoryRepository : IMotionCommandHistoryRepository
+public sealed class SqliteMotionCommandHistoryRepository : IMotionCommandHistoryRepository, IMotionCommandHistoryReader
 {
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
@@ -63,7 +64,46 @@ public sealed class SqliteMotionCommandHistoryRepository : IMotionCommandHistory
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<IReadOnlyList<MotionCommandHistoryRow>> ListRecentAsync(
+    public async Task<IReadOnlyList<MotionCommandHistoryRecord>> ListRecentAsync(
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        if (limit <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "Limit must be greater than zero.");
+        }
+
+        await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+              id,
+              correlation_id,
+              command_name,
+              axis_id,
+              request_json,
+              result_json,
+              elapsed_ms,
+              created_at
+            FROM motion_command_history
+            ORDER BY created_at DESC
+            LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$limit", limit);
+
+        var records = new List<MotionCommandHistoryRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            records.Add(ReadRecord(reader));
+        }
+
+        return records;
+    }
+
+    public async Task<IReadOnlyList<MotionCommandHistoryRow>> ListRecentRowsAsync(
         int limit,
         CancellationToken cancellationToken)
     {
@@ -100,6 +140,23 @@ public sealed class SqliteMotionCommandHistoryRepository : IMotionCommandHistory
         }
 
         return rows;
+    }
+
+    private static MotionCommandHistoryRecord ReadRecord(SqliteDataReader reader)
+    {
+        var commandResult = JsonSerializer.Deserialize<MachineCommandResult>(reader.GetString(5), JsonOptions)
+            ?? throw new InvalidOperationException("Motion command result JSON could not be deserialized.");
+
+        return new MotionCommandHistoryRecord(
+            Guid.ParseExact(reader.GetString(0), "N"),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3),
+            commandResult.Status,
+            commandResult.ErrorCode?.Code,
+            commandResult.Message,
+            commandResult.Elapsed,
+            DateTimeOffset.Parse(reader.GetString(7)));
     }
 
     private static MotionCommandHistoryRow ReadRow(SqliteDataReader reader)

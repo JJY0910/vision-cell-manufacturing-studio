@@ -32,3 +32,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: SQLite repository and MotionView history binding are still pending.
 - Next selected work: `feature/fr-069-motion-history-sqlite` for SQLite motion command history repository and idempotent schema bootstrap.
+
+## 2026-06-01 14:04 - PR #4
+- Branch: `feature/fr-069-motion-history-sqlite`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/4
+- Squash/Merge commit: `c93a366f778d0a4746207e32c1ea88d94231cf8b`
+- Scope: Added SQLite motion command history schema bootstrap, repository, readback tests, ADR-0002, and database/backlog docs.
+- Files changed: 9 files, including Persistence SQLite factory/schema/repository, persistence tests, ADR-0002, DB spec, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 47 tests. GitHub Actions `build-test` passed in 2m6s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: MotionView still needed a read-bound command history panel.
+- Next selected work: `feature/fr-069-motion-history-view` for MotionView history reader binding.

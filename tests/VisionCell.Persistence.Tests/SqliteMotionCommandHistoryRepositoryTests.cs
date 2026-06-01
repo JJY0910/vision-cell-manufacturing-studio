@@ -18,7 +18,7 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
         var entry = CreateEntry("Move Absolute", DateTimeOffset.Parse("2026-06-01T00:00:00Z"));
 
         await repository.SaveAsync(entry, CancellationToken.None);
-        var rows = await repository.ListRecentAsync(10, CancellationToken.None);
+        var rows = await repository.ListRecentRowsAsync(10, CancellationToken.None);
         var migrationCount = await database.CountRowsAsync("schema_version", CancellationToken.None);
 
         rows.Should().ContainSingle();
@@ -45,7 +45,7 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
     }
 
     [Fact]
-    public async Task ListRecentAsync_Should_Return_Newest_Rows_First_And_Respect_Limit()
+    public async Task ListRecentAsync_Should_Return_Newest_Records_First_And_Respect_Limit()
     {
         using var database = TemporaryDatabase.Create();
         var repository = database.CreateRepository();
@@ -54,11 +54,14 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
 
         await repository.SaveAsync(older, CancellationToken.None);
         await repository.SaveAsync(newer, CancellationToken.None);
-        var rows = await repository.ListRecentAsync(1, CancellationToken.None);
+        var records = await repository.ListRecentAsync(1, CancellationToken.None);
 
-        rows.Should().ContainSingle();
-        rows[0].Id.Should().Be(newer.Id);
-        rows[0].CommandName.Should().Be("Home");
+        records.Should().ContainSingle();
+        records[0].Id.Should().Be(newer.Id);
+        records[0].CommandName.Should().Be("Home");
+        records[0].Status.Should().Be(CommandStatus.Success);
+        records[0].Message.Should().Be("Home completed.");
+        records[0].Elapsed.Should().Be(TimeSpan.FromMilliseconds(42));
     }
 
     [Fact]
