@@ -122,6 +122,12 @@ Roles:
 - Park
 - Custom
 
+Implementation status:
+
+- `VisionCell.Motion.Teaching` defines the Teaching Point domain model, role enum, per-axis tolerance model, and creation validation.
+- Teaching point creation rejects empty names, unsupported roles, non-finite coordinates, coordinates outside the default axis soft limits, and non-positive tolerances.
+- Active recipe persistence, duplicate-name validation, edit history, and Go To Teaching Point execution remain Application/App/Persistence follow-up work.
+
 ## Teaching Workflow
 
 1. Connect equipment

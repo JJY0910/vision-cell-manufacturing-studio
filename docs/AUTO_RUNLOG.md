@@ -116,3 +116,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Recipe-level profile persistence, teaching defaults, and per-axis overrides remain open.
 - Next selected work: `codex/test/fr-065-motion-profile-preset-coverage` for Motion-level preset payload coverage and traceability doc cleanup.
+
+## 2026-06-01 15:40 - PR #11
+- Branch: `codex/test/fr-065-motion-profile-preset-coverage`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/11
+- Squash/Merge commit: `7f3b1e162a70b6c58fbd64634f5b5b7c2f975b71`
+- Scope: Added Motion-layer tests for built-in profile preset defaults and `AbsoluteMoveTarget` `ProfilePreset` payload preservation, plus traceability doc cleanup.
+- Files changed: 3 files, including Motion tests, `docs/COMMAND_INTERLOCK_MATRIX.md`, and `docs/AUTO_RUNLOG.md`.
+- Validation: Local Debug/Release restore, build, and test passed with 62 tests. GitHub Actions `build-test` passed in 1m39s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Teaching point domain, persistence, and Go To workflow remained open.
+- Next selected work: `codex/feature/fr-100-teaching-point-model` for Teaching Point role/position/tolerance validation.
