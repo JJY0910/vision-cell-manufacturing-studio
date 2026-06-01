@@ -104,6 +104,10 @@ dotnet build .\VisionCell.sln -c Release --no-restore
 dotnet test .\VisionCell.sln -c Release --no-build
 ```
 
+## Local Windows App Control Compatibility
+
+`tests/Directory.Build.props` enables optimization for Debug test assemblies only. This keeps local `dotnet test .\VisionCell.sln -c Debug --no-build` reliable on Windows Smart App Control / App Control for Business systems that may block freshly generated non-optimized test DLLs. Product project Debug builds remain unchanged.
+
 ## Quality Gates
 
 - No build errors.

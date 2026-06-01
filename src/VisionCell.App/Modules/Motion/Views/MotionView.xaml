@@ -7,6 +7,7 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
@@ -65,6 +66,49 @@
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Axis Snapshot" Style="{DynamicResource Text.CardTitle}" />
+          <ItemsControl Grid.Row="1" ItemsSource="{Binding Axes}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{DynamicResource Card.Compact}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.MetricValue}" />
+                    <TextBlock Text="{Binding MotionState}"
+                               Style="{DynamicResource Text.StatusStrong}"
+                               Margin="0,8,0,0" />
+                    <TextBlock Text="{Binding PositionText}"
+                               Style="{DynamicResource Text.Status}"
+                               Margin="0,8,0,0" />
+                    <TextBlock Text="{Binding TargetText}"
+                               Style="{DynamicResource Text.Status}" />
+                    <TextBlock Text="{Binding SoftLimitText}"
+                               Style="{DynamicResource Text.MetricLabel}"
+                               Margin="0,8,0,0" />
+                    <TextBlock Text="{Binding HomeState}"
+                               Style="{DynamicResource Text.MetricLabel}" />
+                    <TextBlock Text="{Binding ServoState}"
+                               Style="{DynamicResource Text.MetricLabel}" />
+                    <TextBlock Text="{Binding Alarm, StringFormat=Alarm {0}}"
+                               Style="{DynamicResource Text.MetricLabel}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Motion Commands" Style="{DynamicResource Text.CardTitle}" />
@@ -113,7 +157,7 @@
         </Grid>
       </Border>
 
-      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+      <Border Grid.Row="4" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

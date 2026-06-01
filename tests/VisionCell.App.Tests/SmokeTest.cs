@@ -129,6 +129,10 @@ public sealed class DashboardAndShellViewModelTests
         motion.ControllerStatus.Should().Be("Controller: Connected");
         motion.ServoStatus.Should().Be("Servo: Off");
         motion.AxisStatus.Should().Contain("0/4 homed");
+        motion.Axes.Should().HaveCount(4);
+        motion.Axes[0].Label.Should().Be("X");
+        motion.Axes[0].PositionText.Should().Contain("0.000");
+        motion.Axes[0].SoftLimitText.Should().Contain("Limit");
         motion.ServoOnCommand.CanExecute(null).Should().BeTrue();
         motion.HomeCommand.CanExecute(null).Should().BeFalse();
         motion.HomeDisabledReason.Should().Contain("Home requires servo on.");
