@@ -230,3 +230,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 39 tests; App targeted tests passed with 18 tests after a transient parallel build copy race; Debug/Release solution build and test passed with 105 tests; WPF hidden launch smoke passed.
 - Risks: Full Recipe CRUD and app-settings based active recipe selection remain follow-up work.
+
+## 2026-06-01 18:18 - In progress
+- Branch: `codex/feature/fr-120-recipe-domain-contract`
+- Scope: Add ADR-backed Application Recipe definition and validation contract for metadata, Teaching, camera, ROI, vision parameters, and sequence rules.
+- Validation target: Application targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 45 tests; Debug/Release solution build and test passed with 111 tests; WPF hidden launch smoke passed.
+- Risks: JSON persistence, SQLite indexing, active recipe settings, and RecipeView editing remain follow-up work.

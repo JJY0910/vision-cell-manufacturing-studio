@@ -194,3 +194,11 @@ Proposed improvement: Add optional recipe id to Teaching mutation requests and p
 Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
 Priority: P0
 Status: In progress on `codex/feature/fr-120-teaching-recipe-context`.
+
+Date: 2026-06-01
+Source: FR-120 Recipe domain validation contract
+Problem: RecipeView and Recipe persistence need a typed validation contract before JSON/SQLite/UI work can be implemented safely.
+Proposed improvement: Add Application-layer Recipe definition records and validation result shape for metadata, Teaching, ROI, camera, vision parameter, and sequence rules.
+Requirement impact: FR-120, FR-121, FR-124, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-domain-contract`.
