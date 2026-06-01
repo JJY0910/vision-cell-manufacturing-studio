@@ -279,3 +279,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 25 tests; Debug/Release solution build and test passed with 132 tests; WPF hidden launch smoke passed.
 - Risks: Save surface handles one Camera Teaching point and one ROI; active Recipe activation and multi-row editors remain follow-up work.
+
+## 2026-06-01 19:40 - In progress
+- Branch: `codex/feature/fr-122-active-recipe-index`
+- Scope: Add an ADR-backed active Recipe query/switch contract to the Recipe index and SQLite repository using the existing `recipes.is_active` column.
+- Validation target: Persistence targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 49 tests; Persistence targeted tests passed with 29 tests; App targeted tests passed with 25 tests; Debug/Release solution build and test passed with 136 tests; WPF hidden launch smoke passed.
+- Risks: This slice only adds repository-level active state; RecipeView activation and app startup restore remain follow-up work.

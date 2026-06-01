@@ -9,6 +9,13 @@ public interface IRecipeIndexRepository
         string version,
         CancellationToken cancellationToken);
 
+    Task<RecipeIndexEntry?> FindActiveAsync(CancellationToken cancellationToken);
+
+    Task<bool> SetActiveAsync(
+        string recipeId,
+        string version,
+        CancellationToken cancellationToken);
+
     Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(
         int limit,
         CancellationToken cancellationToken);

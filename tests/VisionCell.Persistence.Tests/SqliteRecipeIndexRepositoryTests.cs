@@ -79,6 +79,66 @@ public sealed class SqliteRecipeIndexRepositoryTests
     }
 
     [Fact]
+    public async Task FindActiveAsync_Should_Return_Null_When_No_Active_Recipe_Exists()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateRepository();
+        var entry = CreateEntry("PKG-MEMORY-MODULE", "1.0.0", "Memory Module", false, true, null, "2026-06-01T08:00:00Z");
+
+        await repository.SaveAsync(entry, CancellationToken.None);
+        var active = await repository.FindActiveAsync(CancellationToken.None);
+
+        active.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetActiveAsync_Should_Select_One_Recipe_And_Clear_Previous_Active_Row()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateRepository();
+        var previous = CreateEntry("PKG-A", "1.0.0", "Package A", true, true, null, "2026-06-01T08:00:00Z");
+        var next = CreateEntry("PKG-B", "2.0.0", "Package B", false, true, null, "2026-06-01T08:10:00Z");
+
+        await repository.SaveAsync(previous, CancellationToken.None);
+        await repository.SaveAsync(next, CancellationToken.None);
+        var selected = await repository.SetActiveAsync("pkg-b", "2.0.0", CancellationToken.None);
+        var active = await repository.FindActiveAsync(CancellationToken.None);
+        var entries = await repository.ListRecentAsync(10, CancellationToken.None);
+
+        selected.Should().BeTrue();
+        active.Should().NotBeNull();
+        active!.RecipeId.Should().Be("PKG-B");
+        entries.Should().ContainSingle(entry => entry.IsActive);
+        entries.Single(entry => entry.RecipeId == "PKG-A").IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetActiveAsync_Should_Return_False_And_Preserve_Active_Row_When_Target_Is_Missing()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateRepository();
+        var activeEntry = CreateEntry("PKG-A", "1.0.0", "Package A", true, true, null, "2026-06-01T08:00:00Z");
+
+        await repository.SaveAsync(activeEntry, CancellationToken.None);
+        var selected = await repository.SetActiveAsync("PKG-MISSING", "1.0.0", CancellationToken.None);
+        var active = await repository.FindActiveAsync(CancellationToken.None);
+
+        selected.Should().BeFalse();
+        active.Should().Be(activeEntry);
+    }
+
+    [Fact]
+    public async Task SetActiveAsync_Should_Return_False_For_Blank_Identifiers()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateRepository();
+
+        var selected = await repository.SetActiveAsync(" ", "1.0.0", CancellationToken.None);
+
+        selected.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ListRecentAsync_Should_Reject_NonPositive_Limit()
     {
         using var database = TemporaryDatabase.Create();

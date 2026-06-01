@@ -728,6 +728,39 @@ public sealed class DashboardAndShellViewModelTests
                 string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase)));
         }
 
+        public Task<RecipeIndexEntry?> FindActiveAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_entries
+                .OrderByDescending(entry => entry.UpdatedAt)
+                .FirstOrDefault(entry => entry.IsActive));
+        }
+
+        public Task<bool> SetActiveAsync(
+            string recipeId,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            var hasTarget = _entries.Any(entry =>
+                string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasTarget)
+            {
+                return Task.FromResult(false);
+            }
+
+            for (var index = 0; index < _entries.Count; index++)
+            {
+                var entry = _entries[index];
+                var isTarget =
+                    string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase);
+                _entries[index] = entry with { IsActive = isTarget };
+            }
+
+            return Task.FromResult(true);
+        }
+
         public Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(int limit, CancellationToken cancellationToken)
         {
             if (ListHandler is not null)
