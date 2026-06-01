@@ -48,7 +48,8 @@ Application orchestration:
 - UI and feature view-models call `IMotionCommandUseCase`, not the simulator/controller directly.
 - The use case creates `MachineCommandRequest` with command name, timeout, timestamp, parameters, and correlation ID.
 - The controller result is recorded with the same request correlation ID.
-- Command history is written through `IMotionCommandHistoryRepository`; SQLite implementation is a Persistence-layer follow-up.
+- Command history is written through `IMotionCommandHistoryRepository`; `SqliteMotionCommandHistoryRepository` persists and reads recent command rows for MotionView.
+- MotionView operator controls dispatch Servo On/Off, Home All, Jog X +1, Move preset, and Stop through `IMotionCommandUseCase`; typed operator-entered axis/target DTOs are tracked as follow-up work.
 
 ### Servo On/Off
 
