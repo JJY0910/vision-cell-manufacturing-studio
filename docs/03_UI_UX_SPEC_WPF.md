@@ -127,7 +127,8 @@ Implementation status:
 
 - TeachingView binds to `TeachingViewModel` for refresh, Save Current Position, and Go To commands.
 - The view shows point name, role, position, tolerance, updated time, memo, and save input fields for role/tolerance/memo.
-- Application contracts support edit/delete history, but WPF edit/delete controls and recipe ownership controls remain follow-up work.
+- TeachingView supports selected-point edit/delete commands through the Application contract.
+- Delete confirmation, selected-point history display, and recipe ownership controls remain follow-up work.
 
 ### RecipeView
 
