@@ -45,6 +45,8 @@
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="150" />
               <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="160" />
+              <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Name"
@@ -66,11 +68,20 @@
                       Height="32"
                       Margin="0,0,12,8" />
             <TextBlock Grid.Column="4"
-                       Text="Memo"
+                       Text="Active Recipe"
                        Style="{DynamicResource Text.MetricLabel}"
                        VerticalAlignment="Center"
                        Margin="0,0,8,8" />
             <TextBox Grid.Column="5"
+                     Text="{Binding ActiveRecipeIdText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="6"
+                       Text="Memo"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="7"
                      Text="{Binding MemoText, UpdateSourceTrigger=PropertyChanged}"
                      Height="32"
                      Margin="0,0,0,8" />

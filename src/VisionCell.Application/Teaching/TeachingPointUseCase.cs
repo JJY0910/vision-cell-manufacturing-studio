@@ -107,7 +107,7 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
             await _historyRepository.SaveAsync(
                 TeachingHistoryEntry.Create(
                     creation.Point.Id,
-                    recipeId: null,
+                    recipeId: request.RecipeId,
                     TeachingHistoryAction.Created,
                     beforeJson: null,
                     afterJson: JsonSerializer.Serialize(creation.Point, HistoryJsonOptions),
@@ -207,7 +207,7 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
             await _historyRepository.SaveAsync(
                 TeachingHistoryEntry.Create(
                     updated.Id,
-                    recipeId: null,
+                    recipeId: request.RecipeId,
                     TeachingHistoryAction.Updated,
                     beforeJson: JsonSerializer.Serialize(existing, HistoryJsonOptions),
                     afterJson: JsonSerializer.Serialize(updated, HistoryJsonOptions),
@@ -261,7 +261,7 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
             await _historyRepository.SaveAsync(
                 TeachingHistoryEntry.Create(
                     existing.Id,
-                    recipeId: null,
+                    recipeId: request.RecipeId,
                     TeachingHistoryAction.Deleted,
                     beforeJson: JsonSerializer.Serialize(existing, HistoryJsonOptions),
                     afterJson: null,

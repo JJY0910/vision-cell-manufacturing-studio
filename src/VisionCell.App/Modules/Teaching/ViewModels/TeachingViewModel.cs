@@ -73,6 +73,9 @@ public sealed partial class TeachingViewModel : ObservableObject
     private string _memoText = string.Empty;
 
     [ObservableProperty]
+    private string _activeRecipeIdText = string.Empty;
+
+    [ObservableProperty]
     private string _toleranceXText = "0.010";
 
     [ObservableProperty]
@@ -142,7 +145,7 @@ public sealed partial class TeachingViewModel : ObservableObject
         await RunBusyAsync(async () =>
         {
             var result = await _teachingPointUseCase.SaveCurrentPositionAsync(
-                new TeachingPointSaveRequest(NameText, SelectedRole, tolerance, MemoText, SnapshotTimeout),
+                new TeachingPointSaveRequest(NameText, SelectedRole, tolerance, MemoText, SnapshotTimeout, CurrentRecipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess || result.Point is null)
@@ -184,7 +187,8 @@ public sealed partial class TeachingViewModel : ObservableObject
                     SelectedRole,
                     selected.Position,
                     tolerance,
-                    MemoText),
+                    MemoText,
+                    CurrentRecipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess || result.Point is null)
@@ -225,7 +229,7 @@ public sealed partial class TeachingViewModel : ObservableObject
             var selectedId = SelectedPoint.Id;
             var selectedName = SelectedPoint.Name;
             var result = await _teachingPointUseCase.DeleteAsync(
-                new TeachingPointDeleteRequest(selectedId),
+                new TeachingPointDeleteRequest(selectedId, CurrentRecipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess)
@@ -399,6 +403,8 @@ public sealed partial class TeachingViewModel : ObservableObject
         ToleranceZText = FormatNumber(point.Tolerance.Z);
         ToleranceThetaText = FormatNumber(point.Tolerance.Theta);
     }
+
+    private string? CurrentRecipeId => string.IsNullOrWhiteSpace(ActiveRecipeIdText) ? null : ActiveRecipeIdText.Trim();
 
     private static string FormatNumber(double value)
     {

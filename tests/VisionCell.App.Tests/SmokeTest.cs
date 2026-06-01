@@ -244,12 +244,14 @@ public sealed class DashboardAndShellViewModelTests
         teaching.NameText = "Safe Park";
         teaching.SelectedRole = TeachingRole.Safe;
         teaching.MemoText = "verified";
+        teaching.ActiveRecipeIdText = " RCP-TEACH ";
 
         await teaching.SaveCurrentPositionAsync(CancellationToken.None);
 
         useCase.SaveRequests.Should().ContainSingle();
         useCase.SaveRequests[0].Name.Should().Be("Safe Park");
         useCase.SaveRequests[0].Role.Should().Be(TeachingRole.Safe);
+        useCase.SaveRequests[0].RecipeId.Should().Be("RCP-TEACH");
         teaching.Points.Should().ContainSingle();
         teaching.SelectedPoint.Should().NotBeNull();
         teaching.StatusText.Should().Contain("teaching points loaded");
@@ -295,6 +297,7 @@ public sealed class DashboardAndShellViewModelTests
         teaching.SelectedRole = TeachingRole.Review;
         teaching.MemoText = "after";
         teaching.ToleranceXText = "0.020";
+        teaching.ActiveRecipeIdText = "RCP-EDIT";
         await teaching.UpdateSelectedAsync(CancellationToken.None);
 
         useCase.UpdateRequests.Should().ContainSingle();
@@ -303,6 +306,7 @@ public sealed class DashboardAndShellViewModelTests
         useCase.UpdateRequests[0].Role.Should().Be(TeachingRole.Review);
         useCase.UpdateRequests[0].Position.Should().Be(point.Position);
         useCase.UpdateRequests[0].Tolerance.X.Should().Be(0.02);
+        useCase.UpdateRequests[0].RecipeId.Should().Be("RCP-EDIT");
         teaching.Points.Should().ContainSingle(item => item.Name == "Camera Revised");
         teaching.StatusText.Should().Contain("teaching points loaded");
     }
@@ -318,6 +322,7 @@ public sealed class DashboardAndShellViewModelTests
         var useCase = new FakeTeachingPointUseCase(point);
         var confirmation = new FakeUserConfirmationService(true);
         var teaching = CreateTeachingViewModel(useCase, confirmationService: confirmation);
+        teaching.ActiveRecipeIdText = "RCP-DELETE";
 
         await teaching.RefreshAsync(CancellationToken.None);
         await teaching.DeleteSelectedAsync(CancellationToken.None);
@@ -326,6 +331,7 @@ public sealed class DashboardAndShellViewModelTests
         confirmation.Prompts[0].Message.Should().Contain("Park");
         useCase.DeleteRequests.Should().ContainSingle();
         useCase.DeleteRequests[0].TeachingPointId.Should().Be(point.Id);
+        useCase.DeleteRequests[0].RecipeId.Should().Be("RCP-DELETE");
         teaching.Points.Should().BeEmpty();
         teaching.SelectedPoint.Should().BeNull();
         teaching.StatusText.Should().Be("No teaching points saved");

@@ -186,3 +186,11 @@ Proposed improvement: Add a selected-point history panel backed by `ITeachingHis
 Requirement impact: FR-104, FR-200, NFR-004
 Priority: P0
 Status: Addressed with a selected-point Teaching history panel; active recipe ownership and custom dialog styling remain open.
+
+Date: 2026-06-01
+Source: FR-120 Teaching recipe context
+Problem: Teaching history can now be viewed in the UI, but history rows still need recipe context before full Recipe CRUD owns active recipe selection.
+Proposed improvement: Add optional recipe id to Teaching mutation requests and pass it into Created/Updated/Deleted history rows, while leaving full Recipe CRUD/app-settings activation as follow-up.
+Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
+Priority: P0
+Status: In progress on `codex/feature/fr-120-teaching-recipe-context`.
