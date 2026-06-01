@@ -241,4 +241,12 @@ Problem: The Recipe library save use case exists, but WPF App startup must regis
 Proposed improvement: Extract App service registration into a testable composition helper and register Recipe document/library services with local app-data paths.
 Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-008, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-120-recipe-app-composition`.
+Status: Addressed by WPF App composition registration; RecipeView save command binding remains open.
+
+Date: 2026-06-01
+Source: FR-120 RecipeView save command
+Problem: RecipeView can list indexed metadata and the App can resolve Recipe library services, but operators still need a WPF save command to create a valid Recipe document and index row.
+Proposed improvement: Add a RecipeView metadata/camera/Teaching/ROI editor and bind Save Recipe to `IRecipeLibraryUseCase`, refreshing the index after a successful save.
+Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-006, NFR-008, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-view-save`.

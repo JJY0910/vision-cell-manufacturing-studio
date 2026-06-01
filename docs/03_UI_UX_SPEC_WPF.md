@@ -147,7 +147,8 @@ Implementation status:
 
 - RecipeView binds to `RecipeViewModel` for SQLite Recipe index refresh.
 - The view shows indexed recipe id, version, product name, active state, validation state, updated time, checksum, document path, and validation summary.
-- Recipe create/edit/save/clone/export controls remain follow-up work.
+- RecipeView has a metadata/camera/teaching/ROI editor and Save Recipe command backed by the Application Recipe library use case.
+- Recipe clone/export controls and full multi-row Teaching/ROI editing remain follow-up work.
 
 ### InspectionView
 
