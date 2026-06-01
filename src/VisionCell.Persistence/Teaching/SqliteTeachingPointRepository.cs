@@ -209,6 +209,21 @@ public sealed class SqliteTeachingPointRepository : ITeachingPointRepository
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            DELETE FROM teaching_points
+            WHERE id = $id;
+            """;
+        command.Parameters.AddWithValue("$id", id.ToString("N"));
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private static TeachingPoint ReadPoint(SqliteDataReader reader)
     {
         return new TeachingPoint(

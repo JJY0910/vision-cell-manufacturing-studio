@@ -124,6 +124,173 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
         return TeachingPointSaveResult.Success(creation.Point);
     }
 
+    public async Task<TeachingPointSaveResult> UpdateAsync(
+        TeachingPointUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.TeachingPointId == Guid.Empty)
+        {
+            return TeachingPointSaveResult.ValidationFailed(new[]
+            {
+                new TeachingPointValidationIssue(
+                    "TeachingPoint.IdRequired",
+                    "Teaching point id must not be empty.")
+            });
+        }
+
+        TeachingPoint? existing;
+        try
+        {
+            existing = await _repository.FindByIdAsync(request.TeachingPointId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointSaveResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to load teaching point: {ex.Message}");
+        }
+
+        if (existing is null)
+        {
+            return TeachingPointSaveResult.Failure(
+                TeachingPointOperationStatus.NotFound,
+                $"Teaching point '{request.TeachingPointId}' was not found.");
+        }
+
+        var updatedAt = _clock();
+        var update = TeachingPointFactory.Create(
+            request.Name,
+            request.Role,
+            request.Position,
+            request.Tolerance,
+            request.Memo,
+            request.TeachingPointId,
+            updatedAt);
+
+        if (!update.IsSuccess || update.Point is null)
+        {
+            return TeachingPointSaveResult.ValidationFailed(update.Issues);
+        }
+
+        var updated = update.Point with
+        {
+            CreatedAt = existing.CreatedAt,
+            UpdatedAt = updatedAt
+        };
+
+        try
+        {
+            var duplicate = await _repository.FindByNameAsync(updated.Name, cancellationToken).ConfigureAwait(false);
+            if (duplicate is not null && duplicate.Id != updated.Id)
+            {
+                return TeachingPointSaveResult.ValidationFailed(new[]
+                {
+                    new TeachingPointValidationIssue(
+                        "TeachingPoint.NameDuplicate",
+                        $"Teaching point name '{updated.Name}' already exists.")
+                });
+            }
+
+            await _repository.SaveAsync(updated, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointSaveResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to update teaching point: {ex.Message}");
+        }
+
+        try
+        {
+            await _historyRepository.SaveAsync(
+                TeachingHistoryEntry.Create(
+                    updated.Id,
+                    recipeId: null,
+                    TeachingHistoryAction.Updated,
+                    beforeJson: JsonSerializer.Serialize(existing, HistoryJsonOptions),
+                    afterJson: JsonSerializer.Serialize(updated, HistoryJsonOptions),
+                    clock: _clock),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointSaveResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to save teaching point history: {ex.Message}");
+        }
+
+        return TeachingPointSaveResult.Success(updated);
+    }
+
+    public async Task<TeachingPointDeleteResult> DeleteAsync(
+        TeachingPointDeleteRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.TeachingPointId == Guid.Empty)
+        {
+            return TeachingPointDeleteResult.Failure(
+                TeachingPointOperationStatus.ValidationFailed,
+                "Teaching point id must not be empty.");
+        }
+
+        TeachingPoint? existing;
+        try
+        {
+            existing = await _repository.FindByIdAsync(request.TeachingPointId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointDeleteResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to load teaching point: {ex.Message}");
+        }
+
+        if (existing is null)
+        {
+            return TeachingPointDeleteResult.Failure(
+                TeachingPointOperationStatus.NotFound,
+                $"Teaching point '{request.TeachingPointId}' was not found.");
+        }
+
+        try
+        {
+            await _historyRepository.SaveAsync(
+                TeachingHistoryEntry.Create(
+                    existing.Id,
+                    recipeId: null,
+                    TeachingHistoryAction.Deleted,
+                    beforeJson: JsonSerializer.Serialize(existing, HistoryJsonOptions),
+                    afterJson: null,
+                    clock: _clock),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointDeleteResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to save teaching point history: {ex.Message}",
+                existing);
+        }
+
+        try
+        {
+            await _repository.DeleteAsync(existing.Id, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointDeleteResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to delete teaching point: {ex.Message}",
+                existing);
+        }
+
+        return TeachingPointDeleteResult.Success(existing);
+    }
+
     public async Task<TeachingPointGoToResult> GoToAsync(
         TeachingPointGoToRequest request,
         CancellationToken cancellationToken)

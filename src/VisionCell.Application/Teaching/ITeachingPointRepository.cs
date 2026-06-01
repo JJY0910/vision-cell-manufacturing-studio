@@ -11,4 +11,6 @@ public interface ITeachingPointRepository
     Task<TeachingPoint?> FindByNameAsync(string name, CancellationToken cancellationToken);
 
     Task SaveAsync(TeachingPoint point, CancellationToken cancellationToken);
+
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

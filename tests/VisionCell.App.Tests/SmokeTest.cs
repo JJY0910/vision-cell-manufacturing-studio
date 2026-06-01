@@ -389,6 +389,49 @@ public sealed class DashboardAndShellViewModelTests
             return Task.FromResult(TeachingPointSaveResult.Success(point));
         }
 
+        public Task<TeachingPointSaveResult> UpdateAsync(
+            TeachingPointUpdateRequest request,
+            CancellationToken cancellationToken)
+        {
+            var index = _points.FindIndex(point => point.Id == request.TeachingPointId);
+            if (index < 0)
+            {
+                return Task.FromResult(TeachingPointSaveResult.Failure(
+                    TeachingPointOperationStatus.NotFound,
+                    "Teaching point not found."));
+            }
+
+            var existing = _points[index];
+            var updated = TeachingPointFactory.Create(
+                request.Name,
+                request.Role,
+                request.Position,
+                request.Tolerance,
+                request.Memo,
+                request.TeachingPointId).Point! with
+            {
+                CreatedAt = existing.CreatedAt
+            };
+            _points[index] = updated;
+            return Task.FromResult(TeachingPointSaveResult.Success(updated));
+        }
+
+        public Task<TeachingPointDeleteResult> DeleteAsync(
+            TeachingPointDeleteRequest request,
+            CancellationToken cancellationToken)
+        {
+            var point = _points.SingleOrDefault(item => item.Id == request.TeachingPointId);
+            if (point is null)
+            {
+                return Task.FromResult(TeachingPointDeleteResult.Failure(
+                    TeachingPointOperationStatus.NotFound,
+                    "Teaching point not found."));
+            }
+
+            _points.Remove(point);
+            return Task.FromResult(TeachingPointDeleteResult.Success(point));
+        }
+
         public Task<TeachingPointGoToResult> GoToAsync(
             TeachingPointGoToRequest request,
             CancellationToken cancellationToken)

@@ -162,3 +162,10 @@ Problem: Save Current Position now appends Created history rows, but the save an
 Proposed improvement: Add a persistence-level unit-of-work or combined teaching repository operation when update/delete support is introduced, so point mutation and history append can commit atomically.
 Requirement impact: FR-104, FR-120, FR-200, NFR-004
 Priority: P1
+
+Date: 2026-06-01
+Source: FR-104 teaching update/delete contract
+Problem: Teaching Point update/delete behavior now has Application and Persistence contracts with history rows, but WPF does not yet expose operator edit/delete controls and active recipe ownership remains null.
+Proposed improvement: Bind TeachingView edit/delete controls to the new Application contract, add confirmation for delete, and surface recent history entries for the selected point.
+Requirement impact: FR-101, FR-104, FR-120, FR-200, NFR-004
+Priority: P0

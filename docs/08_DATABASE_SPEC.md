@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS teaching_points (
 Implementation note:
 
 - `VisionCell.Persistence` initializes `teaching_points` through migration id `002_teaching_points`.
-- `SqliteTeachingPointRepository` implements `ITeachingPointRepository` for list, ID lookup, case-insensitive name lookup, and save/upsert.
+- `SqliteTeachingPointRepository` implements `ITeachingPointRepository` for list, ID lookup, case-insensitive name lookup, save/upsert, and delete.
 - The `name` column uses a case-insensitive unique constraint to support duplicate-name validation before WPF binding.
 
 ### motion_command_history
