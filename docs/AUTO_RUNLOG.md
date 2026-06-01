@@ -10,3 +10,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Feature-specific Motion/Inspection/Recipe command handlers still need to consume the command availability model.
 - Next selected work: `feature/fr-060-motion-command-hardening` for motion command timeout, cancellation, and reject result hardening.
+
+## 2026-06-01 13:37 - PR #2
+- Branch: `feature/fr-060-motion-command-hardening`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/2
+- Squash/Merge commit: `167400a910237d1d0e602ab1ba460049d15cf8b9`
+- Scope: Hardened simulator motion command results for Servo/Home/Jog/Move Absolute/Stop success, rejected, timeout, and cancellation paths.
+- Files changed: 7 files, including `VirtualEquipmentController`, `MachineCommandResult`, motion/interlock docs, backlog, and equipment tests.
+- Validation: Local Debug/Release restore, build, and test passed with 38 tests. GitHub Actions `build-test` passed in 1m19s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Motion commands are not yet orchestrated through an Application use case, and history is not yet persisted to `motion_command_history`.
+- Next selected work: `feature/fr-063-motion-usecase-history` for Application motion use case and history repository port.

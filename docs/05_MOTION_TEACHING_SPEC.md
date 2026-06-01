@@ -43,6 +43,13 @@ All motion-like commands return `MachineCommandResult` with one of:
 - `Cancelled`: caller cancellation or Stop interrupted the command.
 - `Failed`: unexpected adapter/runtime failure.
 
+Application orchestration:
+
+- UI and feature view-models call `IMotionCommandUseCase`, not the simulator/controller directly.
+- The use case creates `MachineCommandRequest` with command name, timeout, timestamp, parameters, and correlation ID.
+- The controller result is recorded with the same request correlation ID.
+- Command history is written through `IMotionCommandHistoryRepository`; SQLite implementation is a Persistence-layer follow-up.
+
 ### Servo On/Off
 
 - Servo Off 중 motion command 금지
