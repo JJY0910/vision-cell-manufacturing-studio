@@ -38,10 +38,18 @@ CREATE TABLE IF NOT EXISTS recipes (
   file_path TEXT NOT NULL,
   checksum TEXT NOT NULL,
   is_active INTEGER NOT NULL DEFAULT 0,
+  is_valid INTEGER NOT NULL DEFAULT 0,
+  validation_summary TEXT NULL,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  UNIQUE(recipe_id, version)
 );
 ```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `recipes` through migration id `004_recipes`.
+- `SqliteRecipeIndexRepository` upserts Recipe index rows by `(recipe_id, version)` and lists newest Recipe metadata first.
 
 ### teaching_history
 

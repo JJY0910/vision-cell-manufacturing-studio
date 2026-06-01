@@ -210,3 +210,11 @@ Proposed improvement: Add an Application document-store port and a Persistence J
 Requirement impact: FR-120, FR-121, FR-124, NFR-008, NFR-TEST-001
 Priority: P0
 Status: In progress on `codex/feature/fr-120-recipe-json-store`.
+
+Date: 2026-06-01
+Source: FR-120 SQLite Recipe index
+Problem: Recipe JSON files can be saved and loaded, but RecipeView still needs a fast metadata list/query path with validation and active state.
+Proposed improvement: Add a SQLite `recipes` index table and repository for recipe id/version metadata, document path, checksum, active state, validation state, and updated timestamp.
+Requirement impact: FR-120, FR-123, FR-124, NFR-004, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-sqlite-index`.
