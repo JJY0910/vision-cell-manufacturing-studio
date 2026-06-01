@@ -1,0 +1,148 @@
+<UserControl x:Class="VisionCell.App.Modules.Dashboard.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Connect"
+                  Command="{Binding ConnectCommand}"
+                  Height="36"
+                  MinWidth="92"
+                  Margin="0,0,8,0" />
+          <Button Content="Disconnect"
+                  Command="{Binding DisconnectCommand}"
+                  Height="36"
+                  MinWidth="104"
+                  Margin="0,0,8,0" />
+          <Button Content="Refresh"
+                  Command="{Binding RefreshCommand}"
+                  Height="36"
+                  MinWidth="86" />
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="Dashboard" Style="{DynamicResource Text.PageTitle}" />
+          <TextBlock Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}}"
+                     Style="{DynamicResource Text.Status}"
+                     Margin="0,4,0,0" />
+        </StackPanel>
+      </DockPanel>
+
+      <ItemsControl Grid.Row="1" ItemsSource="{Binding StatusPills}" Margin="0,20,0,8">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <controls:StatusPill />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <UniformGrid Grid.Row="2" Columns="3" Margin="-8,4,-8,4">
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Equipment Overview" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="Connection" Style="{DynamicResource Text.MetricLabel}" />
+            <TextBlock Text="{Binding ConnectionStatus}" Style="{DynamicResource Text.MetricValue}" Margin="0,0,0,10" />
+            <TextBlock Text="Controller response" Style="{DynamicResource Text.MetricLabel}" />
+            <TextBlock Text="{Binding ControllerLatencyStatus}" Style="{DynamicResource Text.StatusStrong}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Safety Summary" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding SafetyStatus}" TextWrapping="Wrap" Style="{DynamicResource Text.StatusStrong}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Camera / Recipe" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding CameraStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,0,10" />
+            <TextBlock Text="{Binding ActiveRecipeStatus}" Style="{DynamicResource Text.Status}" />
+          </StackPanel>
+        </Border>
+      </UniformGrid>
+
+      <Grid Grid.Row="3" Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border Style="{DynamicResource Card.Panel}" Margin="0,8,8,8">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Axis Snapshot" Style="{DynamicResource Text.CardTitle}" />
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding Axes}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <UniformGrid Columns="4" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{DynamicResource Card.Compact}">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.MetricValue}" />
+                      <TextBlock Text="{Binding Position, StringFormat=Pos {0:0.000}}"
+                                 Style="{DynamicResource Text.Status}"
+                                 Margin="0,8,0,0" />
+                      <TextBlock Text="{Binding Target, StringFormat=Target {0:0.000}}"
+                                 Style="{DynamicResource Text.Status}" />
+                      <TextBlock Text="{Binding Unit, StringFormat=Unit {0}}"
+                                 Style="{DynamicResource Text.MetricLabel}"
+                                 Margin="0,6,0,0" />
+                      <TextBlock Text="{Binding IsHomed, StringFormat=Homed {0}}"
+                                 Style="{DynamicResource Text.MetricLabel}" />
+                      <TextBlock Text="{Binding ServoOn, StringFormat=Servo {0}}"
+                                 Style="{DynamicResource Text.MetricLabel}" />
+                      <TextBlock Text="{Binding Alarm, StringFormat=Alarm {0}}"
+                                 Style="{DynamicResource Text.MetricLabel}" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Style="{DynamicResource Card.Panel}" Margin="8,8,0,8">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="I/O Snapshot" Style="{DynamicResource Text.CardTitle}" />
+            <ListView Grid.Row="1"
+                      ItemsSource="{Binding IoBits}"
+                      Background="{DynamicResource Brush.PanelAlt}"
+                      BorderThickness="0"
+                      Foreground="{DynamicResource Brush.TextPrimary}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="70" />
+                  <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="170" />
+                  <GridViewColumn Header="Dir" DisplayMemberBinding="{Binding Direction}" Width="56" />
+                  <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}" Width="58" />
+                </GridView>
+              </ListView.View>
+            </ListView>
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

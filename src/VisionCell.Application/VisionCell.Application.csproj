@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VisionCell.Core\VisionCell.Core.csproj" />
+    <ProjectReference Include="..\VisionCell.Equipment\VisionCell.Equipment.csproj" />
+    <ProjectReference Include="..\VisionCell.Motion\VisionCell.Motion.csproj" />
+    <ProjectReference Include="..\VisionCell.Vision\VisionCell.Vision.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,23 @@
+<UserControl x:Class="VisionCell.App.Shared.Controls.StatusPill"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VisionCell.App.Shared.Converters">
+  <UserControl.Resources>
+    <converters:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
+  </UserControl.Resources>
+  <Border MinWidth="132"
+          Height="44"
+          CornerRadius="8"
+          Background="{Binding Severity, Converter={StaticResource SeverityToBrushConverter}}"
+          Padding="12,6"
+          Margin="0,0,8,8">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.PillLabel}" />
+      <TextBlock Grid.Row="1" Text="{Binding Value}" Style="{DynamicResource Text.PillValue}" />
+    </Grid>
+  </Border>
+</UserControl>

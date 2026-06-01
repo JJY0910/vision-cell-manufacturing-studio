@@ -1,0 +1,46 @@
+# Build outputs
+bin/
+obj/
+out/
+artifacts/
+TestResults/
+coverage/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# Logs and local state
+*.log
+logs/
+local-data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Native build
+build/
+cmake-build-*/
+
+# Secrets
+.env
+*.secret.json
+secrets.json
+appsettings.Local.json
+
+# Codex local logs
+.codex-log/

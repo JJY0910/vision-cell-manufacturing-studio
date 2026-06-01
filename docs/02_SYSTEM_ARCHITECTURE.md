@@ -1,0 +1,183 @@
+# 02. System Architecture
+
+## Architecture Style
+
+- WPF MVVM + Clean Architecture-ish layered structure
+- Simulator-first equipment abstraction
+- UseCase 중심 Application layer
+- Domain model은 UI/DB/Simulator에 독립
+- SQLite persistence
+- Optional native vision engine extension
+
+## Solution Projects
+
+```text
+VisionCell.sln
+├─ src/VisionCell.App
+├─ src/VisionCell.Core
+├─ src/VisionCell.Application
+├─ src/VisionCell.Equipment
+├─ src/VisionCell.Motion
+├─ src/VisionCell.Vision
+├─ src/VisionCell.Persistence
+├─ src/VisionCell.Simulator
+├─ src/VisionCell.Telemetry
+└─ tests/*
+```
+
+## Dependency Direction
+
+```text
+VisionCell.App
+  → VisionCell.Application
+  → VisionCell.Core
+  → VisionCell.Equipment abstractions
+  → VisionCell.Motion abstractions
+  → VisionCell.Vision abstractions
+  → VisionCell.Persistence interfaces
+
+VisionCell.Simulator implements Equipment/Motion/Camera interfaces.
+VisionCell.Persistence implements repositories.
+VisionCell.Telemetry implements logging/event sinks.
+```
+
+## Layer Responsibilities
+
+### VisionCell.Core
+
+- Value objects: AxisId, Position4D, RecipeId, LotId, CorrelationId
+- Enums: MachineMode, AxisState, CommandStatus, Severity, Judgment
+- Domain events and error codes
+- Validation primitives
+
+### VisionCell.Application
+
+- UseCases: ConnectEquipment, HomeAxis, JogAxis, SaveTeachingPoint, RunInspectionSequence
+- Sequence orchestration
+- DTO mapping
+- Application-level validation
+- Cancellation/timeout coordination
+
+### VisionCell.Equipment
+
+- Controller/Camera/I/O abstractions
+- Safety interlock abstraction
+- Command request/response models
+
+### VisionCell.Motion
+
+- Axis model
+- Motion profile
+- Soft limit validation
+- Teaching point model
+
+### VisionCell.Vision
+
+- ROI model
+- Inspection algorithms
+- Defect model
+- Overlay generation
+- Height map simulation
+- AI/native extension points
+
+### VisionCell.Persistence
+
+- SQLite connection factory
+- Schema migration
+- Repositories: Recipe, Result, Event, Teaching
+- File path policy for image/result storage
+
+### VisionCell.Simulator
+
+- In-memory virtual controller
+- Axis state simulation
+- I/O state simulation
+- Camera sample image provider
+- Error injection
+
+### VisionCell.App
+
+- WPF Shell
+- Views/ViewModels
+- Design system
+- Command binding
+- User feedback
+
+## Command Model
+
+Every equipment-like command uses:
+
+```csharp
+public sealed record MachineCommandRequest(
+    string CommandName,
+    CorrelationId CorrelationId,
+    TimeSpan Timeout,
+    DateTimeOffset RequestedAt,
+    IReadOnlyDictionary<string, string> Parameters);
+```
+
+Every command returns:
+
+```csharp
+public sealed record MachineCommandResult(
+    CommandStatus Status,
+    ErrorCode? ErrorCode,
+    string Message,
+    TimeSpan Elapsed,
+    CorrelationId CorrelationId);
+```
+
+## Sequence Pipeline
+
+```text
+PreCheck
+  ├─ Validate active recipe
+  ├─ Validate safety interlock
+  ├─ Validate equipment connected
+  └─ Validate axis homed
+MoveToTeachingPoint
+GrabImage
+Run2DInspection
+Run3DInspection
+Judge
+PersistResult
+PublishUiEvents
+```
+
+## Error Handling Policy
+
+- Domain validation returns explicit result object, not random exception.
+- Infrastructure exception is caught in Application layer and converted to `SystemEvent` + `ErrorCode`.
+- UI displays error banner and event log; it does not swallow errors silently.
+
+## Data Flow
+
+```text
+User Button
+→ ViewModel Command
+→ Application UseCase
+→ Equipment/Motion/Vision/Persistence Interface
+→ Simulator/Repository Implementation
+→ Domain/Application Result
+→ ViewModel State Update
+→ UI Binding
+→ EventLog/SQLite
+```
+
+## Threading
+
+- UI thread: View rendering and state binding only.
+- Application layer: async use cases.
+- Simulator: async delays to mimic hardware latency.
+- Inspection: background Task or dedicated service.
+- DB: async repository methods.
+
+## Extension Points
+
+| Extension | Interface | Future Implementation |
+|---|---|---|
+| Real controller | IEquipmentController | TCP/Serial/PLC driver |
+| Real motion | IAxisController | Vendor SDK wrapper |
+| Real camera | ICameraDevice | GigE/USB camera SDK |
+| Native vision | IVisionEngine | C++ OpenCV DLL/CLI |
+| AI classifier | IDefectClassifier | ONNX Runtime |

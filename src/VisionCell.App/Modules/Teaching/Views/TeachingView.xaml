@@ -1,0 +1,7 @@
+<UserControl x:Class="VisionCell.App.Modules.Teaching.Views.TeachingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <TextBlock Text="Teaching" Style="{DynamicResource Text.PageTitle}" />
+  </Grid>
+</UserControl>

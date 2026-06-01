@@ -1,0 +1,49 @@
+{
+  "recipeId": "PKG-MEMORY-MODULE",
+  "productName": "Memory Module Sample",
+  "version": "1.0.0",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-01-01T00:00:00Z",
+  "motion": {
+    "teachingPoints": [
+      {
+        "id": "CAMERA_POS_01",
+        "name": "Camera Position 01",
+        "role": "Camera",
+        "position": { "x": 10.0, "y": 25.0, "z": 8.0, "theta": 0.0 },
+        "tolerance": { "x": 0.05, "y": 0.05, "z": 0.02, "theta": 0.1 }
+      },
+      {
+        "id": "PARK",
+        "name": "Park Position",
+        "role": "Park",
+        "position": { "x": 0.0, "y": 0.0, "z": 20.0, "theta": 0.0 },
+        "tolerance": { "x": 0.1, "y": 0.1, "z": 0.1, "theta": 0.5 }
+      }
+    ]
+  },
+  "camera": {
+    "exposureMs": 5.0,
+    "gain": 1.0,
+    "lightIntensity": 80
+  },
+  "vision": {
+    "imageWidth": 1280,
+    "imageHeight": 720,
+    "rois": [
+      { "id": "IC_TOP", "name": "IC Top", "x": 120, "y": 80, "width": 300, "height": 200 },
+      { "id": "LEAD_TAB", "name": "Lead Tab", "x": 480, "y": 210, "width": 240, "height": 120 }
+    ],
+    "parameters": {
+      "missingAreaThreshold": 0.75,
+      "offsetTolerancePx": 8,
+      "scratchThreshold": 0.65,
+      "expectedHeight": 1.0,
+      "heightToleranceLow": 0.15,
+      "heightToleranceHigh": 0.15
+    }
+  },
+  "sequence": {
+    "steps": ["SafetyCheck", "MoveToCamera", "Grab", "Inspect2D", "Inspect3D", "Judge", "Persist"]
+  }
+}

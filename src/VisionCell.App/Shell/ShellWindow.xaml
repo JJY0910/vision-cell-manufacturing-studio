@@ -1,0 +1,117 @@
+<Window x:Class="VisionCell.App.Shell.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls"
+        xmlns:dashboardViews="clr-namespace:VisionCell.App.Modules.Dashboard.Views"
+        xmlns:dashboardViewModels="clr-namespace:VisionCell.App.Modules.Dashboard.ViewModels"
+        xmlns:equipmentViews="clr-namespace:VisionCell.App.Modules.Equipment.Views"
+        xmlns:equipmentViewModels="clr-namespace:VisionCell.App.Modules.Equipment.ViewModels"
+        xmlns:inspectionViews="clr-namespace:VisionCell.App.Modules.Inspection.Views"
+        xmlns:inspectionViewModels="clr-namespace:VisionCell.App.Modules.Inspection.ViewModels"
+        xmlns:motionViews="clr-namespace:VisionCell.App.Modules.Motion.Views"
+        xmlns:motionViewModels="clr-namespace:VisionCell.App.Modules.Motion.ViewModels"
+        xmlns:offlineViews="clr-namespace:VisionCell.App.Modules.OfflineDebug.Views"
+        xmlns:offlineViewModels="clr-namespace:VisionCell.App.Modules.OfflineDebug.ViewModels"
+        xmlns:recipeViews="clr-namespace:VisionCell.App.Modules.Recipe.Views"
+        xmlns:recipeViewModels="clr-namespace:VisionCell.App.Modules.Recipe.ViewModels"
+        xmlns:reportsViews="clr-namespace:VisionCell.App.Modules.Reports.Views"
+        xmlns:reportsViewModels="clr-namespace:VisionCell.App.Modules.Reports.ViewModels"
+        xmlns:settingsViews="clr-namespace:VisionCell.App.Modules.Settings.Views"
+        xmlns:settingsViewModels="clr-namespace:VisionCell.App.Modules.Settings.ViewModels"
+        xmlns:teachingViews="clr-namespace:VisionCell.App.Modules.Teaching.Views"
+        xmlns:teachingViewModels="clr-namespace:VisionCell.App.Modules.Teaching.ViewModels"
+        mc:Ignorable="d"
+        Title="VisionCell Manufacturing Studio"
+        Width="1600"
+        Height="960"
+        MinWidth="1366"
+        MinHeight="768"
+        Background="{DynamicResource Brush.AppBackground}">
+  <Window.Resources>
+    <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
+      <dashboardViews:DashboardView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type equipmentViewModels:EquipmentViewModel}">
+      <equipmentViews:EquipmentView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type motionViewModels:MotionViewModel}">
+      <motionViews:MotionView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type teachingViewModels:TeachingViewModel}">
+      <teachingViews:TeachingView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type recipeViewModels:RecipeViewModel}">
+      <recipeViews:RecipeView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type inspectionViewModels:InspectionViewModel}">
+      <inspectionViews:InspectionView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type offlineViewModels:OfflineDebugViewModel}">
+      <offlineViews:OfflineDebugView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type reportsViewModels:ReportsViewModel}">
+      <reportsViews:ReportsView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type settingsViewModels:SettingsViewModel}">
+      <settingsViews:SettingsView />
+    </DataTemplate>
+  </Window.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="64" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="180" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="248" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.TopBar}" Padding="20,0">
+      <DockPanel LastChildFill="True">
+        <TextBlock DockPanel.Dock="Left" Text="VISIONCELL" Style="{DynamicResource Text.Logo}" VerticalAlignment="Center" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="Mode:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
+          <TextBlock Text="{Binding ModeStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
+          <TextBlock Text="Controller:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
+          <TextBlock Text="{Binding ConnectionStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
+          <TextBlock Text="{Binding ActiveRecipeStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
+          <TextBlock Text="Alarm:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
+          <TextBlock Text="{Binding AlarmStatus}" Style="{DynamicResource Text.StatusStrong}" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource Brush.SideNav}" Padding="12">
+      <StackPanel>
+        <TextBlock Text="Navigation" Style="{DynamicResource Text.SectionHeader}" Margin="8" />
+        <ItemsControl ItemsSource="{Binding NavigationItems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Content="{Binding Title}"
+                      Command="{Binding NavigateCommand}"
+                      Style="{DynamicResource Button.Nav}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="1" Grid.Column="1" Padding="20" Background="{DynamicResource Brush.Workspace}">
+      <ContentControl Content="{Binding CurrentViewModel}" />
+    </Border>
+
+    <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{DynamicResource Brush.EventLog}" Padding="16">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="System Event Log" Style="{DynamicResource Text.SectionHeader}" />
+        <controls:EventLogGrid Grid.Row="1" DataContext="{Binding Events}" Margin="0,8,0,0" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

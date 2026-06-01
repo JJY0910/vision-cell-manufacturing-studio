@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VisionCell.Application\VisionCell.Application.csproj" />
+    <ProjectReference Include="..\VisionCell.Core\VisionCell.Core.csproj" />
+    <ProjectReference Include="..\VisionCell.Simulator\VisionCell.Simulator.csproj" />
+    <ProjectReference Include="..\VisionCell.Persistence\VisionCell.Persistence.csproj" />
+    <ProjectReference Include="..\VisionCell.Telemetry\VisionCell.Telemetry.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+</Project>

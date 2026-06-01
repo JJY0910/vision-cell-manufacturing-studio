@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionCell Recipe",
+  "type": "object",
+  "required": ["recipeId", "productName", "version", "motion", "camera", "vision", "sequence"],
+  "properties": {
+    "recipeId": { "type": "string", "minLength": 1 },
+    "productName": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "motion": { "type": "object" },
+    "camera": { "type": "object" },
+    "vision": { "type": "object" },
+    "sequence": { "type": "object" }
+  }
+}
