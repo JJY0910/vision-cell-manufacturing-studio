@@ -60,10 +60,13 @@ tests/VisionCell.App.Tests
 
 ### Application Sequence
 
-- Full inspection success path
-- Camera timeout failure path
-- Stop/cancel path
-- Persist result after judge
+- Inspection run Application boundary accepts active valid Recipe with ready interlocks and emits step timeline state.
+- Inspection run rejects missing/invalid active Recipe before controller execution.
+- Inspection run rejects failed Run Inspection interlocks before controller execution.
+- Stop/cancel path returns explicit cancelled result and cancelled/skipped step state.
+- Future full inspection success path with camera, vision, judge, and persistence remains open.
+- Camera timeout failure path remains open until camera grab execution is implemented.
+- Persist result after judge remains open until FR-200 persistence is implemented.
 
 ### Persistence
 

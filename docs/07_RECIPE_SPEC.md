@@ -81,7 +81,8 @@ Implementation status:
 - `ActiveRecipeContext` exposes the active Recipe metadata through an Application-layer result contract for Teaching, inspection startup, and future interlock consumers.
 - TeachingView resolves active Recipe context before Save/Update/Delete mutations and passes the active Recipe ID into Teaching history requests, with manual Recipe ID entry retained as a fallback.
 - InspectionView uses active Recipe context as a precheck before Run Inspection can proceed to future sequence execution.
-- Active Recipe app startup restore, full inspection sequence execution, and multi-row Recipe editing remain follow-up work.
+- `InspectionRunUseCase` consumes active Recipe context when creating the Run Inspection command request.
+- Active Recipe app startup restore, full camera/vision/result inspection sequence execution, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 

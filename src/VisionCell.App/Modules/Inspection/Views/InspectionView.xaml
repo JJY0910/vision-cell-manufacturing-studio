@@ -18,7 +18,12 @@
         <Button Content="Run Inspection"
                 Command="{Binding RunInspectionCommand}"
                 Height="36"
-                MinWidth="132" />
+                MinWidth="132"
+                Margin="0,0,8,0" />
+        <Button Content="Stop"
+                Command="{Binding StopInspectionCommand}"
+                Height="36"
+                MinWidth="76" />
       </StackPanel>
       <StackPanel>
         <TextBlock Text="Inspection" Style="{DynamicResource Text.PageTitle}" />
@@ -28,7 +33,7 @@
       </StackPanel>
     </DockPanel>
 
-    <UniformGrid Grid.Row="1" Columns="3" Margin="-8,12,-8,0">
+    <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,0">
       <Border Style="{DynamicResource Card.Panel}">
         <StackPanel>
           <TextBlock Text="Active Recipe" Style="{DynamicResource Text.CardTitle}" />
@@ -53,6 +58,44 @@
                      TextWrapping="Wrap" />
         </StackPanel>
       </Border>
+      <Border Style="{DynamicResource Card.Panel}">
+        <StackPanel>
+          <TextBlock Text="Correlation" Style="{DynamicResource Text.CardTitle}" />
+          <TextBlock Text="{Binding LastRunCorrelationId}"
+                     Style="{DynamicResource Text.MetricValue}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
     </UniformGrid>
+
+    <ItemsControl Grid.Row="2"
+                  ItemsSource="{Binding SequenceSteps}"
+                  Margin="0,16,0,0">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border Style="{DynamicResource Card.Panel}">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.CardTitle}" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Status}"
+                         Style="{DynamicResource Text.StatusStrong}" />
+              <TextBlock Grid.Column="2"
+                         Text="{Binding ElapsedText}"
+                         Style="{DynamicResource Text.Status}" />
+              <TextBlock Grid.Column="3"
+                         Text="{Binding Detail}"
+                         Style="{DynamicResource Text.Status}"
+                         TextWrapping="Wrap" />
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
   </Grid>
 </UserControl>

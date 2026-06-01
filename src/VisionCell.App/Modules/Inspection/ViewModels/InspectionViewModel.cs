@@ -1,22 +1,36 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.Application.Inspection;
 using VisionCell.Application.Recipes;
 
 namespace VisionCell.App.Modules.Inspection.ViewModels;
 
 public sealed partial class InspectionViewModel : ObservableObject
 {
-    private readonly IActiveRecipeContext _activeRecipeContext;
+    private static readonly InspectionRunRequest DefaultRunRequest = new(
+        SnapshotTimeout: TimeSpan.FromSeconds(2),
+        CommandTimeout: TimeSpan.FromSeconds(5));
 
-    public InspectionViewModel(IActiveRecipeContext activeRecipeContext)
+    private readonly IActiveRecipeContext _activeRecipeContext;
+    private readonly IInspectionRunUseCase _inspectionRunUseCase;
+    private CancellationTokenSource? _activeRunCancellation;
+
+    public InspectionViewModel(
+        IActiveRecipeContext activeRecipeContext,
+        IInspectionRunUseCase inspectionRunUseCase)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
+        _inspectionRunUseCase = inspectionRunUseCase ?? throw new ArgumentNullException(nameof(inspectionRunUseCase));
         RefreshActiveRecipeCommand = new AsyncRelayCommand(RefreshActiveRecipeAsync, () => !IsBusy);
         RunInspectionCommand = new AsyncRelayCommand(RunInspectionAsync, () => !IsBusy);
+        StopInspectionCommand = new RelayCommand(StopInspection, () => IsBusy && _activeRunCancellation is not null);
     }
 
     public IAsyncRelayCommand RefreshActiveRecipeCommand { get; }
     public IAsyncRelayCommand RunInspectionCommand { get; }
+    public IRelayCommand StopInspectionCommand { get; }
+    public ObservableCollection<InspectionStepViewModel> SequenceSteps { get; } = new();
 
     [ObservableProperty]
     private string _statusText = "Inspection sequence not started";
@@ -29,6 +43,9 @@ public sealed partial class InspectionViewModel : ObservableObject
 
     [ObservableProperty]
     private string _lastCheckText = "-";
+
+    [ObservableProperty]
+    private string _lastRunCorrelationId = "-";
 
     [ObservableProperty]
     private bool _isBusy;
@@ -63,18 +80,19 @@ public sealed partial class InspectionViewModel : ObservableObject
     public async Task RunInspectionAsync(CancellationToken cancellationToken)
     {
         IsBusy = true;
+        using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _activeRunCancellation = linkedCancellation;
+        StopInspectionCommand.NotifyCanExecuteChanged();
+        SequenceSteps.Clear();
+
         try
         {
-            var result = await _activeRecipeContext.GetActiveAsync(cancellationToken).ConfigureAwait(true);
-            ApplyActiveRecipeResult(result);
+            var progress = new InspectionStepProgress(ApplyStepUpdate);
+            var result = await _inspectionRunUseCase
+                .RunAsync(DefaultRunRequest, progress, linkedCancellation.Token)
+                .ConfigureAwait(true);
 
-            if (!result.IsSuccess)
-            {
-                StatusText = $"Run inspection rejected: {result.Message}";
-                return;
-            }
-
-            StatusText = $"Inspection ready for recipe '{result.RecipeId}' v{result.Version}; sequence execution is pending";
+            ApplyInspectionRunResult(result);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -88,6 +106,7 @@ public sealed partial class InspectionViewModel : ObservableObject
         }
         finally
         {
+            _activeRunCancellation = null;
             IsBusy = false;
         }
     }
@@ -96,6 +115,13 @@ public sealed partial class InspectionViewModel : ObservableObject
     {
         RefreshActiveRecipeCommand.NotifyCanExecuteChanged();
         RunInspectionCommand.NotifyCanExecuteChanged();
+        StopInspectionCommand.NotifyCanExecuteChanged();
+    }
+
+    private void StopInspection()
+    {
+        _activeRunCancellation?.Cancel();
+        StatusText = "Stop inspection requested";
     }
 
     private void ApplyActiveRecipeResult(ActiveRecipeContextResult result)
@@ -112,5 +138,60 @@ public sealed partial class InspectionViewModel : ObservableObject
         }
 
         LastCheckText = DateTimeOffset.UtcNow.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    private void ApplyInspectionRunResult(InspectionRunResult result)
+    {
+        if (result.Recipe is not null)
+        {
+            ActiveRecipeText = $"{result.Recipe.RecipeId} v{result.Recipe.Version}";
+            PrecheckStatusText = $"Active recipe '{result.Recipe.RecipeId}' v{result.Recipe.Version} is ready.";
+        }
+        else
+        {
+            ActiveRecipeText = "-";
+            PrecheckStatusText = result.Message;
+        }
+
+        LastRunCorrelationId = result.Request?.CorrelationId.ToString() ?? "-";
+        LastCheckText = result.CompletedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        StatusText = result.Status switch
+        {
+            InspectionRunStatus.Accepted => result.Message,
+            InspectionRunStatus.CommandCancelled => result.Message,
+            _ => $"Run inspection rejected: {result.Message}"
+        };
+
+        foreach (var step in result.Steps)
+        {
+            ApplyStepUpdate(step);
+        }
+    }
+
+    private void ApplyStepUpdate(InspectionSequenceStepRecord step)
+    {
+        var existing = SequenceSteps.FirstOrDefault(item => string.Equals(item.Name, step.Name, StringComparison.Ordinal));
+        if (existing is null)
+        {
+            SequenceSteps.Add(new InspectionStepViewModel(step));
+            return;
+        }
+
+        existing.Apply(step);
+    }
+
+    private sealed class InspectionStepProgress : IProgress<InspectionSequenceStepRecord>
+    {
+        private readonly Action<InspectionSequenceStepRecord> _handler;
+
+        public InspectionStepProgress(Action<InspectionSequenceStepRecord> handler)
+        {
+            _handler = handler;
+        }
+
+        public void Report(InspectionSequenceStepRecord value)
+        {
+            _handler(value);
+        }
     }
 }

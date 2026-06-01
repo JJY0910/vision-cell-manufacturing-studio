@@ -314,3 +314,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 34 tests; Debug/Release solution build and test passed with 149 tests. Windows application control temporarily blocked freshly built Debug Motion and Release Equipment test DLLs until those projects were rebuilt with `-p:Deterministic=false`; apphost exe launch was also blocked, so WPF smoke passed by launching `VisionCell.App.dll` directly through `dotnet` for 6 seconds.
 - Risks: This slice does not execute camera grab, vision algorithms, or inspection result persistence yet.
+
+## 2026-06-01 21:15 - In progress
+- Branch: `codex/feature/fr-181-inspection-run-use-case`
+- Scope: Add ADR-backed `IInspectionRunUseCase`, InspectionView timeline binding, and Stop Inspection cancellation for the active run token.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 57 tests; App targeted tests passed with 34 tests; Debug/Release solution build and test passed with 153 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: This slice submits a correlated Run Inspection command and reports camera/vision/judge/persist steps as skipped; it does not yet execute camera grab, algorithms, result persistence, or overlay rendering.

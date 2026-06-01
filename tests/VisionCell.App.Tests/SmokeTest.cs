@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.App;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
@@ -485,22 +486,36 @@ public sealed class DashboardAndShellViewModelTests
     [Fact]
     public async Task Inspection_RunInspectionAsync_Should_Report_Ready_For_Valid_Active_Recipe()
     {
-        var activeRecipe = new FakeActiveRecipeContext(CreateActiveRecipeContextResult("RCP-INSPECT", "1.0.0"));
-        var inspection = CreateInspectionViewModel(activeRecipe);
+        var activeRecipe = CreateRecipeIndexEntry(
+            "RCP-INSPECT",
+            "1.0.0",
+            "Inspection Recipe",
+            isActive: true,
+            isValid: true);
+        var runUseCase = new FakeInspectionRunUseCase(CreateInspectionRunResult(
+            InspectionRunStatus.Accepted,
+            "Inspection sequence accepted for recipe 'RCP-INSPECT' v1.0.0.",
+            activeRecipe));
+        var inspection = CreateInspectionViewModel(inspectionRunUseCase: runUseCase);
 
         await inspection.RunInspectionAsync(CancellationToken.None);
 
-        activeRecipe.RequestCount.Should().Be(1);
+        runUseCase.Requests.Should().ContainSingle();
         inspection.ActiveRecipeText.Should().Be("RCP-INSPECT v1.0.0");
-        inspection.StatusText.Should().Contain("Inspection ready");
+        inspection.StatusText.Should().Contain("Inspection sequence accepted");
         inspection.StatusText.Should().Contain("RCP-INSPECT");
+        inspection.SequenceSteps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == "Success");
+        inspection.LastRunCorrelationId.Should().NotBe("-");
         inspection.LastCheckText.Should().NotBe("-");
     }
 
     [Fact]
     public async Task Inspection_RunInspectionAsync_Should_Reject_When_Active_Recipe_Is_Not_Selected()
     {
-        var inspection = CreateInspectionViewModel();
+        var runUseCase = new FakeInspectionRunUseCase(CreateInspectionRunResult(
+            InspectionRunStatus.ActiveRecipeNotSelected,
+            "No active recipe is selected."));
+        var inspection = CreateInspectionViewModel(inspectionRunUseCase: runUseCase);
 
         await inspection.RunInspectionAsync(CancellationToken.None);
 
@@ -512,14 +527,10 @@ public sealed class DashboardAndShellViewModelTests
     [Fact]
     public async Task Inspection_RunInspectionAsync_Should_Reject_Invalid_Active_Recipe()
     {
-        var activeRecipe = new FakeActiveRecipeContext(ActiveRecipeContextResult.InvalidRecipe(CreateRecipeIndexEntry(
-            "RCP-BAD",
-            "0.1.0",
-            "Invalid Recipe",
-            isActive: true,
-            isValid: false,
-            validationSummary: "Missing ROI")));
-        var inspection = CreateInspectionViewModel(activeRecipe);
+        var runUseCase = new FakeInspectionRunUseCase(CreateInspectionRunResult(
+            InspectionRunStatus.ActiveRecipeInvalid,
+            "Active recipe 'RCP-BAD' v0.1.0 is invalid: Missing ROI"));
+        var inspection = CreateInspectionViewModel(inspectionRunUseCase: runUseCase);
 
         await inspection.RunInspectionAsync(CancellationToken.None);
 
@@ -828,9 +839,13 @@ public sealed class DashboardAndShellViewModelTests
             activeRecipeContext ?? new FakeActiveRecipeContext());
     }
 
-    private static InspectionViewModel CreateInspectionViewModel(FakeActiveRecipeContext? activeRecipeContext = null)
+    private static InspectionViewModel CreateInspectionViewModel(
+        FakeActiveRecipeContext? activeRecipeContext = null,
+        FakeInspectionRunUseCase? inspectionRunUseCase = null)
     {
-        return new InspectionViewModel(activeRecipeContext ?? new FakeActiveRecipeContext());
+        return new InspectionViewModel(
+            activeRecipeContext ?? new FakeActiveRecipeContext(),
+            inspectionRunUseCase ?? new FakeInspectionRunUseCase());
     }
 
     private static RecipeViewModel CreateRecipeViewModel(
@@ -899,6 +914,44 @@ public sealed class DashboardAndShellViewModelTests
             isActive: true,
             isValid: true,
             validationSummary: "Valid"));
+    }
+
+    private static InspectionRunResult CreateInspectionRunResult(
+        InspectionRunStatus status,
+        string message,
+        RecipeIndexEntry? recipe = null)
+    {
+        var timestamp = DateTimeOffset.UtcNow;
+        var request = recipe is null
+            ? null
+            : new MachineCommandRequest(
+                "Run Inspection",
+                CorrelationId.New(),
+                TimeSpan.FromSeconds(5),
+                timestamp,
+                new Dictionary<string, string>
+                {
+                    ["RecipeId"] = recipe.RecipeId,
+                    ["RecipeVersion"] = recipe.Version
+                });
+        var commandResult = request is null
+            ? null
+            : MachineCommandResult.Success("Run Inspection accepted.", TimeSpan.FromMilliseconds(10), request.CorrelationId);
+
+        return new InspectionRunResult(
+            status,
+            message,
+            recipe,
+            request,
+            commandResult,
+            new[]
+            {
+                new InspectionSequenceStepRecord("Load Recipe", recipe is null ? InspectionSequenceStepStatus.Failed : InspectionSequenceStepStatus.Success, message, TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Safety Interlock", recipe is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, recipe is null ? "Skipped" : "Inspection interlocks passed.", TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Start Sequence", status == InspectionRunStatus.Accepted ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, message, TimeSpan.FromMilliseconds(1))
+            },
+            timestamp,
+            timestamp.AddMilliseconds(12));
     }
 
     private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository
@@ -1010,6 +1063,39 @@ public sealed class DashboardAndShellViewModelTests
                 isValid: true,
                 validationSummary: "Valid",
                 updatedAt: recipe.UpdatedAt)));
+        }
+    }
+
+    private sealed class FakeInspectionRunUseCase : IInspectionRunUseCase
+    {
+        private readonly InspectionRunResult _result;
+
+        public FakeInspectionRunUseCase()
+            : this(CreateInspectionRunResult(
+                InspectionRunStatus.ActiveRecipeNotSelected,
+                "No active recipe is selected."))
+        {
+        }
+
+        public FakeInspectionRunUseCase(InspectionRunResult result)
+        {
+            _result = result;
+        }
+
+        public List<InspectionRunRequest> Requests { get; } = new();
+
+        public Task<InspectionRunResult> RunAsync(
+            InspectionRunRequest request,
+            IProgress<InspectionSequenceStepRecord>? progress,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            foreach (var step in _result.Steps)
+            {
+                progress?.Report(step);
+            }
+
+            return Task.FromResult(_result);
         }
     }
 
