@@ -251,3 +251,10 @@
 - Validation target: Persistence targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
 - Local validation: Persistence targeted tests passed with 25 tests; Debug/Release solution build and test passed with 121 tests; WPF hidden launch smoke passed.
 - Risks: JSON document save and SQLite index update are not yet an atomic workflow; active recipe settings and RecipeView editing remain follow-up work.
+
+## 2026-06-01 18:45 - In progress
+- Branch: `codex/feature/fr-120-recipe-index-view`
+- Scope: Register the SQLite Recipe index repository in App composition and bind RecipeView to refresh/display indexed Recipe metadata with active and validation state.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 21 tests; Debug/Release solution build and test passed with 124 tests; WPF hidden launch smoke passed.
+- Risks: Browser is read-only; create/import/save/activate Recipe workflows remain follow-up work.

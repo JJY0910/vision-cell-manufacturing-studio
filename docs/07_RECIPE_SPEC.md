@@ -72,6 +72,7 @@ Implementation status:
 - `RecipeValidator` checks required metadata, semantic version format, Teaching Point domain validation, ROI bounds against the default 1920x1080 image size, camera/vision parameter ranges, and required sequence steps.
 - `JsonRecipeDocumentStore` saves and loads validated Recipe JSON under a configured recipe root directory using `{RecipeId}.v{Version}.recipe.json` file names.
 - `SqliteRecipeIndexRepository` stores Recipe metadata, document path, checksum, active state, validation state, and updated timestamp for list/query workflows.
+- `RecipeViewModel` and `RecipeView` can refresh and display the SQLite Recipe index, including active state and validation summary.
 - Active recipe settings and RecipeView editing remain follow-up work.
 
 ## Versioning Policy
@@ -96,3 +97,4 @@ Implementation status:
 - Recipe edits must generate event log.
 - Current JSON document store rejects invalid Recipe definitions and unsafe recipe id/version file-name inputs before writing files.
 - Current SQLite Recipe index stores metadata only; JSON document save and index update are not yet a single transaction.
+- Current RecipeView browser is read-only and depends on rows already present in the SQLite Recipe index.

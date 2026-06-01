@@ -217,4 +217,12 @@ Problem: Recipe JSON files can be saved and loaded, but RecipeView still needs a
 Proposed improvement: Add a SQLite `recipes` index table and repository for recipe id/version metadata, document path, checksum, active state, validation state, and updated timestamp.
 Requirement impact: FR-120, FR-123, FR-124, NFR-004, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-120-recipe-sqlite-index`.
+Status: Addressed by the SQLite Recipe index repository and current RecipeView browser binding; active recipe settings remain open.
+
+Date: 2026-06-01
+Source: FR-120 Recipe index view binding
+Problem: RecipeView can now list SQLite Recipe metadata, but operators still cannot create/import/save Recipe documents or activate a selected Recipe from the UI.
+Proposed improvement: Add an Application use case that coordinates `JsonRecipeDocumentStore`, `RecipeValidator`, and `SqliteRecipeIndexRepository`, then bind RecipeView create/import/save/activate commands to it.
+Requirement impact: FR-120, FR-121, FR-122, FR-123, FR-124, NFR-004, NFR-008
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-index-view`.
