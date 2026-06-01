@@ -154,3 +154,11 @@ Problem: Teaching history rows can now be stored and queried in SQLite, but Save
 Proposed improvement: Inject `ITeachingHistoryRepository` into the teaching use case, serialize before/after snapshots for create/update/delete, and associate entries with the active recipe when recipe selection is available.
 Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
 Priority: P0
+Status: Addressed for Save Current Position Created history rows; update/delete history and active recipe ownership remain open.
+
+Date: 2026-06-01
+Source: FR-104 Teaching save history append
+Problem: Save Current Position now appends Created history rows, but the save and history writes are not wrapped in a single database transaction because the Application layer depends on repository ports rather than SQLite transaction details.
+Proposed improvement: Add a persistence-level unit-of-work or combined teaching repository operation when update/delete support is introduced, so point mutation and history append can commit atomically.
+Requirement impact: FR-104, FR-120, FR-200, NFR-004
+Priority: P1

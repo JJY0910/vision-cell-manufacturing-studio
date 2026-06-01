@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VisionCell.Application.Motion;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Primitives;
@@ -9,19 +11,24 @@ namespace VisionCell.Application.Teaching;
 
 public sealed class TeachingPointUseCase : ITeachingPointUseCase
 {
+    private static readonly JsonSerializerOptions HistoryJsonOptions = CreateHistoryJsonOptions();
+
     private readonly IEquipmentController _controller;
     private readonly ITeachingPointRepository _repository;
+    private readonly ITeachingHistoryRepository _historyRepository;
     private readonly IMotionCommandUseCase _motionCommandUseCase;
     private readonly Func<DateTimeOffset> _clock;
 
     public TeachingPointUseCase(
         IEquipmentController controller,
         ITeachingPointRepository repository,
+        ITeachingHistoryRepository historyRepository,
         IMotionCommandUseCase motionCommandUseCase,
         Func<DateTimeOffset>? clock = null)
     {
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         _motionCommandUseCase = motionCommandUseCase ?? throw new ArgumentNullException(nameof(motionCommandUseCase));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
@@ -87,7 +94,6 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
             }
 
             await _repository.SaveAsync(creation.Point, cancellationToken).ConfigureAwait(false);
-            return TeachingPointSaveResult.Success(creation.Point);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -95,6 +101,27 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
                 TeachingPointOperationStatus.RepositoryUnavailable,
                 $"Unable to save teaching point: {ex.Message}");
         }
+
+        try
+        {
+            await _historyRepository.SaveAsync(
+                TeachingHistoryEntry.Create(
+                    creation.Point.Id,
+                    recipeId: null,
+                    TeachingHistoryAction.Created,
+                    beforeJson: null,
+                    afterJson: JsonSerializer.Serialize(creation.Point, HistoryJsonOptions),
+                    clock: _clock),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointSaveResult.Failure(
+                TeachingPointOperationStatus.RepositoryUnavailable,
+                $"Unable to save teaching point history: {ex.Message}");
+        }
+
+        return TeachingPointSaveResult.Success(creation.Point);
     }
 
     public async Task<TeachingPointGoToResult> GoToAsync(
@@ -212,5 +239,12 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
             axisPositions[AxisId.Theta]);
         issues = Array.Empty<TeachingPointValidationIssue>();
         return true;
+    }
+
+    private static JsonSerializerOptions CreateHistoryJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
     }
 }
