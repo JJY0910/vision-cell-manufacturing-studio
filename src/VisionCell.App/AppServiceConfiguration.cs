@@ -23,6 +23,7 @@ using VisionCell.Persistence.Recipes;
 using VisionCell.Persistence.Sqlite;
 using VisionCell.Persistence.Teaching;
 using VisionCell.Simulator;
+using VisionCell.Vision.Inspection;
 
 namespace VisionCell.App;
 
@@ -46,6 +47,7 @@ public static class AppServiceConfiguration
 
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
         services.AddSingleton<ICameraDevice, VirtualCameraDevice>();
+        services.AddSingleton<IVisionInspectionEngine, Deterministic2DInspectionEngine>();
         services.AddSingleton<ICommandInterlockService, CommandInterlockService>();
         services.AddSingleton<RecipeValidator>();
         services.AddSingleton(_ => new SqliteConnectionFactory(databasePath));

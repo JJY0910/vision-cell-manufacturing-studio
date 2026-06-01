@@ -55,6 +55,8 @@ tests/VisionCell.App.Tests
 - Normal image PASS
 - Missing defect FAIL
 - Offset defect FAIL
+- Scratch defect FAIL
+- Invalid ROI returns invalid judgment
 - Height lift FAIL
 - Overlay output generated
 
@@ -68,7 +70,8 @@ tests/VisionCell.App.Tests
 - Stop/cancel path returns explicit cancelled result and cancelled/skipped step state.
 - Camera grab success path returns a correlated synthetic frame and updates the Inspection timeline.
 - Camera timeout failure path returns CAM-001 and skips downstream vision/judge/persist steps.
-- Future full inspection success path with vision, judge, and persistence remains open.
+- 2D inspection success path runs the Vision engine, records Inspect 2D, and records Judge Pass/Fail timeline state.
+- Invalid Vision result returns an explicit `VisionInspectionFailed` status and skips Judge/Persist.
 - Persist result after judge remains open until FR-200 persistence is implemented.
 
 ### Persistence

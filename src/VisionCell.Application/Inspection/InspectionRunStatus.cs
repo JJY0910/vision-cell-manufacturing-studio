@@ -14,5 +14,6 @@ public enum InspectionRunStatus
     CommandFailed,
     MoveToCameraFailed,
     CameraGrabFailed,
+    VisionInspectionFailed,
     Failed
 }

@@ -5,4 +5,5 @@ public sealed record InspectionRunRequest(
     TimeSpan CommandTimeout)
 {
     public TimeSpan GrabTimeout { get; init; } = CommandTimeout;
+    public TimeSpan VisionTimeout { get; init; } = CommandTimeout;
 }

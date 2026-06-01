@@ -342,3 +342,10 @@
 - Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 63 tests; Equipment targeted tests passed with 21 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 165 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: 2D/3D algorithms, judge, overlay, and result persistence remain follow-up work.
+
+## 2026-06-01 22:50 - In progress
+- Branch: `codex/feature/fr-160-deterministic-2d-inspection`
+- Scope: Add ADR-backed `IVisionInspectionEngine`, deterministic Gray8 Missing/Scratch/Offset checks, InspectionRunUseCase Inspect 2D execution, and Judge Pass/Fail timeline state.
+- Validation target: Vision/Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Vision targeted tests passed with 5 tests; Application targeted tests passed with 64 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 170 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`. Initial parallel targeted run hit a shared Debug DLL file lock and was rerun serially.
+- Risks: Engine is a deterministic simulator baseline, not production metrology; 3D inspection, overlay rendering, and result persistence remain follow-up work.

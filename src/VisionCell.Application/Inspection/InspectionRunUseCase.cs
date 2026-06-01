@@ -9,6 +9,7 @@ using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Motion.Commands;
 using VisionCell.Motion.Teaching;
+using VisionCell.Vision.Inspection;
 
 namespace VisionCell.Application.Inspection;
 
@@ -19,6 +20,10 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private const string StartSequenceStep = "Start Sequence";
     private const string MoveToCameraStep = "Move To Camera";
     private const string GrabImageStep = "Grab Image";
+    private const string Inspect2DStep = "Inspect 2D";
+    private const string Inspect3DStep = "Inspect 3D";
+    private const string JudgeStep = "Judge";
+    private const string PersistResultStep = "Persist Result";
 
     private static readonly string[] StepNames =
     {
@@ -27,10 +32,10 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         StartSequenceStep,
         MoveToCameraStep,
         GrabImageStep,
-        "Inspect 2D",
-        "Inspect 3D",
-        "Judge",
-        "Persist Result"
+        Inspect2DStep,
+        Inspect3DStep,
+        JudgeStep,
+        PersistResultStep
     };
 
     private readonly IActiveRecipeContext _activeRecipeContext;
@@ -38,6 +43,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private readonly IEquipmentController _controller;
     private readonly IMotionCommandUseCase _motionCommandUseCase;
     private readonly ICameraDevice _cameraDevice;
+    private readonly IVisionInspectionEngine _visionInspectionEngine;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
@@ -46,6 +52,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         IEquipmentController controller,
         IMotionCommandUseCase motionCommandUseCase,
         ICameraDevice cameraDevice,
+        IVisionInspectionEngine visionInspectionEngine,
         Func<DateTimeOffset>? clock = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
@@ -53,6 +60,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _motionCommandUseCase = motionCommandUseCase ?? throw new ArgumentNullException(nameof(motionCommandUseCase));
         _cameraDevice = cameraDevice ?? throw new ArgumentNullException(nameof(cameraDevice));
+        _visionInspectionEngine = visionInspectionEngine ?? throw new ArgumentNullException(nameof(visionInspectionEngine));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -65,6 +73,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         EnsurePositiveTimeout(request.SnapshotTimeout, nameof(request.SnapshotTimeout));
         EnsurePositiveTimeout(request.CommandTimeout, nameof(request.CommandTimeout));
         EnsurePositiveTimeout(request.GrabTimeout, nameof(request.GrabTimeout));
+        EnsurePositiveTimeout(request.VisionTimeout, nameof(request.VisionTimeout));
 
         var startedAt = _clock();
         var recorder = new StepRecorder(progress);
@@ -74,6 +83,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         MachineCommandResult? commandResult = null;
         MotionCommandExecutionResult? moveToCameraResult = null;
         CameraGrabResult? cameraGrabResult = null;
+        VisionInspectionResult? visionResult = null;
 
         try
         {
@@ -187,11 +197,50 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             }
 
             recorder.Update(GrabImageStep, InspectionSequenceStepStatus.Success, cameraGrabResult.Message, grabStopwatch.Elapsed);
-            recorder.SkipPending("Pending implementation in vision, judge, and persistence slices.");
+
+            var visionStopwatch = Stopwatch.StartNew();
+            recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Running, "Running deterministic 2D inspection.", null);
+            try
+            {
+                visionResult = await _visionInspectionEngine
+                    .InspectAsync(
+                        CreateVisionInspectionRequest(
+                            recipeDocument,
+                            cameraGrabResult.Frame!,
+                            commandRequest.CorrelationId,
+                            request.VisionTimeout),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                visionStopwatch.Stop();
+                var message = $"2D inspection failed: {ex.Message}";
+                recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Failed, message, visionStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because 2D inspection did not complete.");
+                return Finish(InspectionRunStatus.VisionInspectionFailed, message);
+            }
+
+            visionStopwatch.Stop();
+            if (visionResult.Judgment == Judgment.Invalid)
+            {
+                recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Failed, visionResult.Message, visionStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because 2D inspection returned an invalid result.");
+                return Finish(InspectionRunStatus.VisionInspectionFailed, visionResult.Message);
+            }
+
+            recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Success, visionResult.Message, visionStopwatch.Elapsed);
+            recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Skipped, "3D inspection is pending FR-170 implementation.", TimeSpan.Zero);
+            recorder.Update(JudgeStep, InspectionSequenceStepStatus.Success, FormatJudgeMessage(visionResult), TimeSpan.Zero);
+            recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Skipped, "Result persistence is pending FR-200 implementation.", TimeSpan.Zero);
 
             return Finish(
                 InspectionRunStatus.Accepted,
-                $"Inspection sequence accepted and image grabbed for recipe '{recipe.RecipeId}' v{recipe.Version}.");
+                $"Inspection sequence completed with 2D judge {visionResult.Judgment} for recipe '{recipe.RecipeId}' v{recipe.Version}.");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -216,10 +265,62 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 commandResult,
                 moveToCameraResult,
                 cameraGrabResult,
+                visionResult,
                 recorder.Snapshot(),
                 startedAt,
                 _clock());
         }
+    }
+
+    private VisionInspectionRequest CreateVisionInspectionRequest(
+        RecipeDefinition recipe,
+        CameraFrame frame,
+        CorrelationId correlationId,
+        TimeSpan timeout)
+    {
+        var image = new VisionImageFrame(
+            frame.Width,
+            frame.Height,
+            frame.Stride,
+            MapPixelFormat(frame.PixelFormat),
+            frame.Pixels,
+            frame.GrabbedAt,
+            frame.Metadata);
+
+        var rois = recipe.Vision.Rois
+            .Select(roi => new VisionRoi(roi.Id, roi.Name, roi.X, roi.Y, roi.Width, roi.Height))
+            .ToArray();
+
+        var parameters = new VisionInspectionParameters(
+            recipe.Vision.Parameters.MissingAreaThreshold,
+            recipe.Vision.Parameters.OffsetTolerancePx,
+            recipe.Vision.Parameters.ScratchThreshold);
+
+        return new VisionInspectionRequest(
+            correlationId,
+            recipe.RecipeId,
+            recipe.Version,
+            image,
+            rois,
+            parameters,
+            timeout,
+            _clock());
+    }
+
+    private static VisionPixelFormat MapPixelFormat(CameraPixelFormat pixelFormat)
+    {
+        return pixelFormat switch
+        {
+            CameraPixelFormat.Gray8 => VisionPixelFormat.Gray8,
+            _ => throw new NotSupportedException($"Unsupported camera pixel format: {pixelFormat}.")
+        };
+    }
+
+    private static string FormatJudgeMessage(VisionInspectionResult result)
+    {
+        return result.Judgment == Judgment.Pass
+            ? "Judge: Pass. No 2D defects detected."
+            : $"Judge: Fail. {result.Defects.Count} 2D defect(s) detected.";
     }
 
     private CameraGrabRequest CreateCameraGrabRequest(

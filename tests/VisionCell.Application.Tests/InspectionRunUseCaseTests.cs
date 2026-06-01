@@ -12,6 +12,7 @@ using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
 using VisionCell.Motion.Teaching;
+using VisionCell.Vision.Inspection;
 using Xunit;
 
 namespace VisionCell_Application_Tests;
@@ -28,7 +29,12 @@ public sealed class InspectionRunUseCaseTests
                 MachineCommandResult.Success("Run Inspection accepted.", TimeSpan.FromMilliseconds(11), request.CorrelationId))
         };
         var motion = new FakeMotionCommandUseCase();
-        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, motionCommandUseCase: motion);
+        var vision = new FakeVisionInspectionEngine();
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            motionCommandUseCase: motion,
+            visionInspectionEngine: vision);
         var progress = new CapturingProgress();
 
         var result = await useCase.RunAsync(CreateRequest(), progress, CancellationToken.None);
@@ -46,6 +52,11 @@ public sealed class InspectionRunUseCaseTests
         result.CameraGrabResult.Should().NotBeNull();
         result.CameraGrabResult!.IsSuccess.Should().BeTrue();
         result.CameraGrabResult.Frame!.Metadata.Should().Contain("RecipeId", "RCP-AUTO");
+        result.VisionResult.Should().NotBeNull();
+        result.VisionResult!.Judgment.Should().Be(Judgment.Pass);
+        vision.Requests.Should().ContainSingle();
+        vision.Requests[0].RecipeId.Should().Be("RCP-AUTO");
+        vision.Requests[0].Rois.Should().ContainSingle(roi => roi.Id == "ROI-01");
         motion.Requests.Should().ContainSingle();
         motion.Requests[0].Command.Should().Be(CommandKind.SequenceMoveToCamera);
         motion.Requests[0].InterlockContext.AutoMode.Should().BeTrue();
@@ -61,6 +72,9 @@ public sealed class InspectionRunUseCaseTests
         result.Steps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Success && step.Message.Contains("Pass", StringComparison.Ordinal));
+        result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Skipped);
         progress.Updates.Should().Contain(update => update.Status == InspectionSequenceStepStatus.Running);
     }
 
@@ -89,6 +103,38 @@ public sealed class InspectionRunUseCaseTests
         camera.Requests[0].CorrelationId.Should().Be(result.Request!.CorrelationId);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Failed);
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Skipped);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Fail_Inspect_2D_When_Vision_Result_Is_Invalid()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-VISION-INVALID", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var vision = new FakeVisionInspectionEngine
+        {
+            InspectHandler = request => Task.FromResult(new VisionInspectionResult(
+                Judgment.Invalid,
+                new[] { new Defect("InvalidRoi", 1.0, 0, 0, 10, 10, "ROI is outside the frame.") },
+                "2D inspection invalid: 1 ROI boundary issue(s).",
+                request.RecipeId,
+                request.RecipeVersion,
+                TimeSpan.FromMilliseconds(2),
+                request.RequestedAt.AddMilliseconds(2)))
+        };
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            visionInspectionEngine: vision);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.VisionInspectionFailed);
+        result.Message.Should().Contain("2D inspection invalid");
+        result.VisionResult.Should().NotBeNull();
+        result.VisionResult!.Judgment.Should().Be(Judgment.Invalid);
+        vision.Requests.Should().ContainSingle();
+        result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Failed);
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Skipped);
     }
 
     [Fact]
@@ -185,7 +231,8 @@ public sealed class InspectionRunUseCaseTests
         IEquipmentController controller,
         IRecipeDocumentStore? documentStore = null,
         IMotionCommandUseCase? motionCommandUseCase = null,
-        ICameraDevice? cameraDevice = null)
+        ICameraDevice? cameraDevice = null,
+        IVisionInspectionEngine? visionInspectionEngine = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
@@ -193,6 +240,7 @@ public sealed class InspectionRunUseCaseTests
             controller,
             motionCommandUseCase ?? new FakeMotionCommandUseCase(),
             cameraDevice ?? new FakeCameraDevice(),
+            visionInspectionEngine ?? new FakeVisionInspectionEngine(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
 
@@ -469,6 +517,30 @@ public sealed class InspectionRunUseCaseTests
                     ["RecipeId"] = request.RecipeId,
                     ["RecipeVersion"] = request.RecipeVersion
                 });
+        }
+    }
+
+    private sealed class FakeVisionInspectionEngine : IVisionInspectionEngine
+    {
+        public List<VisionInspectionRequest> Requests { get; } = new();
+
+        public Func<VisionInspectionRequest, Task<VisionInspectionResult>> InspectHandler { get; init; } =
+            request => Task.FromResult(new VisionInspectionResult(
+                Judgment.Pass,
+                Array.Empty<Defect>(),
+                "2D inspection Pass: 1 ROI(s) evaluated.",
+                request.RecipeId,
+                request.RecipeVersion,
+                TimeSpan.FromMilliseconds(2),
+                request.RequestedAt.AddMilliseconds(2)));
+
+        public Task<VisionInspectionResult> InspectAsync(
+            VisionInspectionRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return InspectHandler(request);
         }
     }
 }

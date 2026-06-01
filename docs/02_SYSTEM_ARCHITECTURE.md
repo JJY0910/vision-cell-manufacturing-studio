@@ -75,7 +75,7 @@ VisionCell.Telemetry implements logging/event sinks.
 ### VisionCell.Vision
 
 - ROI model
-- Inspection algorithms
+- Inspection algorithm contracts and deterministic Phase 1 2D engine
 - Defect model
 - Overlay generation
 - Height map simulation
@@ -154,7 +154,8 @@ Current implementation status:
 - The use case validates active Recipe context, loads the Recipe document, evaluates Run Inspection interlocks, submits a correlated controller command, moves to the Recipe Camera Teaching point through `IMotionCommandUseCase`, and returns ordered timeline state for WPF binding.
 - Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
 - Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
-- 2D/3D inspection, judge, result persistence, and UI overlay rendering remain separate follow-up slices.
+- 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.
+- 3D inspection, result persistence, and UI overlay rendering remain separate follow-up slices.
 
 ## Error Handling Policy
 
@@ -191,5 +192,5 @@ User Button
 | Real controller | IEquipmentController | TCP/Serial/PLC driver |
 | Real motion | IAxisController | Vendor SDK wrapper |
 | Real camera | ICameraDevice | GigE/USB camera SDK |
-| Native vision | IVisionEngine | C++ OpenCV DLL/CLI |
+| Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
 | AI classifier | IDefectClassifier | ONNX Runtime |
