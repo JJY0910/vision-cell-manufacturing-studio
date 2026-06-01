@@ -113,6 +113,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Motion Commands" Style="{DynamicResource Text.CardTitle}" />
           <WrapPanel Grid.Row="1">
@@ -241,6 +242,22 @@
           <Grid Grid.Row="4" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="156" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Profile"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding MoveProfilePresets}"
+                      SelectedItem="{Binding SelectedMoveProfilePreset}"
+                      DisplayMemberPath="Name"
+                      Height="32"
+                      Margin="0,0,12,8" />
+          </Grid>
+          <Grid Grid.Row="5" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="88" />
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="88" />
@@ -296,7 +313,7 @@
                      Height="32"
                      Margin="0,0,12,8" />
           </Grid>
-          <TextBlock Grid.Row="5"
+          <TextBlock Grid.Row="6"
                      Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Last snapshot: -}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />

@@ -108,12 +108,13 @@ public sealed class VirtualEquipmentControllerTests
         var request = CreateRequest(
             "Move Absolute",
             TimeSpan.FromSeconds(1),
-            new AbsoluteMoveTarget(12.5, -4.0, 6.0, 15.0, 125.0, 300.0, 250.0, 1500.0, 0.02).ToParameters());
+            new AbsoluteMoveTarget(12.5, -4.0, 6.0, 15.0, 125.0, 300.0, 250.0, 1500.0, 0.02, "Fast").ToParameters());
 
         var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
         var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
 
         result.Status.Should().Be(CommandStatus.Success);
+        result.Message.Should().Contain("profile=Fast");
         result.Message.Should().Contain("velocity=125.000");
         result.Message.Should().Contain("tolerance=0.020");
         snapshot.Axes.Single(axis => axis.AxisId == AxisId.X).Position.Should().Be(12.5);
@@ -163,6 +164,27 @@ public sealed class VirtualEquipmentControllerTests
         result.Status.Should().Be(CommandStatus.Rejected);
         result.ErrorCode?.Code.Should().Be("EQP-007");
         result.Message.Should().Contain("Velocity must be greater than zero");
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Reject_Empty_Profile_Preset_Name()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var parameters = new Dictionary<string, string>(
+            new AbsoluteMoveTarget(12.5, -4.0, 6.0, 15.0).ToParameters())
+        {
+            ["ProfilePreset"] = " "
+        };
+        var request = CreateRequest("Move Absolute", TimeSpan.FromSeconds(1), parameters);
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.ErrorCode?.Code.Should().Be("EQP-007");
+        result.Message.Should().Contain("ProfilePreset must not be empty");
     }
 
     [Fact]

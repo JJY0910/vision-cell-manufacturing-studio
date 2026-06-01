@@ -21,6 +21,7 @@ using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
+using VisionCell.Motion.Commands;
 using VisionCell.Simulator;
 using Xunit;
 
@@ -182,11 +183,7 @@ public sealed class DashboardAndShellViewModelTests
         motion.MoveTargetYText = "-4.000";
         motion.MoveTargetZText = "6.000";
         motion.MoveTargetThetaText = "15.000";
-        motion.MoveVelocityText = "125.000";
-        motion.MoveAccelerationText = "300.000";
-        motion.MoveDecelerationText = "250.000";
-        motion.MoveJerkText = "1500.000";
-        motion.MoveArrivalToleranceText = "0.020";
+        motion.SelectedMoveProfilePreset = MotionProfilePreset.Fast;
 
         await motion.RefreshSnapshotAsync(CancellationToken.None);
         await motion.ExecuteMoveAbsoluteAsync(CancellationToken.None);
@@ -203,6 +200,21 @@ public sealed class DashboardAndShellViewModelTests
         parameters.Should().Contain("Deceleration", "250");
         parameters.Should().Contain("Jerk", "1500");
         parameters.Should().Contain("ArrivalTolerance", "0.02");
+        parameters.Should().Contain("ProfilePreset", "Fast");
+    }
+
+    [Fact]
+    public void Motion_SelectMoveProfilePreset_Should_Update_Profile_Input_Text()
+    {
+        var motion = CreateMotionViewModel();
+
+        motion.SelectedMoveProfilePreset = MotionProfilePreset.Fine;
+
+        motion.MoveVelocityText.Should().Be("10");
+        motion.MoveAccelerationText.Should().Be("80");
+        motion.MoveDecelerationText.Should().Be("80");
+        motion.MoveJerkText.Should().Be("400");
+        motion.MoveArrivalToleranceText.Should().Be("0.005");
     }
 
     [Fact]

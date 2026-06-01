@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] Motion profile presets and per-axis override policy
+- [ ] Motion profile per-axis override and recipe reuse policy
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -106,4 +106,12 @@ Source: FR-065 motion profile/tolerance payloads
 Problem: Move Absolute now captures a request-level profile and arrival tolerance, but there is no profile preset library, per-axis override policy, or recipe-level profile reuse model yet.
 Proposed improvement: Add named motion profile presets, clarify per-axis override behavior, and wire profile selection into recipe/teaching workflows before real adapter integration.
 Requirement impact: FR-063, FR-065, FR-100, FR-120, FR-200, NFR-004
+Priority: P1
+Status: Addressed by ADR-0005 for built-in Fine/Standard/Fast presets; per-axis override and recipe/teaching reuse remain open.
+
+Date: 2026-06-01
+Source: FR-065 motion profile presets
+Problem: MotionView now offers built-in profile presets, but profile selection is not yet persisted as reusable recipe/teaching configuration and cannot vary per axis.
+Proposed improvement: Define recipe-level profile preset persistence, per-axis override behavior, and teaching point default profile selection before real adapter integration.
+Requirement impact: FR-065, FR-068, FR-100, FR-120, FR-200, NFR-004
 Priority: P1

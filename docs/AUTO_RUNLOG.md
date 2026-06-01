@@ -94,3 +94,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Motion profile/tolerance fields were still fixed by defaults and needed typed operator input.
 - Next selected work: `codex/feature/fr-065-motion-profile-tolerance` for request-level velocity, acceleration, deceleration, jerk, and arrival tolerance payloads.
+
+## 2026-06-01 15:22 - PR #9
+- Branch: `codex/feature/fr-065-motion-profile-tolerance`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/9
+- Squash/Merge commit: `ccc73ea001612b5913c6bbfbac63659b13f2e556`
+- Scope: Added request-level Move Absolute velocity, acceleration, deceleration, jerk, and arrival tolerance payloads with MotionView inputs, simulator validation/application, tests, ADR-0004, specs, backlog, and runlog.
+- Files changed: 14 files, including Motion command payloads, MotionView profile inputs, simulator profile application, app/equipment tests, ADR-0004, specs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 58 tests. GitHub Actions `build-test` passed in 1m53s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Profile presets and recipe/teaching reuse remained open.
+- Next selected work: `codex/feature/fr-065-motion-profile-presets` for built-in Fine/Standard/Fast profile presets and traceable preset payload names.

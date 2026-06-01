@@ -50,7 +50,7 @@ Application orchestration:
 - The same `MachineCommandRequest` is passed to the controller boundary so the recorded payload matches the executed payload.
 - The controller result is recorded with the same request correlation ID.
 - Command history is written through `IMotionCommandHistoryRepository`; `SqliteMotionCommandHistoryRepository` persists and reads recent command rows for MotionView.
-- MotionView operator controls dispatch Servo On/Off, Home All, Jog +/- with operator-selected axis/step, Move Absolute with operator-entered X/Y/Z/Theta targets, and Stop through `IMotionCommandUseCase`.
+- MotionView operator controls dispatch Servo On/Off, Home All, Jog +/- with operator-selected axis/step, Move Absolute with operator-entered X/Y/Z/Theta targets and profile preset/profile/tolerance values, and Stop through `IMotionCommandUseCase`.
 
 ### Servo On/Off
 
@@ -81,6 +81,7 @@ Rules:
 Inputs:
 
 - X/Y/Z/T target
+- profile preset: Fine, Standard, Fast
 - velocity profile: velocity, acceleration, deceleration, jerk
 - arrival tolerance
 - timeout
@@ -89,7 +90,7 @@ Acceptance:
 
 - all axes arrive within tolerance
 - final position stored in command log
-- requested profile/tolerance stored in command log
+- selected profile preset and requested profile/tolerance stored in command log
 
 ### Stop
 
