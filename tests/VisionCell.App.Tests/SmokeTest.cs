@@ -290,18 +290,20 @@ public sealed class DashboardAndShellViewModelTests
     public async Task Teaching_SaveCurrentPositionAsync_Should_Save_And_Refresh_List()
     {
         var useCase = new FakeTeachingPointUseCase();
-        var teaching = CreateTeachingViewModel(useCase);
+        var activeRecipe = new FakeActiveRecipeContext(CreateActiveRecipeContextResult("RCP-ACTIVE", "2.0.0"));
+        var teaching = CreateTeachingViewModel(useCase, activeRecipeContext: activeRecipe);
         teaching.NameText = "Safe Park";
         teaching.SelectedRole = TeachingRole.Safe;
         teaching.MemoText = "verified";
-        teaching.ActiveRecipeIdText = " RCP-TEACH ";
 
         await teaching.SaveCurrentPositionAsync(CancellationToken.None);
 
         useCase.SaveRequests.Should().ContainSingle();
         useCase.SaveRequests[0].Name.Should().Be("Safe Park");
         useCase.SaveRequests[0].Role.Should().Be(TeachingRole.Safe);
-        useCase.SaveRequests[0].RecipeId.Should().Be("RCP-TEACH");
+        useCase.SaveRequests[0].RecipeId.Should().Be("RCP-ACTIVE");
+        teaching.ActiveRecipeIdText.Should().Be("RCP-ACTIVE");
+        teaching.ActiveRecipeContextText.Should().Be("RCP-ACTIVE v2.0.0");
         teaching.Points.Should().ContainSingle();
         teaching.SelectedPoint.Should().NotBeNull();
         teaching.StatusText.Should().Contain("teaching points loaded");
@@ -340,14 +342,14 @@ public sealed class DashboardAndShellViewModelTests
             PositionTolerance.Default,
             "before").Point!;
         var useCase = new FakeTeachingPointUseCase(point);
-        var teaching = CreateTeachingViewModel(useCase);
+        var activeRecipe = new FakeActiveRecipeContext(CreateActiveRecipeContextResult("RCP-EDIT-ACTIVE", "1.2.0"));
+        var teaching = CreateTeachingViewModel(useCase, activeRecipeContext: activeRecipe);
 
         await teaching.RefreshAsync(CancellationToken.None);
         teaching.NameText = "Camera Revised";
         teaching.SelectedRole = TeachingRole.Review;
         teaching.MemoText = "after";
         teaching.ToleranceXText = "0.020";
-        teaching.ActiveRecipeIdText = "RCP-EDIT";
         await teaching.UpdateSelectedAsync(CancellationToken.None);
 
         useCase.UpdateRequests.Should().ContainSingle();
@@ -356,7 +358,7 @@ public sealed class DashboardAndShellViewModelTests
         useCase.UpdateRequests[0].Role.Should().Be(TeachingRole.Review);
         useCase.UpdateRequests[0].Position.Should().Be(point.Position);
         useCase.UpdateRequests[0].Tolerance.X.Should().Be(0.02);
-        useCase.UpdateRequests[0].RecipeId.Should().Be("RCP-EDIT");
+        useCase.UpdateRequests[0].RecipeId.Should().Be("RCP-EDIT-ACTIVE");
         teaching.Points.Should().ContainSingle(item => item.Name == "Camera Revised");
         teaching.StatusText.Should().Contain("teaching points loaded");
     }
@@ -371,8 +373,11 @@ public sealed class DashboardAndShellViewModelTests
             PositionTolerance.Default).Point!;
         var useCase = new FakeTeachingPointUseCase(point);
         var confirmation = new FakeUserConfirmationService(true);
-        var teaching = CreateTeachingViewModel(useCase, confirmationService: confirmation);
-        teaching.ActiveRecipeIdText = "RCP-DELETE";
+        var activeRecipe = new FakeActiveRecipeContext(CreateActiveRecipeContextResult("RCP-DELETE-ACTIVE", "3.0.0"));
+        var teaching = CreateTeachingViewModel(
+            useCase,
+            confirmationService: confirmation,
+            activeRecipeContext: activeRecipe);
 
         await teaching.RefreshAsync(CancellationToken.None);
         await teaching.DeleteSelectedAsync(CancellationToken.None);
@@ -381,10 +386,24 @@ public sealed class DashboardAndShellViewModelTests
         confirmation.Prompts[0].Message.Should().Contain("Park");
         useCase.DeleteRequests.Should().ContainSingle();
         useCase.DeleteRequests[0].TeachingPointId.Should().Be(point.Id);
-        useCase.DeleteRequests[0].RecipeId.Should().Be("RCP-DELETE");
+        useCase.DeleteRequests[0].RecipeId.Should().Be("RCP-DELETE-ACTIVE");
         teaching.Points.Should().BeEmpty();
         teaching.SelectedPoint.Should().BeNull();
         teaching.StatusText.Should().Be("No teaching points saved");
+    }
+
+    [Fact]
+    public async Task Teaching_SaveCurrentPositionAsync_Should_Fallback_To_Manual_Recipe_When_No_Active_Context()
+    {
+        var useCase = new FakeTeachingPointUseCase();
+        var teaching = CreateTeachingViewModel(useCase);
+        teaching.ActiveRecipeIdText = " RCP-MANUAL ";
+
+        await teaching.SaveCurrentPositionAsync(CancellationToken.None);
+
+        useCase.SaveRequests.Should().ContainSingle();
+        useCase.SaveRequests[0].RecipeId.Should().Be("RCP-MANUAL");
+        teaching.ActiveRecipeContextText.Should().Contain("No active recipe");
     }
 
     [Fact]
@@ -738,13 +757,15 @@ public sealed class DashboardAndShellViewModelTests
         FakeTeachingPointUseCase? useCase = null,
         FakeEquipmentController? equipmentController = null,
         FakeUserConfirmationService? confirmationService = null,
-        FakeTeachingHistoryRepository? historyRepository = null)
+        FakeTeachingHistoryRepository? historyRepository = null,
+        FakeActiveRecipeContext? activeRecipeContext = null)
     {
         return new TeachingViewModel(
             useCase ?? new FakeTeachingPointUseCase(),
             historyRepository ?? new FakeTeachingHistoryRepository(),
             equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
-            confirmationService ?? new FakeUserConfirmationService(true));
+            confirmationService ?? new FakeUserConfirmationService(true),
+            activeRecipeContext ?? new FakeActiveRecipeContext());
     }
 
     private static RecipeViewModel CreateRecipeViewModel(
@@ -802,6 +823,17 @@ public sealed class DashboardAndShellViewModelTests
                 new[] { new RecipeRoi("IC_TOP", "IC Top", 120, 80, 300, 200) },
                 new RecipeVisionParameters(0.75, 8, 0.65, 1.0, 0.15, 0.15)),
             new RecipeSequence(new[] { "SafetyCheck", "MoveToCamera", "Grab", "Inspect2D", "Inspect3D", "Judge", "Persist" }));
+    }
+
+    private static ActiveRecipeContextResult CreateActiveRecipeContextResult(string recipeId, string version)
+    {
+        return ActiveRecipeContextResult.Success(CreateRecipeIndexEntry(
+            recipeId,
+            version,
+            $"{recipeId} Product",
+            isActive: true,
+            isValid: true,
+            validationSummary: "Valid"));
     }
 
     private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository
@@ -913,6 +945,29 @@ public sealed class DashboardAndShellViewModelTests
                 isValid: true,
                 validationSummary: "Valid",
                 updatedAt: recipe.UpdatedAt)));
+        }
+    }
+
+    private sealed class FakeActiveRecipeContext : IActiveRecipeContext
+    {
+        private readonly ActiveRecipeContextResult _result;
+
+        public FakeActiveRecipeContext()
+            : this(ActiveRecipeContextResult.NotSelected())
+        {
+        }
+
+        public FakeActiveRecipeContext(ActiveRecipeContextResult result)
+        {
+            _result = result;
+        }
+
+        public int RequestCount { get; private set; }
+
+        public Task<ActiveRecipeContextResult> GetActiveAsync(CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            return Task.FromResult(_result);
         }
     }
 

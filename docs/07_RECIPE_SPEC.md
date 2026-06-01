@@ -79,7 +79,8 @@ Implementation status:
 - `SqliteRecipeIndexRepository` can query the active Recipe row and atomically switch active state to one existing indexed Recipe without clearing the previous active row on a missing target.
 - RecipeView can set the selected indexed Recipe active through the Application-layer index port and refresh the active-state summary.
 - `ActiveRecipeContext` exposes the active Recipe metadata through an Application-layer result contract for Teaching, inspection startup, and future interlock consumers.
-- Active Recipe app startup restore, active context consumption by Teaching/inspection, and multi-row Recipe editing remain follow-up work.
+- TeachingView resolves active Recipe context before Save/Update/Delete mutations and passes the active Recipe ID into Teaching history requests, with manual Recipe ID entry retained as a fallback.
+- Active Recipe app startup restore, active context consumption by inspection, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 

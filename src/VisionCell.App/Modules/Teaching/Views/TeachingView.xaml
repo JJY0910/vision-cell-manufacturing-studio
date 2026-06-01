@@ -36,6 +36,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Save Current Position" Style="{DynamicResource Text.CardTitle}" />
           <Grid Grid.Row="1" Margin="0,12,0,0">
@@ -154,6 +155,10 @@
                     MinWidth="128"
                     Margin="0,0,0,8" />
           </Grid>
+          <TextBlock Grid.Row="3"
+                     Text="{Binding ActiveRecipeContextText, StringFormat=Recipe Context: {0}}"
+                     Style="{DynamicResource Text.Status}"
+                     TextWrapping="Wrap" />
         </Grid>
       </Border>
 
