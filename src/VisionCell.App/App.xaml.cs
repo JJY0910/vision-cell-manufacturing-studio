@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Teaching;
+using VisionCell.App.Interaction;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -60,6 +61,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ITeachingHistoryRepository>(provider => provider.GetRequiredService<SqliteTeachingHistoryRepository>());
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
+        services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<EquipmentViewModel>();
         services.AddSingleton<MotionViewModel>();

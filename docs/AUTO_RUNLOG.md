@@ -209,3 +209,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 15 tests; Debug/Release solution build and test passed with 101 tests; WPF hidden launch smoke passed.
 - Risks: Delete confirmation, selected-point history display, and active recipe ownership remain follow-up work.
+
+## 2026-06-01 17:43 - In progress
+- Branch: `codex/feature/fr-104-teaching-delete-confirmation`
+- Scope: Add a testable WPF confirmation service and require confirmation before TeachingView deletes a selected point.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 16 tests; Debug/Release solution build and test passed with 102 tests; WPF hidden launch smoke passed.
+- Risks: Selected-point history display and active recipe ownership remain follow-up work.

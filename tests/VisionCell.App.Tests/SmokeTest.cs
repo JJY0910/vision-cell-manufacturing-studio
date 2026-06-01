@@ -2,6 +2,7 @@ using FluentAssertions;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Teaching;
+using VisionCell.App.Interaction;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
@@ -315,16 +316,41 @@ public sealed class DashboardAndShellViewModelTests
             new Position4D(1.0, 2.0, 3.0, 4.0),
             PositionTolerance.Default).Point!;
         var useCase = new FakeTeachingPointUseCase(point);
-        var teaching = CreateTeachingViewModel(useCase);
+        var confirmation = new FakeUserConfirmationService(true);
+        var teaching = CreateTeachingViewModel(useCase, confirmationService: confirmation);
 
         await teaching.RefreshAsync(CancellationToken.None);
         await teaching.DeleteSelectedAsync(CancellationToken.None);
 
+        confirmation.Prompts.Should().ContainSingle();
+        confirmation.Prompts[0].Message.Should().Contain("Park");
         useCase.DeleteRequests.Should().ContainSingle();
         useCase.DeleteRequests[0].TeachingPointId.Should().Be(point.Id);
         teaching.Points.Should().BeEmpty();
         teaching.SelectedPoint.Should().BeNull();
         teaching.StatusText.Should().Be("No teaching points saved");
+    }
+
+    [Fact]
+    public async Task Teaching_DeleteSelectedAsync_Should_Not_Delete_When_Confirmation_Is_Cancelled()
+    {
+        var point = TeachingPointFactory.Create(
+            "Park",
+            TeachingRole.Park,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var useCase = new FakeTeachingPointUseCase(point);
+        var confirmation = new FakeUserConfirmationService(false);
+        var teaching = CreateTeachingViewModel(useCase, confirmationService: confirmation);
+
+        await teaching.RefreshAsync(CancellationToken.None);
+        await teaching.DeleteSelectedAsync(CancellationToken.None);
+
+        confirmation.Prompts.Should().ContainSingle();
+        useCase.DeleteRequests.Should().BeEmpty();
+        teaching.Points.Should().ContainSingle();
+        teaching.SelectedPoint.Should().NotBeNull();
+        teaching.StatusText.Should().Contain("cancelled");
     }
 
     [Fact]
@@ -361,11 +387,34 @@ public sealed class DashboardAndShellViewModelTests
 
     private static TeachingViewModel CreateTeachingViewModel(
         FakeTeachingPointUseCase? useCase = null,
-        FakeEquipmentController? equipmentController = null)
+        FakeEquipmentController? equipmentController = null,
+        FakeUserConfirmationService? confirmationService = null)
     {
         return new TeachingViewModel(
             useCase ?? new FakeTeachingPointUseCase(),
-            equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+            equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
+            confirmationService ?? new FakeUserConfirmationService(true));
+    }
+
+    private sealed class FakeUserConfirmationService : IUserConfirmationService
+    {
+        private readonly bool _result;
+
+        public FakeUserConfirmationService(bool result)
+        {
+            _result = result;
+        }
+
+        public List<(string Title, string Message)> Prompts { get; } = new();
+
+        public Task<bool> ConfirmAsync(
+            string title,
+            string message,
+            CancellationToken cancellationToken)
+        {
+            Prompts.Add((title, message));
+            return Task.FromResult(_result);
+        }
     }
 
     private sealed class FakeMotionCommandHistoryReader : IMotionCommandHistoryReader
