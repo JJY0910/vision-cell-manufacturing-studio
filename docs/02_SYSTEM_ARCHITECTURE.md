@@ -53,6 +53,7 @@ VisionCell.Telemetry implements logging/event sinks.
 ### VisionCell.Application
 
 - UseCases: ConnectEquipment, HomeAxis, JogAxis, SaveTeachingPoint, RunInspectionSequence
+- Recipe workflows: validate and save Recipe documents, update Recipe index metadata
 - Sequence orchestration
 - DTO mapping
 - Application-level validation

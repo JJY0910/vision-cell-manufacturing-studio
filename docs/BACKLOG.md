@@ -225,4 +225,12 @@ Problem: RecipeView can now list SQLite Recipe metadata, but operators still can
 Proposed improvement: Add an Application use case that coordinates `JsonRecipeDocumentStore`, `RecipeValidator`, and `SqliteRecipeIndexRepository`, then bind RecipeView create/import/save/activate commands to it.
 Requirement impact: FR-120, FR-121, FR-122, FR-123, FR-124, NFR-004, NFR-008
 Priority: P0
-Status: In progress on `codex/feature/fr-120-recipe-index-view`.
+Status: Addressed for read-only Recipe index browser; Application save workflow and activation remain open.
+
+Date: 2026-06-01
+Source: FR-120 Recipe library save use case
+Problem: Recipe JSON save and SQLite index update need one Application boundary before RecipeView can expose save/import commands safely.
+Proposed improvement: Add `IRecipeLibraryUseCase` to validate Recipe definitions, save JSON through `IRecipeDocumentStore`, compute a checksum, and upsert `IRecipeIndexRepository`.
+Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-008, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-library-save`.
