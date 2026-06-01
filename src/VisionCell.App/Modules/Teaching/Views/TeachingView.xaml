@@ -85,6 +85,8 @@
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="88" />
               <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Tol X"
                        Style="{DynamicResource Text.MetricLabel}"
@@ -124,6 +126,18 @@
             <Button Grid.Column="8"
                     Content="Save Current"
                     Command="{Binding SaveCurrentPositionCommand}"
+                    Height="32"
+                    MinWidth="128"
+                    Margin="0,0,8,8" />
+            <Button Grid.Column="9"
+                    Content="Update Selected"
+                    Command="{Binding UpdateSelectedCommand}"
+                    Height="32"
+                    MinWidth="132"
+                    Margin="0,0,8,8" />
+            <Button Grid.Column="10"
+                    Content="Delete Selected"
+                    Command="{Binding DeleteSelectedCommand}"
                     Height="32"
                     MinWidth="128"
                     Margin="0,0,0,8" />

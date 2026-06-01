@@ -169,3 +169,11 @@ Problem: Teaching Point update/delete behavior now has Application and Persisten
 Proposed improvement: Bind TeachingView edit/delete controls to the new Application contract, add confirmation for delete, and surface recent history entries for the selected point.
 Requirement impact: FR-101, FR-104, FR-120, FR-200, NFR-004
 Priority: P0
+Status: WPF edit/delete command binding added; delete confirmation, selected-point history display, and active recipe ownership remain open.
+
+Date: 2026-06-01
+Source: FR-104 TeachingView edit/delete binding
+Problem: TeachingView can update/delete selected points through the Application contract, but delete does not yet require operator confirmation and the selected point history rows are not visible in the UI.
+Proposed improvement: Add a confirmation boundary for delete and a selected-point history panel backed by `ITeachingHistoryRepository.ListByPointAsync`.
+Requirement impact: FR-104, FR-200, NFR-004
+Priority: P0

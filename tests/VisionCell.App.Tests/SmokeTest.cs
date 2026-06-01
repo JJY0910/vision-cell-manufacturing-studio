@@ -278,6 +278,56 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Teaching_UpdateSelectedAsync_Should_Send_Selected_Point_Edit()
+    {
+        var point = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default,
+            "before").Point!;
+        var useCase = new FakeTeachingPointUseCase(point);
+        var teaching = CreateTeachingViewModel(useCase);
+
+        await teaching.RefreshAsync(CancellationToken.None);
+        teaching.NameText = "Camera Revised";
+        teaching.SelectedRole = TeachingRole.Review;
+        teaching.MemoText = "after";
+        teaching.ToleranceXText = "0.020";
+        await teaching.UpdateSelectedAsync(CancellationToken.None);
+
+        useCase.UpdateRequests.Should().ContainSingle();
+        useCase.UpdateRequests[0].TeachingPointId.Should().Be(point.Id);
+        useCase.UpdateRequests[0].Name.Should().Be("Camera Revised");
+        useCase.UpdateRequests[0].Role.Should().Be(TeachingRole.Review);
+        useCase.UpdateRequests[0].Position.Should().Be(point.Position);
+        useCase.UpdateRequests[0].Tolerance.X.Should().Be(0.02);
+        teaching.Points.Should().ContainSingle(item => item.Name == "Camera Revised");
+        teaching.StatusText.Should().Contain("teaching points loaded");
+    }
+
+    [Fact]
+    public async Task Teaching_DeleteSelectedAsync_Should_Delete_Selected_Point_And_Refresh()
+    {
+        var point = TeachingPointFactory.Create(
+            "Park",
+            TeachingRole.Park,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var useCase = new FakeTeachingPointUseCase(point);
+        var teaching = CreateTeachingViewModel(useCase);
+
+        await teaching.RefreshAsync(CancellationToken.None);
+        await teaching.DeleteSelectedAsync(CancellationToken.None);
+
+        useCase.DeleteRequests.Should().ContainSingle();
+        useCase.DeleteRequests[0].TeachingPointId.Should().Be(point.Id);
+        teaching.Points.Should().BeEmpty();
+        teaching.SelectedPoint.Should().BeNull();
+        teaching.StatusText.Should().Be("No teaching points saved");
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -367,6 +417,8 @@ public sealed class DashboardAndShellViewModelTests
         }
 
         public List<TeachingPointSaveRequest> SaveRequests { get; } = new();
+        public List<TeachingPointUpdateRequest> UpdateRequests { get; } = new();
+        public List<TeachingPointDeleteRequest> DeleteRequests { get; } = new();
         public List<TeachingPointGoToRequest> GoToRequests { get; } = new();
 
         public Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
@@ -393,6 +445,7 @@ public sealed class DashboardAndShellViewModelTests
             TeachingPointUpdateRequest request,
             CancellationToken cancellationToken)
         {
+            UpdateRequests.Add(request);
             var index = _points.FindIndex(point => point.Id == request.TeachingPointId);
             if (index < 0)
             {
@@ -420,6 +473,7 @@ public sealed class DashboardAndShellViewModelTests
             TeachingPointDeleteRequest request,
             CancellationToken cancellationToken)
         {
+            DeleteRequests.Add(request);
             var point = _points.SingleOrDefault(item => item.Id == request.TeachingPointId);
             if (point is null)
             {

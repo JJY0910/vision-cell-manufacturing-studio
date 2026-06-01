@@ -202,3 +202,10 @@
 - Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 38 tests; Persistence targeted tests passed with 15 tests; App targeted tests passed with 13 tests; Debug/Release solution build and test passed with 99 tests; WPF hidden launch smoke passed.
 - Risks: WPF edit/delete controls, active recipe ownership, and transactional point+history commits remain follow-up work.
+
+## 2026-06-01 17:35 - In progress
+- Branch: `codex/feature/fr-104-teaching-view-edit-delete`
+- Scope: Bind TeachingView selected-point update/delete buttons to the Application contract and refresh list state after each mutation.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 15 tests; Debug/Release solution build and test passed with 101 tests; WPF hidden launch smoke passed.
+- Risks: Delete confirmation, selected-point history display, and active recipe ownership remain follow-up work.
