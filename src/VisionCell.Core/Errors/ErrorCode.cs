@@ -8,6 +8,7 @@ public readonly record struct ErrorCode(string Code, string Message)
     public static readonly ErrorCode DoorOpen = new("EQP-004", "Door is open.");
     public static readonly ErrorCode CommandTimeout = new("EQP-005", "Command timed out.");
     public static readonly ErrorCode CommandCancelled = new("EQP-006", "Command was cancelled.");
+    public static readonly ErrorCode CommandRejected = new("EQP-007", "Command rejected by interlock.");
     public static readonly ErrorCode ServoOff = new("MOT-001", "Servo is off.");
     public static readonly ErrorCode AxisNotHomed = new("MOT-002", "Axis is not homed.");
     public static readonly ErrorCode MotionTimeout = new("MOT-003", "Motion command timed out.");

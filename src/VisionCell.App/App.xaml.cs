@@ -1,5 +1,6 @@
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using VisionCell.Application.Interlocks;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -41,6 +42,7 @@ public partial class App : System.Windows.Application
     private static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
+        services.AddSingleton<ICommandInterlockService, CommandInterlockService>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<EquipmentViewModel>();
         services.AddSingleton<MotionViewModel>();

@@ -15,6 +15,7 @@
 - [x] Dashboard shows Axis X/Y/Z/Theta state.
 - [x] Dashboard shows I/O bit state.
 - [x] Dashboard shows recent system events.
+- [x] Dashboard exposes command interlock availability baseline.
 - [ ] Dashboard polish review is complete on a real display.
 
 ## Simulator
@@ -24,6 +25,7 @@
 - [x] Simulator exposes snapshot state for Safety, Axis, I/O, Camera, Alarm, and Timestamp.
 - [x] Hardware-like commands return explicit result status.
 - [x] Hardware-like commands support timeout and cancellation.
+- [x] Backend command entry can reject disabled commands with code/message.
 - [ ] Motion command timeout/cancellation paths are fully implemented beyond connection baseline.
 
 ## Tests
@@ -32,6 +34,7 @@
 - [x] Motion tests exist.
 - [x] Equipment tests exist.
 - [x] App ViewModel tests exist.
+- [x] Application command interlock tests exist.
 - [ ] P0/P1 coverage is complete for Motion, I/O, Safety, Recipe, and Inspection.
 
 ## CI and Git
@@ -40,11 +43,11 @@
 - [x] CI restores, builds, and tests the solution in Release.
 - [x] `.gitignore` excludes WPF/.NET/Visual Studio artifacts.
 - [x] Git repository has been initialized locally.
-- [ ] GitHub remote is connected.
-- [ ] `main` and `develop` have been pushed to GitHub.
+- [x] GitHub remote is connected.
+- [x] `main` and `develop` have been pushed to GitHub.
 
 ## SDK
 
 - [x] `global.json` targets .NET 8 LTS deterministically.
-- [ ] Local machine has .NET 8 SDK installed.
-- [ ] Full local restore/build/test passes with .NET 8 SDK.
+- [x] Local machine has .NET 8 SDK installed.
+- [x] Full local restore/build/test passes with .NET 8 SDK.

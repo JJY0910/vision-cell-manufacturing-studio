@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
+using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Alarms;
 using VisionCell.Equipment.Cameras;
@@ -53,6 +54,37 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 _connected = false;
                 return "Virtual controller disconnected.";
             });
+    }
+
+    public CommandAvailability GetCommandAvailability(CommandKind command, InterlockContext context)
+    {
+        return CommandInterlockRules.Evaluate(command, context);
+    }
+
+    public Task<MachineCommandResult> ExecuteCommandAsync(CommandKind command, InterlockContext context, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        var availability = GetCommandAvailability(command, context);
+        if (!availability.IsEnabled)
+        {
+            return Task.FromResult(new MachineCommandResult(
+                CommandStatus.Rejected,
+                ErrorCode.CommandRejected,
+                availability.DisabledReason,
+                TimeSpan.Zero,
+                CorrelationId.New()));
+        }
+
+        return command switch
+        {
+            CommandKind.Connect => ConnectAsync(timeout, cancellationToken),
+            CommandKind.Disconnect => DisconnectAsync(timeout, cancellationToken),
+            _ => Task.FromResult(new MachineCommandResult(
+                CommandStatus.Success,
+                null,
+                $"{command} interlock accepted. Hardware execution is deferred beyond Phase 1.",
+                TimeSpan.Zero,
+                CorrelationId.New()))
+        };
     }
 
     private async Task<MachineCommandResult> RunControllerCommandAsync(

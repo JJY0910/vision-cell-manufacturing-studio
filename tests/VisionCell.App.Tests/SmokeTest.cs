@@ -1,4 +1,6 @@
 using FluentAssertions;
+using VisionCell.Application.Interlocks;
+using VisionCell.Core.Commands;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -20,7 +22,7 @@ public sealed class DashboardAndShellViewModelTests
     [Fact]
     public async Task Dashboard_ConnectAsync_Should_Surface_Connection_Axis_Io_And_EventLog_State()
     {
-        var dashboard = new DashboardViewModel(new VirtualEquipmentController());
+        var dashboard = new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService());
 
         await dashboard.ConnectAsync(CancellationToken.None);
 
@@ -29,6 +31,8 @@ public sealed class DashboardAndShellViewModelTests
         dashboard.Axes.Should().HaveCount(4);
         dashboard.IoBits.Should().Contain(bit => bit.Name == "DI_ESTOP_ON");
         dashboard.Events.Should().Contain(systemEvent => systemEvent.EventType == "Connect");
+        dashboard.GetCommandAvailability(CommandKind.Connect).IsEnabled.Should().BeFalse();
+        dashboard.GetCommandAvailability(CommandKind.Disconnect).IsEnabled.Should().BeTrue();
     }
 
     [Fact]
@@ -36,7 +40,7 @@ public sealed class DashboardAndShellViewModelTests
     {
         var shell = new ShellViewModel(
             new NavigationService(),
-            new DashboardViewModel(new VirtualEquipmentController()),
+            new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService()),
             new EquipmentViewModel(),
             new MotionViewModel(),
             new TeachingViewModel(),
@@ -51,5 +55,17 @@ public sealed class DashboardAndShellViewModelTests
 
         shell.CurrentViewModel.Should().BeOfType<MotionViewModel>();
         motionItem.IsSelected.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Dashboard_Initial_State_Should_Disable_Dangerous_Commands()
+    {
+        var dashboard = new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService());
+
+        dashboard.GetCommandAvailability(CommandKind.Connect).IsEnabled.Should().BeTrue();
+        dashboard.GetCommandAvailability(CommandKind.Home).IsEnabled.Should().BeFalse();
+        dashboard.GetCommandAvailability(CommandKind.Jog).IsEnabled.Should().BeFalse();
+        dashboard.GetCommandAvailability(CommandKind.MoveAbsolute).IsEnabled.Should().BeFalse();
+        dashboard.GetCommandAvailability(CommandKind.RunInspection).IsEnabled.Should().BeFalse();
     }
 }

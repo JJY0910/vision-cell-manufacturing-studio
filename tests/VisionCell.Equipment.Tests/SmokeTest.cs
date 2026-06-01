@@ -1,5 +1,6 @@
 using FluentAssertions;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Simulator;
 using Xunit;
@@ -33,5 +34,54 @@ public sealed class VirtualEquipmentControllerTests
 
         result.Status.Should().Be(CommandStatus.Timeout);
         result.ErrorCode?.Code.Should().Be("EQP-005");
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Reject_Disabled_Command_With_Code_And_Message()
+    {
+        var controller = new VirtualEquipmentController();
+        var context = ReadyManualContext() with { ServoOn = false };
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.Home, context, TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.ErrorCode?.Code.Should().Be("EQP-007");
+        result.Message.Should().Contain("Home requires servo on");
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Reject_MoveAbsolute_When_Target_Is_Outside_Soft_Limit()
+    {
+        var controller = new VirtualEquipmentController();
+        var context = ReadyManualContext() with { WithinSoftLimit = false };
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, context, TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.ErrorCode?.Message.Should().NotBeNullOrWhiteSpace();
+        result.Message.Should().Contain("soft limit");
+    }
+
+    private static InterlockContext ReadyManualContext()
+    {
+        return new InterlockContext(
+            Connected: true,
+            ControllerBusy: false,
+            SequenceRunning: false,
+            EmergencyStopActive: false,
+            DoorClosed: true,
+            SafetyOk: true,
+            ManualMode: true,
+            AutoMode: false,
+            ServoOn: true,
+            AxisHomed: true,
+            AllRequiredAxesHomed: true,
+            AxisBusy: false,
+            AxisAlarm: false,
+            WithinSoftLimit: true,
+            RecipeLoaded: true,
+            CameraConnected: true,
+            IoReady: true,
+            AlarmActive: false);
     }
 }
