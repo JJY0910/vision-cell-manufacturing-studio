@@ -29,6 +29,8 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         ConnectCommand = new AsyncRelayCommand(ConnectAsync, () => IsCommandEnabled(CommandKind.Connect));
         DisconnectCommand = new AsyncRelayCommand(DisconnectAsync, () => IsCommandEnabled(CommandKind.Disconnect));
+        EnterManualModeCommand = new AsyncRelayCommand(EnterManualModeAsync, () => IsCommandEnabled(CommandKind.EnterManualMode));
+        EnterAutoModeCommand = new AsyncRelayCommand(EnterAutoModeAsync, () => IsCommandEnabled(CommandKind.EnterAutoMode));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
 
         ApplySnapshot(CreateDisconnectedSnapshot(DateTimeOffset.UtcNow));
@@ -43,6 +45,8 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public IAsyncRelayCommand ConnectCommand { get; }
     public IAsyncRelayCommand DisconnectCommand { get; }
+    public IAsyncRelayCommand EnterManualModeCommand { get; }
+    public IAsyncRelayCommand EnterAutoModeCommand { get; }
     public IAsyncRelayCommand RefreshCommand { get; }
 
     [ObservableProperty]
@@ -76,6 +80,8 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public string ConnectDisabledReason => GetCommandAvailability(CommandKind.Connect).DisabledReason;
     public string DisconnectDisabledReason => GetCommandAvailability(CommandKind.Disconnect).DisabledReason;
+    public string EnterManualModeDisabledReason => GetCommandAvailability(CommandKind.EnterManualMode).DisabledReason;
+    public string EnterAutoModeDisabledReason => GetCommandAvailability(CommandKind.EnterAutoMode).DisabledReason;
 
     public CommandAvailabilityViewModel GetCommandAvailability(CommandKind command)
     {
@@ -97,6 +103,16 @@ public sealed partial class DashboardViewModel : ObservableObject
         AddEvent(result.ToSystemEvent("Equipment", "Disconnect"));
         ControllerLatencyStatus = $"Latency: {result.Elapsed.TotalMilliseconds:0} ms";
         await RefreshAsync(cancellationToken).ConfigureAwait(true);
+    }
+
+    public Task EnterManualModeAsync(CancellationToken cancellationToken)
+    {
+        return ExecuteControllerCommandAsync(CommandKind.EnterManualMode, cancellationToken);
+    }
+
+    public Task EnterAutoModeAsync(CancellationToken cancellationToken)
+    {
+        return ExecuteControllerCommandAsync(CommandKind.EnterAutoMode, cancellationToken);
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -193,8 +209,22 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         ConnectCommand.NotifyCanExecuteChanged();
         DisconnectCommand.NotifyCanExecuteChanged();
+        EnterManualModeCommand.NotifyCanExecuteChanged();
+        EnterAutoModeCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ConnectDisabledReason));
         OnPropertyChanged(nameof(DisconnectDisabledReason));
+        OnPropertyChanged(nameof(EnterManualModeDisabledReason));
+        OnPropertyChanged(nameof(EnterAutoModeDisabledReason));
+    }
+
+    private async Task ExecuteControllerCommandAsync(CommandKind command, CancellationToken cancellationToken)
+    {
+        var result = await _equipmentController
+            .ExecuteCommandAsync(command, _interlockContext, ControllerCommandTimeout, cancellationToken)
+            .ConfigureAwait(true);
+        AddEvent(result.ToSystemEvent("Equipment", FormatCommand(command)));
+        ControllerLatencyStatus = $"Latency: {result.Elapsed.TotalMilliseconds:0} ms";
+        await RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
 
     private bool IsCommandEnabled(CommandKind command)
@@ -219,6 +249,8 @@ public sealed partial class DashboardViewModel : ObservableObject
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
             CommandKind.ResetAlarm => "Reset Alarm",
+            CommandKind.EnterManualMode => "Enter Manual",
+            CommandKind.EnterAutoMode => "Enter Auto",
             CommandKind.RunInspection => "Run Inspection",
             _ => command.ToString()
         };

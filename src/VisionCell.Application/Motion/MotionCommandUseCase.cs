@@ -94,6 +94,8 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
             CommandKind.ServoOn => "Servo On",
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.EnterManualMode => "Enter Manual",
+            CommandKind.EnterAutoMode => "Enter Auto",
             CommandKind.RunInspection => "Run Inspection",
             _ => command.ToString()
         };

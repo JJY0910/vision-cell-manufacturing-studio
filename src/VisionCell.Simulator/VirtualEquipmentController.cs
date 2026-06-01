@@ -26,6 +26,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
     private bool _connected;
     private bool _servoEnabled;
     private bool _axisBusy;
+    private MachineMode _mode = MachineMode.Offline;
     private AlarmSnapshot? _alarm;
     private IReadOnlyList<AxisSnapshot> _axes = AxisDefaults.CreatePowerOffAxes();
     private CancellationTokenSource? _activeMotionCancellation;
@@ -51,6 +52,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 lock (_gate)
                 {
                     _connected = true;
+                    _mode = MachineMode.Manual;
                     _alarm = null;
                 }
 
@@ -70,6 +72,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 lock (_gate)
                 {
                     _connected = false;
+                    _mode = MachineMode.Offline;
                     _servoEnabled = false;
                     _axisBusy = false;
                     _activeMotionCancellation?.Cancel();
@@ -196,6 +199,34 @@ public sealed class VirtualEquipmentController : IEquipmentController
                     }
 
                     return "Alarm reset completed.";
+                }),
+            CommandKind.EnterManualMode => RunControllerCommandAsync(
+                FormatCommand(command),
+                ServoLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _mode = MachineMode.Manual;
+                    }
+
+                    return "Machine mode changed to Manual.";
+                }),
+            CommandKind.EnterAutoMode => RunControllerCommandAsync(
+                FormatCommand(command),
+                ServoLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _mode = MachineMode.Auto;
+                    }
+
+                    return "Machine mode changed to Auto.";
                 }),
             CommandKind.RunInspection => Task.FromResult(MachineCommandResult.Success(
                 "Run Inspection interlock accepted. Inspection execution remains a later use case.",
@@ -393,6 +424,9 @@ public sealed class VirtualEquipmentController : IEquipmentController
         {
             return context with
             {
+                Connected = context.Connected || _connected,
+                ManualMode = _mode == MachineMode.Manual,
+                AutoMode = _mode == MachineMode.Auto,
                 AxisBusy = context.AxisBusy || _axisBusy,
                 AlarmActive = context.AlarmActive || _alarm is not null
             };
@@ -445,6 +479,8 @@ public sealed class VirtualEquipmentController : IEquipmentController
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
             CommandKind.ResetAlarm => "Reset Alarm",
+            CommandKind.EnterManualMode => "Enter Manual",
+            CommandKind.EnterAutoMode => "Enter Auto",
             CommandKind.RunInspection => "Run Inspection",
             _ => command.ToString()
         };
@@ -540,10 +576,21 @@ public sealed class VirtualEquipmentController : IEquipmentController
         {
             connected = _connected;
             servoEnabled = _servoEnabled;
+            var mode = connected ? _mode : MachineMode.Offline;
             alarm = _alarm;
             axes = _axes;
+            return CreateSnapshot(timestamp, connected, mode, servoEnabled, alarm, axes);
         }
+    }
 
+    private static EquipmentSnapshot CreateSnapshot(
+        DateTimeOffset timestamp,
+        bool connected,
+        MachineMode mode,
+        bool servoEnabled,
+        AlarmSnapshot? alarm,
+        IReadOnlyList<AxisSnapshot> axes)
+    {
         var safety = new SafetySnapshot(
             DoorClosed: true,
             EmergencyStopActive: false,
@@ -553,7 +600,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
 
         return new EquipmentSnapshot(
             connected,
-            connected ? MachineMode.Manual : MachineMode.Offline,
+            mode,
             safety,
             axes,
             CreateIoSnapshot(timestamp, servoEnabled),

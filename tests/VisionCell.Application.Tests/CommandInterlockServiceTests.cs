@@ -81,6 +81,23 @@ public sealed class CommandInterlockServiceTests
     }
 
     [Fact]
+    public void EnterAutoMode_Should_Require_Servo_Homed_Safety_And_Idle_State()
+    {
+        _service.Evaluate(CommandKind.EnterAutoMode, ReadyManualContext()).IsEnabled.Should().BeTrue();
+        _service.Evaluate(CommandKind.EnterAutoMode, ReadyManualContext() with { ServoOn = false }).IsEnabled.Should().BeFalse();
+        _service.Evaluate(CommandKind.EnterAutoMode, ReadyManualContext() with { AllRequiredAxesHomed = false }).IsEnabled.Should().BeFalse();
+        _service.Evaluate(CommandKind.EnterAutoMode, ReadyManualContext() with { DoorClosed = false, SafetyOk = false }).IsEnabled.Should().BeFalse();
+        _service.Evaluate(CommandKind.EnterAutoMode, ReadyManualContext() with { AxisBusy = true }).IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void EnterManualMode_Should_Be_Disabled_When_Sequence_Is_Running()
+    {
+        _service.Evaluate(CommandKind.EnterManualMode, ReadyAutoContext()).IsEnabled.Should().BeTrue();
+        _service.Evaluate(CommandKind.EnterManualMode, ReadyAutoContext() with { SequenceRunning = true }).IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
     public void RunInspection_Should_Be_Disabled_When_Recipe_Not_Loaded()
     {
         _service.Evaluate(CommandKind.RunInspection, ReadyAutoContext() with { RecipeLoaded = false }).IsEnabled.Should().BeFalse();

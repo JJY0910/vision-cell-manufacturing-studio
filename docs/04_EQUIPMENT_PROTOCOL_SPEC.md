@@ -24,7 +24,8 @@ public sealed record EquipmentSnapshot(
 |---|---|---|---:|---|
 | Connect | profileId | Connected | 3000ms | none |
 | Disconnect | none | Disconnected | 1000ms | none |
-| SetMode | mode | ModeChanged | 1000ms | safety check |
+| EnterManualMode | none | ModeChanged(Manual) | 1000ms | connected, idle |
+| EnterAutoMode | none | ModeChanged(Auto) | 1000ms | connected, servo on, homed, safety/camera/I/O ready |
 | ResetAlarm | none | AlarmCleared | 2000ms | EStop off |
 | GetSnapshot | none | EquipmentSnapshot | 500ms | none |
 

@@ -130,7 +130,33 @@ public sealed class DashboardAndShellViewModelTests
         dashboard.GetCommandAvailability(CommandKind.Home).IsEnabled.Should().BeFalse();
         dashboard.GetCommandAvailability(CommandKind.Jog).IsEnabled.Should().BeFalse();
         dashboard.GetCommandAvailability(CommandKind.MoveAbsolute).IsEnabled.Should().BeFalse();
+        dashboard.GetCommandAvailability(CommandKind.EnterAutoMode).IsEnabled.Should().BeFalse();
         dashboard.GetCommandAvailability(CommandKind.RunInspection).IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Dashboard_EnterAutoModeAsync_Should_Execute_Mode_Command_And_Refresh_Snapshot()
+    {
+        var controller = new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true));
+        controller.ExecuteHandler = (command, _, _, _) =>
+        {
+            if (command == CommandKind.EnterAutoMode)
+            {
+                controller.Snapshot = controller.Snapshot with { Mode = MachineMode.Auto };
+            }
+
+            return Task.FromResult(MachineCommandResult.Success("Machine mode changed to Auto.", TimeSpan.FromMilliseconds(12), CorrelationId.New()));
+        };
+        var dashboard = new DashboardViewModel(controller, new CommandInterlockService());
+
+        await dashboard.RefreshAsync(CancellationToken.None);
+        dashboard.EnterAutoModeCommand.CanExecute(null).Should().BeTrue();
+
+        await dashboard.EnterAutoModeAsync(CancellationToken.None);
+
+        controller.LastCommand.Should().Be(CommandKind.EnterAutoMode);
+        dashboard.ModeStatus.Should().Be("Auto");
+        dashboard.Events.Should().Contain(systemEvent => systemEvent.EventType == "Enter Auto");
     }
 
     [Fact]
@@ -1330,6 +1356,15 @@ public sealed class DashboardAndShellViewModelTests
         }
 
         public EquipmentSnapshot Snapshot { get; set; }
+        public CommandKind? LastCommand { get; private set; }
+        public InterlockContext? LastContext { get; private set; }
+
+        public Func<CommandKind, InterlockContext, TimeSpan, CancellationToken, Task<MachineCommandResult>> ExecuteHandler { get; set; } =
+            (_, _, _, _) => Task.FromResult(MachineCommandResult.Failed(
+                ErrorCode.CommandRejected,
+                "Fake controller does not execute commands in app tests.",
+                TimeSpan.Zero,
+                CorrelationId.New()));
 
         public Task<EquipmentSnapshot> GetSnapshotAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
@@ -1357,18 +1392,17 @@ public sealed class DashboardAndShellViewModelTests
             TimeSpan timeout,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(MachineCommandResult.Failed(
-                ErrorCode.CommandRejected,
-                "Fake controller does not execute motion commands in app tests.",
-                TimeSpan.Zero,
-                CorrelationId.New()));
+            LastCommand = command;
+            LastContext = context;
+            return ExecuteHandler(command, context, timeout, cancellationToken);
         }
     }
 
     private static EquipmentSnapshot CreateSnapshot(
         bool connected = false,
         bool servoOn = false,
-        bool homed = false)
+        bool homed = false,
+        MachineMode? mode = null)
     {
         var timestamp = DateTimeOffset.UtcNow;
         var axes = AxisDefaults.CreatePowerOffAxes()
@@ -1393,7 +1427,7 @@ public sealed class DashboardAndShellViewModelTests
 
         return new EquipmentSnapshot(
             connected,
-            connected ? MachineMode.Manual : MachineMode.Offline,
+            mode ?? (connected ? MachineMode.Manual : MachineMode.Offline),
             new SafetySnapshot(true, false, true, false, servoOn),
             axes,
             io,

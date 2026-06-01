@@ -321,3 +321,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 57 tests; App targeted tests passed with 34 tests; Debug/Release solution build and test passed with 153 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: This slice submits a correlated Run Inspection command and reports camera/vision/judge/persist steps as skipped; it does not yet execute camera grab, algorithms, result persistence, or overlay rendering.
+
+## 2026-06-01 21:35 - In progress
+- Branch: `codex/feature/fr-180-simulator-auto-mode`
+- Scope: Add ADR-backed simulator Enter Manual/Enter Auto commands, backend interlocks, Dashboard bindings, and mode transition tests.
+- Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 59 tests; Equipment targeted tests passed with 18 tests; App targeted tests passed with 35 tests after rerunning App alone because the first parallel targeted run hit a build DLL file lock. Debug/Release solution build and test passed with 158 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: Enter Auto does not require active Recipe by design; Run Inspection still enforces active Recipe separately. Camera/vision/result persistence remains follow-up.
