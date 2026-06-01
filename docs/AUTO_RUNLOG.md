@@ -105,3 +105,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Profile presets and recipe/teaching reuse remained open.
 - Next selected work: `codex/feature/fr-065-motion-profile-presets` for built-in Fine/Standard/Fast profile presets and traceable preset payload names.
+
+## 2026-06-01 15:32 - PR #10
+- Branch: `codex/feature/fr-065-motion-profile-presets`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/10
+- Squash/Merge commit: `a5be6fedf8613b8fcf9d7b2efb69c49e7cccf992`
+- Scope: Added built-in Fine/Standard/Fast motion profile presets, MotionView preset selection, traceable `ProfilePreset` payloads, simulator validation, tests, ADR-0005, specs, backlog, and runlog.
+- Files changed: 15 files, including profile preset model, MotionView selector binding, simulator result message/validation, app/equipment tests, ADR-0005, specs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 60 tests. GitHub Actions `build-test` passed in 1m25s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Recipe-level profile persistence, teaching defaults, and per-axis overrides remain open.
+- Next selected work: `codex/test/fr-065-motion-profile-preset-coverage` for Motion-level preset payload coverage and traceability doc cleanup.
