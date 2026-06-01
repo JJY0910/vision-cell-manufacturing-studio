@@ -1,6 +1,7 @@
 using FluentAssertions;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
+using VisionCell.Application.Teaching;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
@@ -22,6 +23,7 @@ using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
 using VisionCell.Motion.Commands;
+using VisionCell.Motion.Teaching;
 using VisionCell.Simulator;
 using Xunit;
 
@@ -53,7 +55,7 @@ public sealed class DashboardAndShellViewModelTests
             new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService()),
             new EquipmentViewModel(),
             CreateMotionViewModel(),
-            new TeachingViewModel(),
+            CreateTeachingViewModel(),
             new RecipeViewModel(),
             new InspectionViewModel(),
             new OfflineDebugViewModel(),
@@ -234,6 +236,48 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Teaching_SaveCurrentPositionAsync_Should_Save_And_Refresh_List()
+    {
+        var useCase = new FakeTeachingPointUseCase();
+        var teaching = CreateTeachingViewModel(useCase);
+        teaching.NameText = "Safe Park";
+        teaching.SelectedRole = TeachingRole.Safe;
+        teaching.MemoText = "verified";
+
+        await teaching.SaveCurrentPositionAsync(CancellationToken.None);
+
+        useCase.SaveRequests.Should().ContainSingle();
+        useCase.SaveRequests[0].Name.Should().Be("Safe Park");
+        useCase.SaveRequests[0].Role.Should().Be(TeachingRole.Safe);
+        teaching.Points.Should().ContainSingle();
+        teaching.SelectedPoint.Should().NotBeNull();
+        teaching.StatusText.Should().Contain("teaching points loaded");
+    }
+
+    [Fact]
+    public async Task Teaching_GoToSelectedAsync_Should_Execute_Selected_Point()
+    {
+        var point = TeachingPointFactory.Create(
+            "Review",
+            TeachingRole.Review,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var useCase = new FakeTeachingPointUseCase(point);
+        var teaching = CreateTeachingViewModel(
+            useCase,
+            new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+
+        await teaching.RefreshAsync(CancellationToken.None);
+        teaching.SelectedPoint = teaching.Points.Single();
+        await teaching.GoToSelectedAsync(CancellationToken.None);
+
+        useCase.GoToRequests.Should().ContainSingle();
+        useCase.GoToRequests[0].TeachingPointId.Should().Be(point.Id);
+        useCase.GoToRequests[0].InterlockContext.ServoOn.Should().BeTrue();
+        teaching.StatusText.Should().Contain("completed");
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -263,6 +307,15 @@ public sealed class DashboardAndShellViewModelTests
             commandUseCase ?? new FakeMotionCommandUseCase(),
             historyReader ?? new FakeMotionCommandHistoryReader(),
             equipmentController ?? new FakeEquipmentController(CreateSnapshot()));
+    }
+
+    private static TeachingViewModel CreateTeachingViewModel(
+        FakeTeachingPointUseCase? useCase = null,
+        FakeEquipmentController? equipmentController = null)
+    {
+        return new TeachingViewModel(
+            useCase ?? new FakeTeachingPointUseCase(),
+            equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
     }
 
     private sealed class FakeMotionCommandHistoryReader : IMotionCommandHistoryReader
@@ -301,6 +354,60 @@ public sealed class DashboardAndShellViewModelTests
                 commandRequest.CorrelationId);
 
             return Task.FromResult(new MotionCommandExecutionResult(commandRequest, commandResult));
+        }
+    }
+
+    private sealed class FakeTeachingPointUseCase : ITeachingPointUseCase
+    {
+        private readonly List<TeachingPoint> _points = new();
+
+        public FakeTeachingPointUseCase(params TeachingPoint[] points)
+        {
+            _points.AddRange(points);
+        }
+
+        public List<TeachingPointSaveRequest> SaveRequests { get; } = new();
+        public List<TeachingPointGoToRequest> GoToRequests { get; } = new();
+
+        public Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<TeachingPoint>>(_points.Take(limit).ToArray());
+        }
+
+        public Task<TeachingPointSaveResult> SaveCurrentPositionAsync(
+            TeachingPointSaveRequest request,
+            CancellationToken cancellationToken)
+        {
+            SaveRequests.Add(request);
+            var point = TeachingPointFactory.Create(
+                request.Name,
+                request.Role,
+                new Position4D(1.0, 2.0, 3.0, 4.0),
+                request.Tolerance,
+                request.Memo).Point!;
+            _points.Insert(0, point);
+            return Task.FromResult(TeachingPointSaveResult.Success(point));
+        }
+
+        public Task<TeachingPointGoToResult> GoToAsync(
+            TeachingPointGoToRequest request,
+            CancellationToken cancellationToken)
+        {
+            GoToRequests.Add(request);
+            var point = _points.Single(item => item.Id == request.TeachingPointId);
+            var commandRequest = new MachineCommandRequest(
+                "Move Absolute",
+                CorrelationId.New(),
+                request.Timeout,
+                DateTimeOffset.UtcNow,
+                new Dictionary<string, string>());
+            var commandResult = MachineCommandResult.Success(
+                "Move completed.",
+                TimeSpan.FromMilliseconds(10),
+                commandRequest.CorrelationId);
+            return Task.FromResult(TeachingPointGoToResult.Success(
+                point,
+                new MotionCommandExecutionResult(commandRequest, commandResult)));
         }
     }
 

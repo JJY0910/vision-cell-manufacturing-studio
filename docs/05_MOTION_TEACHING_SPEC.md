@@ -130,7 +130,8 @@ Implementation status:
 - Save Current Position reads the current equipment snapshot with timeout/cancellation, validates duplicate names through the repository port, and saves only validated points.
 - Go To Teaching Point loads a saved point and dispatches a traceable Move Absolute request through `IMotionCommandUseCase`.
 - SQLite persistence supports save, ID lookup, duplicate-name lookup, and updated-time ordered list queries.
-- WPF TeachingView binding and edit history remain follow-up work.
+- WPF TeachingView binding supports refresh, save current position, and Go To selected point.
+- Edit history and recipe-level Teaching Point ownership remain follow-up work.
 
 ## Teaching Workflow
 

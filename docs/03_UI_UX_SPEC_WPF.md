@@ -123,6 +123,12 @@ Required visual:
 - Teaching role/tolerance
 - Edit history
 
+Implementation status:
+
+- TeachingView binds to `TeachingViewModel` for refresh, Save Current Position, and Go To commands.
+- The view shows point name, role, position, tolerance, updated time, memo, and save input fields for role/tolerance/memo.
+- Edit history and recipe ownership controls remain follow-up work.
+
 ### RecipeView
 
 - Recipe browser

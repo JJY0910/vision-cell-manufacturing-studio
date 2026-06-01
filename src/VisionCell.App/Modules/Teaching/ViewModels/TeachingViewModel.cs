@@ -1,5 +1,224 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using VisionCell.Application.Interlocks;
+using VisionCell.Application.Teaching;
+using VisionCell.Equipment.Controllers;
+using VisionCell.Motion.Teaching;
+
 namespace VisionCell.App.Modules.Teaching.ViewModels;
 
-public sealed class TeachingViewModel
+public sealed partial class TeachingViewModel : ObservableObject
 {
+    private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(3);
+    private const int TeachingPointLimit = 50;
+    private readonly ITeachingPointUseCase _teachingPointUseCase;
+    private readonly IEquipmentController _equipmentController;
+
+    public TeachingViewModel(ITeachingPointUseCase teachingPointUseCase, IEquipmentController equipmentController)
+    {
+        _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
+        _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+        SaveCurrentPositionCommand = new AsyncRelayCommand(SaveCurrentPositionAsync, () => !IsBusy);
+        GoToSelectedCommand = new AsyncRelayCommand(GoToSelectedAsync, () => !IsBusy && SelectedPoint is not null);
+    }
+
+    public IReadOnlyList<TeachingRole> RoleOptions { get; } = new[]
+    {
+        TeachingRole.Load,
+        TeachingRole.Camera,
+        TeachingRole.Inspection,
+        TeachingRole.Review,
+        TeachingRole.Safe,
+        TeachingRole.Park,
+        TeachingRole.Custom
+    };
+
+    public ObservableCollection<TeachingPointItemViewModel> Points { get; } = new();
+    public IAsyncRelayCommand RefreshCommand { get; }
+    public IAsyncRelayCommand SaveCurrentPositionCommand { get; }
+    public IAsyncRelayCommand GoToSelectedCommand { get; }
+
+    [ObservableProperty]
+    private string _statusText = "Teaching points not loaded";
+
+    [ObservableProperty]
+    private string _nameText = "Camera Align";
+
+    [ObservableProperty]
+    private TeachingRole _selectedRole = TeachingRole.Camera;
+
+    [ObservableProperty]
+    private string _memoText = string.Empty;
+
+    [ObservableProperty]
+    private string _toleranceXText = "0.010";
+
+    [ObservableProperty]
+    private string _toleranceYText = "0.010";
+
+    [ObservableProperty]
+    private string _toleranceZText = "0.010";
+
+    [ObservableProperty]
+    private string _toleranceThetaText = "0.010";
+
+    [ObservableProperty]
+    private TeachingPointItemViewModel? _selectedPoint;
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private bool _hasPoints;
+
+    public async Task RefreshAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var points = await _teachingPointUseCase.ListAsync(TeachingPointLimit, cancellationToken).ConfigureAwait(true);
+            Points.Clear();
+            foreach (var point in points)
+            {
+                Points.Add(new TeachingPointItemViewModel(point));
+            }
+
+            HasPoints = Points.Count > 0;
+            SelectedPoint ??= Points.FirstOrDefault();
+            StatusText = HasPoints ? $"{Points.Count} teaching points loaded" : "No teaching points saved";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = "Teaching point refresh cancelled";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Teaching point refresh failed: {ex.Message}";
+        }
+    }
+
+    public async Task SaveCurrentPositionAsync(CancellationToken cancellationToken)
+    {
+        if (!TryCreateTolerance(out var tolerance, out var error))
+        {
+            StatusText = $"Teaching input rejected: {error}";
+            return;
+        }
+
+        await RunBusyAsync(async () =>
+        {
+            var result = await _teachingPointUseCase.SaveCurrentPositionAsync(
+                new TeachingPointSaveRequest(NameText, SelectedRole, tolerance, MemoText, SnapshotTimeout),
+                cancellationToken).ConfigureAwait(true);
+
+            if (!result.IsSuccess || result.Point is null)
+            {
+                StatusText = result.ValidationIssues.Count > 0
+                    ? $"Teaching save rejected: {string.Join(" ", result.ValidationIssues.Select(issue => issue.Message))}"
+                    : $"Teaching save failed: {result.Message}";
+                return;
+            }
+
+            StatusText = $"Saved teaching point '{result.Point.Name}'";
+            await RefreshAsync(cancellationToken).ConfigureAwait(true);
+            SelectedPoint = Points.FirstOrDefault(point => point.Id == result.Point.Id) ?? SelectedPoint;
+        }, cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task GoToSelectedAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedPoint is null)
+        {
+            StatusText = "Select a teaching point before Go To";
+            return;
+        }
+
+        await RunBusyAsync(async () =>
+        {
+            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
+            var result = await _teachingPointUseCase.GoToAsync(
+                new TeachingPointGoToRequest(
+                    SelectedPoint.Id,
+                    EquipmentSnapshotInterlockContextFactory.Create(snapshot),
+                    CommandTimeout),
+                cancellationToken).ConfigureAwait(true);
+
+            StatusText = result.IsSuccess
+                ? $"Go To '{SelectedPoint.Name}' completed"
+                : $"Go To '{SelectedPoint.Name}' failed: {result.Message}";
+        }, cancellationToken).ConfigureAwait(true);
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        SaveCurrentPositionCommand.NotifyCanExecuteChanged();
+        GoToSelectedCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedPointChanged(TeachingPointItemViewModel? value)
+    {
+        GoToSelectedCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task RunBusyAsync(Func<Task> action, CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        try
+        {
+            await action().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = "Teaching command cancelled";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Teaching command timed out";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Teaching command failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private bool TryCreateTolerance(out PositionTolerance tolerance, out string error)
+    {
+        tolerance = PositionTolerance.Default;
+        if (!TryParsePositive(ToleranceXText, "X tolerance", out var x, out error) ||
+            !TryParsePositive(ToleranceYText, "Y tolerance", out var y, out error) ||
+            !TryParsePositive(ToleranceZText, "Z tolerance", out var z, out error) ||
+            !TryParsePositive(ToleranceThetaText, "Theta tolerance", out var theta, out error))
+        {
+            return false;
+        }
+
+        tolerance = new PositionTolerance(x, y, z, theta);
+        return true;
+    }
+
+    private static bool TryParsePositive(string text, string label, out double value, out string error)
+    {
+        error = string.Empty;
+        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value) ||
+            !double.IsFinite(value))
+        {
+            error = $"{label} must be a finite number.";
+            return false;
+        }
+
+        if (value <= 0.0)
+        {
+            error = $"{label} must be greater than zero.";
+            return false;
+        }
+
+        return true;
+    }
 }

@@ -1,7 +1,167 @@
 <UserControl x:Class="VisionCell.App.Modules.Teaching.Views.TeachingView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid>
-    <TextBlock Text="Teaching" Style="{DynamicResource Text.PageTitle}" />
-  </Grid>
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Refresh"
+                  Command="{Binding RefreshCommand}"
+                  Height="36"
+                  MinWidth="96"
+                  Margin="0,0,8,0" />
+          <Button Content="Go To"
+                  Command="{Binding GoToSelectedCommand}"
+                  Height="36"
+                  MinWidth="88" />
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="Teaching" Style="{DynamicResource Text.PageTitle}" />
+          <TextBlock Text="{Binding StatusText}"
+                     Style="{DynamicResource Text.Status}"
+                     Margin="0,4,0,0" />
+        </StackPanel>
+      </DockPanel>
+
+      <Border Grid.Row="1" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Save Current Position" Style="{DynamicResource Text.CardTitle}" />
+          <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="180" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="150" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Name"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="1"
+                     Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="2"
+                       Text="Role"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <ComboBox Grid.Column="3"
+                      ItemsSource="{Binding RoleOptions}"
+                      SelectedItem="{Binding SelectedRole}"
+                      Height="32"
+                      Margin="0,0,12,8" />
+            <TextBlock Grid.Column="4"
+                       Text="Memo"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="5"
+                     Text="{Binding MemoText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,0,8" />
+          </Grid>
+          <Grid Grid.Row="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Tol X"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="1"
+                     Text="{Binding ToleranceXText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="2"
+                       Text="Tol Y"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="3"
+                     Text="{Binding ToleranceYText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="4"
+                       Text="Tol Z"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="5"
+                     Text="{Binding ToleranceZText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="6"
+                       Text="Tol T"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="7"
+                     Text="{Binding ToleranceThetaText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <Button Grid.Column="8"
+                    Content="Save Current"
+                    Command="{Binding SaveCurrentPositionCommand}"
+                    Height="32"
+                    MinWidth="128"
+                    Margin="0,0,0,8" />
+          </Grid>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <DockPanel>
+            <TextBlock Text="Teaching Points" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding Points.Count, StringFormat={}{0} points}"
+                       Style="{DynamicResource Text.Status}" />
+          </DockPanel>
+          <ListView Grid.Row="1"
+                    ItemsSource="{Binding Points}"
+                    SelectedItem="{Binding SelectedPoint}"
+                    Background="{DynamicResource Brush.PanelAlt}"
+                    BorderThickness="0"
+                    Foreground="{DynamicResource Brush.TextPrimary}">
+            <ListView.View>
+              <GridView>
+                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
+                <GridViewColumn Header="Role" DisplayMemberBinding="{Binding Role}" Width="100" />
+                <GridViewColumn Header="Position" DisplayMemberBinding="{Binding PositionText}" Width="260" />
+                <GridViewColumn Header="Tolerance" DisplayMemberBinding="{Binding ToleranceText}" Width="260" />
+                <GridViewColumn Header="Updated" DisplayMemberBinding="{Binding UpdatedAtText}" Width="150" />
+                <GridViewColumn Header="Memo" DisplayMemberBinding="{Binding Memo}" Width="220" />
+              </GridView>
+            </ListView.View>
+          </ListView>
+        </Grid>
+      </Border>
+    </Grid>
+  </ScrollViewer>
 </UserControl>

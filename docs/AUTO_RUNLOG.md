@@ -160,3 +160,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: WPF TeachingView binding, App DI registration, edit history wiring, and recipe-level teaching ownership remain open.
 - Next selected work: `codex/feature/fr-101-teaching-list-query` for list query support before WPF binding.
+
+## 2026-06-01 16:16 - PR #15
+- Branch: `codex/feature/fr-101-teaching-list-query`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/15
+- Squash/Merge commit: `33912e8920d31dc83e54b13f46413865f3d59566`
+- Scope: Added Teaching Point list query support to Application and Persistence contracts, SQLite updated-time ordering, and list query tests.
+- Files changed: 10 files, including Application/Persistence teaching contracts, SQLite repository, tests, Teaching/DB specs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 83 tests. GitHub Actions `build-test` passed in 1m44s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: WPF TeachingView binding and App DI registration remained open.
+- Next selected work: `codex/feature/fr-101-teaching-view-binding` for operator-visible refresh/save/go-to controls.
