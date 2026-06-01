@@ -171,3 +171,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: WPF TeachingView binding and App DI registration remained open.
 - Next selected work: `codex/feature/fr-101-teaching-view-binding` for operator-visible refresh/save/go-to controls.
+
+## 2026-06-01 16:26 - PR #16
+- Branch: `codex/feature/fr-101-teaching-view-binding`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/16
+- Squash/Merge commit: `c0fd3eeff079ae63c6a2e6837a7b2401461a82e0`
+- Scope: Bound TeachingView to refresh, Save Current Position, and Go To selected point through the Application/Persistence boundary.
+- Files changed: 9 files, including App DI, TeachingViewModel, TeachingView XAML, App tests, UI/Teaching docs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 85 tests. GitHub Actions `build-test` passed in 1m33s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Teaching edit history, active recipe ownership, delete/update UI, and import/export remain open.
+- Next selected work: `codex/feature/fr-104-teaching-history-contract` for edit history traceability contract.

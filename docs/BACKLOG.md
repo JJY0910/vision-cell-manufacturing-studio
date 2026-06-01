@@ -8,7 +8,7 @@
 - [ ] FR-060 Axis state display
 - [ ] FR-061 Axis Home
 - [ ] FR-062 Axis Jog
-- [ ] FR-100 Teaching point save/go-to (domain, Application use case, SQLite repository, list query, and WPF binding added; edit history/recipe ownership pending)
+- [ ] FR-100 Teaching point save/go-to (domain, Application use case, SQLite repository, list query, and WPF binding added; recipe ownership pending)
 - [ ] FR-120 Recipe CRUD
 - [ ] FR-140 Camera simulator grab
 - [ ] FR-160 2D inspection baseline
@@ -146,3 +146,4 @@ Problem: Operators can save, list, and Go To Teaching Points from the WPF surfac
 Proposed improvement: Add active recipe ownership for Teaching Points and write `teaching_history` rows for create/update/delete operations.
 Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
 Priority: P0
+Status: Application history entry and repository port added; SQLite history persistence and recipe ownership remain open.
