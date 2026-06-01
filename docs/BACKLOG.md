@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] SQLite motion command history repository and MotionView log binding after Application motion use case port
+- [ ] MotionView command history binding after SQLite motion command history repository
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -68,5 +68,12 @@ Date: 2026-06-01
 Source: FR-063 Application motion use case
 Problem: The Application layer can now create traceable motion command requests and record them through a history port, but no SQLite repository or MotionView binding exists yet.
 Proposed improvement: Implement the Persistence-layer SQLite `motion_command_history` repository with idempotent schema migration, then bind recent command history into MotionView through a view-model state object.
+Requirement impact: FR-063, FR-069, FR-200, NFR-004
+Priority: P1
+
+Date: 2026-06-01
+Source: FR-069 SQLite motion command history
+Problem: SQLite motion command history persistence now stores request/result records, but no MotionView state reads and displays the latest rows yet.
+Proposed improvement: Add an Application query use case or read port for recent motion command history and bind it to MotionView with refresh/error state.
 Requirement impact: FR-063, FR-069, FR-200, NFR-004
 Priority: P1

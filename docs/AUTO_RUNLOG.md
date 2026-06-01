@@ -21,3 +21,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Motion commands are not yet orchestrated through an Application use case, and history is not yet persisted to `motion_command_history`.
 - Next selected work: `feature/fr-063-motion-usecase-history` for Application motion use case and history repository port.
+
+## 2026-06-01 13:52 - PR #3
+- Branch: `feature/fr-063-motion-usecase-history`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/3
+- Squash/Merge commit: `daecf30b36a47366e7735c2f09867847a7f58205`
+- Scope: Added Application-layer motion command orchestration, request/result correlation normalization, and history repository port.
+- Files changed: 11 files, including ADR-0001, Application motion use case/DTOs/history port, Core DB error code, docs, and Application tests.
+- Validation: Local Debug/Release restore, build, and test passed with 43 tests. GitHub Actions `build-test` passed in 1m22s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: SQLite repository and MotionView history binding are still pending.
+- Next selected work: `feature/fr-069-motion-history-sqlite` for SQLite motion command history repository and idempotent schema bootstrap.
