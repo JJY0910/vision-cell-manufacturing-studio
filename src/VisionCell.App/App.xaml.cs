@@ -52,6 +52,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
+        services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<EquipmentViewModel>();
         services.AddSingleton<MotionViewModel>();

@@ -43,3 +43,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: MotionView still needed a read-bound command history panel.
 - Next selected work: `feature/fr-069-motion-history-view` for MotionView history reader binding.
+
+## 2026-06-01 14:17 - PR #5
+- Branch: `feature/fr-069-motion-history-view`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/5
+- Squash/Merge commit: `53b2b20968020e90efb9f4ca5c6065011e37a251`
+- Scope: Added Application/Persistence read path for recent motion command history and bound MotionView to SQLite-backed command records.
+- Files changed: 8 files, including MotionView/MotionViewModel history state, history item view-model, Persistence read mapping, App DI, UI spec, backlog, and app/persistence tests.
+- Validation: Local Debug/Release restore, build, and test passed with 49 tests. GitHub Actions `build-test` passed in 1m46s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: MotionView could display persisted command history but still needed operator controls to execute Servo/Home/Jog/Move/Stop through the Application use case.
+- Next selected work: `codex/feature/fr-063-motion-command-controls` for MotionView operator command controls.

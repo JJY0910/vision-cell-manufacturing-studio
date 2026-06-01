@@ -110,6 +110,8 @@ Required visual:
 - Soft limit display
 - Motion log
 - Recent motion command history from `motion_command_history`
+- Snapshot refresh and command status/correlation feedback
+- Current implementation executes simulator-backed Servo On/Off, Home All, Jog X +1, Move preset, and Stop through `IMotionCommandUseCase`; typed target-entry controls remain a follow-up.
 
 ### TeachingView
 

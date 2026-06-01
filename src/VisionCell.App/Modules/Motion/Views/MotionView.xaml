@@ -6,41 +6,54 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
       <DockPanel>
-        <Button DockPanel.Dock="Right"
-                Content="Refresh History"
-                Command="{Binding RefreshHistoryCommand}"
-                Height="36"
-                MinWidth="126" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Refresh Snapshot"
+                  Command="{Binding RefreshSnapshotCommand}"
+                  Height="36"
+                  MinWidth="132"
+                  Margin="0,0,8,0" />
+          <Button Content="Refresh History"
+                  Command="{Binding RefreshHistoryCommand}"
+                  Height="36"
+                  MinWidth="126" />
+        </StackPanel>
         <StackPanel>
           <TextBlock Text="Motion" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding HistoryStatus}"
+          <TextBlock Text="{Binding CommandStatus}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />
         </StackPanel>
       </DockPanel>
 
-      <UniformGrid Grid.Row="1" Columns="3" Margin="-8,12,-8,4">
+      <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
         <Border Style="{DynamicResource Card.Panel}">
           <StackPanel>
-            <TextBlock Text="Command Records" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding RecentCommands.Count}" Style="{DynamicResource Text.MetricValue}" />
+            <TextBlock Text="Controller" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding ControllerStatus}" Style="{DynamicResource Text.MetricValue}" />
           </StackPanel>
         </Border>
         <Border Style="{DynamicResource Card.Panel}">
           <StackPanel>
-            <TextBlock Text="Last Refresh" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding LastHistoryRefreshAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=-}"
+            <TextBlock Text="Servo" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding ServoStatus}" Style="{DynamicResource Text.MetricValue}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Axis State" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding AxisStatus}"
                        Style="{DynamicResource Text.StatusStrong}" />
           </StackPanel>
         </Border>
         <Border Style="{DynamicResource Card.Panel}">
           <StackPanel>
-            <TextBlock Text="History Source" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="SQLite motion_command_history"
+            <TextBlock Text="Last Command" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding LastCommandCorrelationId}"
                        Style="{DynamicResource Text.StatusStrong}"
                        TextWrapping="Wrap" />
           </StackPanel>
@@ -51,9 +64,67 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Motion Commands" Style="{DynamicResource Text.CardTitle}" />
+          <WrapPanel Grid.Row="1">
+            <Button Content="Servo On"
+                    Command="{Binding ServoOnCommand}"
+                    ToolTip="{Binding ServoOnDisabledReason}"
+                    Height="36"
+                    MinWidth="94"
+                    Margin="0,0,8,8" />
+            <Button Content="Servo Off"
+                    Command="{Binding ServoOffCommand}"
+                    ToolTip="{Binding ServoOffDisabledReason}"
+                    Height="36"
+                    MinWidth="94"
+                    Margin="0,0,8,8" />
+            <Button Content="Home All"
+                    Command="{Binding HomeCommand}"
+                    ToolTip="{Binding HomeDisabledReason}"
+                    Height="36"
+                    MinWidth="94"
+                    Margin="0,0,8,8" />
+            <Button Content="Jog X +1"
+                    Command="{Binding JogXPositiveCommand}"
+                    ToolTip="{Binding JogDisabledReason}"
+                    Height="36"
+                    MinWidth="94"
+                    Margin="0,0,8,8" />
+            <Button Content="Move Preset"
+                    Command="{Binding MoveAbsoluteCommand}"
+                    ToolTip="{Binding MoveAbsoluteDisabledReason}"
+                    Height="36"
+                    MinWidth="112"
+                    Margin="0,0,8,8" />
+            <Button Content="Stop"
+                    Command="{Binding StopCommand}"
+                    ToolTip="{Binding StopDisabledReason}"
+                    Height="36"
+                    MinWidth="84"
+                    Margin="0,0,8,8" />
+          </WrapPanel>
+          <TextBlock Grid.Row="2"
+                     Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Last snapshot: -}"
+                     Style="{DynamicResource Text.Status}"
+                     Margin="0,4,0,0" />
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <TextBlock Text="Recent Motion Commands" Style="{DynamicResource Text.CardTitle}" />
+          <DockPanel>
+            <TextBlock Text="Recent Motion Commands" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding HistoryStatus}"
+                       Style="{DynamicResource Text.Status}" />
+          </DockPanel>
           <ListView Grid.Row="1"
                     ItemsSource="{Binding RecentCommands}"
                     Background="{DynamicResource Brush.PanelAlt}"
