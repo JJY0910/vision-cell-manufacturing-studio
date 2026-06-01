@@ -164,5 +164,6 @@ ONNX integration is P2. Placeholder must not block P0/P1.
 - `Deterministic2DInspectionEngine` covers Phase 1 Missing, Scratch, Offset, and invalid ROI decisions for simulator evidence.
 - `InspectionRunUseCase` now creates a synthetic height map from the grabbed Gray8 frame, runs `IHeightMapInspectionEngine`, and records Inspect 3D before the final Judge.
 - `DeterministicHeightMapInspectionEngine` covers Phase 1 Lift, Dent, LeadBent, invalid height-map, and invalid ROI decisions for FR-162 evidence.
+- `InspectionRunUseCase` persists final Judge, defect summary, per-step timings, Recipe metadata, generated lot ID, source image URI, and 2D/3D defect records through `IInspectionResultRepository` after Judge succeeds.
 - Stop Inspection requests cancellation for the active run token through `InspectionViewModel`.
-- Result persistence and overlay rendering remain follow-up work; Persist Result is currently reported as a skipped timeline step after Judge.
+- Overlay rendering and image/height-map artifact file generation remain follow-up work; the persisted overlay and height-map paths are nullable until that slice lands.

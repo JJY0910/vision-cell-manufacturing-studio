@@ -46,6 +46,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private readonly IVisionInspectionEngine _visionInspectionEngine;
     private readonly IHeightMapInspectionEngine _heightMapInspectionEngine;
     private readonly SyntheticHeightMapFactory _syntheticHeightMapFactory;
+    private readonly IInspectionResultRepository _inspectionResultRepository;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
@@ -57,6 +58,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         IVisionInspectionEngine visionInspectionEngine,
         IHeightMapInspectionEngine heightMapInspectionEngine,
         SyntheticHeightMapFactory syntheticHeightMapFactory,
+        IInspectionResultRepository inspectionResultRepository,
         Func<DateTimeOffset>? clock = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
@@ -67,6 +69,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _visionInspectionEngine = visionInspectionEngine ?? throw new ArgumentNullException(nameof(visionInspectionEngine));
         _heightMapInspectionEngine = heightMapInspectionEngine ?? throw new ArgumentNullException(nameof(heightMapInspectionEngine));
         _syntheticHeightMapFactory = syntheticHeightMapFactory ?? throw new ArgumentNullException(nameof(syntheticHeightMapFactory));
+        _inspectionResultRepository = inspectionResultRepository ?? throw new ArgumentNullException(nameof(inspectionResultRepository));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -91,6 +94,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         CameraGrabResult? cameraGrabResult = null;
         VisionInspectionResult? visionResult = null;
         VisionInspectionResult? heightMapResult = null;
+        Guid? persistedResultId = null;
 
         try
         {
@@ -280,11 +284,45 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Success, heightMapResult.Message, heightMapStopwatch.Elapsed);
             var finalJudgment = DetermineFinalJudgment(visionResult, heightMapResult);
             recorder.Update(JudgeStep, InspectionSequenceStepStatus.Success, FormatJudgeMessage(visionResult, heightMapResult), TimeSpan.Zero);
-            recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Skipped, "Result persistence is pending FR-200 implementation.", TimeSpan.Zero);
+
+            var persistStopwatch = Stopwatch.StartNew();
+            persistedResultId = Guid.NewGuid();
+            recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Running, "Persisting inspection result.", null);
+            try
+            {
+                await _inspectionResultRepository
+                    .SaveAsync(
+                        CreateInspectionResultSaveRequest(
+                            persistedResultId.Value,
+                            recipe,
+                            commandRequest,
+                            cameraGrabResult.Frame!,
+                            visionResult,
+                            heightMapResult,
+                            finalJudgment,
+                            recorder.Snapshot(),
+                            startedAt),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                persistStopwatch.Stop();
+                var message = $"Inspection result persistence failed: {ex.Message}";
+                recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Failed, message, persistStopwatch.Elapsed);
+                return Finish(InspectionRunStatus.ResultPersistenceFailed, message);
+            }
+
+            persistStopwatch.Stop();
+            recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Success, $"Inspection result persisted: {persistedResultId.Value:N}.", persistStopwatch.Elapsed);
 
             return Finish(
                 InspectionRunStatus.Accepted,
-                $"Inspection sequence completed with judge {finalJudgment} for recipe '{recipe.RecipeId}' v{recipe.Version}.");
+                $"Inspection sequence completed with judge {finalJudgment} and persisted result {persistedResultId.Value:N} for recipe '{recipe.RecipeId}' v{recipe.Version}.");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -311,6 +349,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 cameraGrabResult,
                 visionResult,
                 heightMapResult,
+                persistedResultId,
                 recorder.Snapshot(),
                 startedAt,
                 _clock());
@@ -423,6 +462,72 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         return finalJudgment == Judgment.Pass
             ? "Judge: Pass. No 2D/3D defects detected."
             : $"Judge: Fail. 2D defects: {visionResult.Defects.Count}; 3D defects: {heightMapResult.Defects.Count}.";
+    }
+
+    private InspectionResultSaveRequest CreateInspectionResultSaveRequest(
+        Guid resultId,
+        RecipeIndexEntry recipe,
+        MachineCommandRequest commandRequest,
+        CameraFrame frame,
+        VisionInspectionResult visionResult,
+        VisionInspectionResult heightMapResult,
+        Judgment finalJudgment,
+        IReadOnlyList<InspectionSequenceStepRecord> stepTimings,
+        DateTimeOffset startedAt)
+    {
+        var completedAt = _clock();
+        var defects = visionResult.Defects
+            .Concat(heightMapResult.Defects)
+            .Select(defect => new InspectionDefectRecord(
+                defect.Type,
+                defect.Score,
+                RoiId: null,
+                defect.X,
+                defect.Y,
+                defect.Width,
+                defect.Height,
+                defect.Message))
+            .ToArray();
+
+        var parameters = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["RecipeId"] = recipe.RecipeId,
+            ["RecipeVersion"] = recipe.Version,
+            ["ProductName"] = recipe.ProductName,
+            ["CameraName"] = frame.CameraName,
+            ["FrameWidth"] = frame.Width.ToString(),
+            ["FrameHeight"] = frame.Height.ToString(),
+            ["PixelFormat"] = frame.PixelFormat.ToString(),
+            ["Vision2D"] = visionResult.Judgment.ToString(),
+            ["Vision3D"] = heightMapResult.Judgment.ToString()
+        };
+
+        return new InspectionResultSaveRequest(
+            resultId,
+            commandRequest.CorrelationId.ToString(),
+            CreateLotId(startedAt),
+            recipe.RecipeId,
+            recipe.Version,
+            finalJudgment,
+            defects.Length == 0 ? "No defects" : $"{defects.Length} defect(s)",
+            CreateSourceImagePath(frame, commandRequest.CorrelationId),
+            OverlayImagePath: null,
+            HeightMapPath: null,
+            completedAt - startedAt,
+            stepTimings,
+            parameters,
+            defects,
+            completedAt);
+    }
+
+    private static string CreateLotId(DateTimeOffset startedAt)
+    {
+        return $"LOT-{startedAt:yyyyMMddHHmmss}";
+    }
+
+    private static string CreateSourceImagePath(CameraFrame frame, CorrelationId correlationId)
+    {
+        return $"camera-frame://{Uri.EscapeDataString(frame.CameraName)}/{correlationId}";
     }
 
     private CameraGrabRequest CreateCameraGrabRequest(

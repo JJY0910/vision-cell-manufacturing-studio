@@ -31,12 +31,14 @@ public sealed class InspectionRunUseCaseTests
         var motion = new FakeMotionCommandUseCase();
         var vision = new FakeVisionInspectionEngine();
         var heightMap = new FakeHeightMapInspectionEngine();
+        var results = new FakeInspectionResultRepository();
         var useCase = CreateUseCase(
             new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
             controller,
             motionCommandUseCase: motion,
             visionInspectionEngine: vision,
-            heightMapInspectionEngine: heightMap);
+            heightMapInspectionEngine: heightMap,
+            inspectionResultRepository: results);
         var progress = new CapturingProgress();
 
         var result = await useCase.RunAsync(CreateRequest(), progress, CancellationToken.None);
@@ -63,6 +65,12 @@ public sealed class InspectionRunUseCaseTests
         result.HeightMapResult!.Judgment.Should().Be(Judgment.Pass);
         heightMap.Requests.Should().ContainSingle();
         heightMap.Requests[0].RecipeId.Should().Be("RCP-AUTO");
+        var persistedResultId = result.PersistedResultId;
+        persistedResultId.Should().NotBeNull();
+        results.Requests.Should().ContainSingle();
+        results.Requests[0].Id.Should().Be(persistedResultId.GetValueOrDefault());
+        results.Requests[0].Judgment.Should().Be(Judgment.Pass);
+        results.Requests[0].CorrelationId.Should().Be(result.Request.CorrelationId.ToString());
         motion.Requests.Should().ContainSingle();
         motion.Requests[0].Command.Should().Be(CommandKind.SequenceMoveToCamera);
         motion.Requests[0].InterlockContext.AutoMode.Should().BeTrue();
@@ -81,7 +89,7 @@ public sealed class InspectionRunUseCaseTests
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Inspect 3D" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Success && step.Message.Contains("Pass", StringComparison.Ordinal));
-        result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Skipped);
+        result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Success);
         progress.Updates.Should().Contain(update => update.Status == InspectionSequenceStepStatus.Running);
     }
 
@@ -213,6 +221,30 @@ public sealed class InspectionRunUseCaseTests
     }
 
     [Fact]
+    public async Task RunAsync_Should_Fail_Persist_Result_When_Result_Repository_Fails()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-PERSIST-FAIL", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var results = new FakeInspectionResultRepository
+        {
+            SaveHandler = _ => throw new InvalidOperationException("result database unavailable")
+        };
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            inspectionResultRepository: results);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.ResultPersistenceFailed);
+        result.Message.Should().Contain("result database unavailable");
+        result.PersistedResultId.Should().NotBeNull();
+        results.Requests.Should().ContainSingle();
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Failed);
+    }
+
+    [Fact]
     public async Task RunAsync_Should_Fail_When_Active_Recipe_Document_Cannot_Be_Loaded()
     {
         var recipe = CreateRecipeIndexEntry("RCP-MISSING-DOC", "1.0.0");
@@ -309,7 +341,8 @@ public sealed class InspectionRunUseCaseTests
         ICameraDevice? cameraDevice = null,
         IVisionInspectionEngine? visionInspectionEngine = null,
         IHeightMapInspectionEngine? heightMapInspectionEngine = null,
-        SyntheticHeightMapFactory? syntheticHeightMapFactory = null)
+        SyntheticHeightMapFactory? syntheticHeightMapFactory = null,
+        IInspectionResultRepository? inspectionResultRepository = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
@@ -320,6 +353,7 @@ public sealed class InspectionRunUseCaseTests
             visionInspectionEngine ?? new FakeVisionInspectionEngine(),
             heightMapInspectionEngine ?? new FakeHeightMapInspectionEngine(),
             syntheticHeightMapFactory ?? new SyntheticHeightMapFactory(),
+            inspectionResultRepository ?? new FakeInspectionResultRepository(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
 
@@ -644,6 +678,23 @@ public sealed class InspectionRunUseCaseTests
             Requests.Add(request);
             cancellationToken.ThrowIfCancellationRequested();
             return InspectHandler(request);
+        }
+    }
+
+    private sealed class FakeInspectionResultRepository : IInspectionResultRepository
+    {
+        public List<InspectionResultSaveRequest> Requests { get; } = new();
+
+        public Func<InspectionResultSaveRequest, Task> SaveHandler { get; init; } =
+            _ => Task.CompletedTask;
+
+        public Task SaveAsync(
+            InspectionResultSaveRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return SaveHandler(request);
         }
     }
 }

@@ -20,7 +20,7 @@ public sealed class SqliteRecipeIndexRepositoryTests
         var migrationCount = await database.CountRowsAsync("schema_version", CancellationToken.None);
 
         saved.Should().Be(entry);
-        migrationCount.Should().Be(4);
+        migrationCount.Should().Be(5);
     }
 
     [Fact]

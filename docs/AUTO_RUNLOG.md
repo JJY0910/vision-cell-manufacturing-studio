@@ -356,3 +356,10 @@
 - Validation target: Vision/Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Vision targeted tests passed with 10 tests; Application targeted tests passed with 66 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 177 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: Height-map inspection is deterministic simulator evidence, not production metrology; overlay rendering and result persistence remain follow-up work.
+
+## 2026-06-01 23:45 - In progress
+- Branch: `codex/feature/fr-200-inspection-result-persistence`
+- Scope: Add ADR-backed SQLite inspection result persistence for Judge, defects, timing, Recipe metadata, lot ID, correlation ID, and generated source image URI.
+- Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 67 tests; Persistence targeted tests passed with 31 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 180 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: Overlay and height-map artifact file generation remain follow-up work; persisted overlay/height-map paths are nullable in this slice.
