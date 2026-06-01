@@ -1,6 +1,8 @@
 using FluentAssertions;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Motion;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Primitives;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -42,7 +44,7 @@ public sealed class DashboardAndShellViewModelTests
             new NavigationService(),
             new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService()),
             new EquipmentViewModel(),
-            new MotionViewModel(),
+            new MotionViewModel(new FakeMotionCommandHistoryReader()),
             new TeachingViewModel(),
             new RecipeViewModel(),
             new InspectionViewModel(),
@@ -67,5 +69,60 @@ public sealed class DashboardAndShellViewModelTests
         dashboard.GetCommandAvailability(CommandKind.Jog).IsEnabled.Should().BeFalse();
         dashboard.GetCommandAvailability(CommandKind.MoveAbsolute).IsEnabled.Should().BeFalse();
         dashboard.GetCommandAvailability(CommandKind.RunInspection).IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Motion_RefreshHistoryAsync_Should_Load_Recent_Command_State()
+    {
+        var createdAt = new DateTimeOffset(2026, 6, 1, 10, 30, 0, TimeSpan.Zero);
+        var motion = new MotionViewModel(new FakeMotionCommandHistoryReader(
+            new MotionCommandHistoryRecord(
+                Guid.NewGuid(),
+                CorrelationId.New().ToString(),
+                "Move Absolute",
+                "X",
+                CommandStatus.Success,
+                null,
+                "Move Absolute completed.",
+                TimeSpan.FromMilliseconds(42),
+                createdAt)));
+
+        await motion.RefreshHistoryAsync(CancellationToken.None);
+
+        motion.HasHistory.Should().BeTrue();
+        motion.RecentCommands.Should().ContainSingle();
+        motion.RecentCommands[0].CommandName.Should().Be("Move Absolute");
+        motion.RecentCommands[0].AxisId.Should().Be("X");
+        motion.RecentCommands[0].Status.Should().Be(CommandStatus.Success);
+        motion.RecentCommands[0].ErrorCode.Should().Be("-");
+        motion.HistoryStatus.Should().Be("1 command records loaded");
+        motion.LastHistoryRefreshAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Motion_RefreshHistoryAsync_Should_Surface_Empty_State()
+    {
+        var motion = new MotionViewModel(new FakeMotionCommandHistoryReader());
+
+        await motion.RefreshHistoryAsync(CancellationToken.None);
+
+        motion.HasHistory.Should().BeFalse();
+        motion.RecentCommands.Should().BeEmpty();
+        motion.HistoryStatus.Should().Be("No motion command history");
+    }
+
+    private sealed class FakeMotionCommandHistoryReader : IMotionCommandHistoryReader
+    {
+        private readonly IReadOnlyList<MotionCommandHistoryRecord> _records;
+
+        public FakeMotionCommandHistoryReader(params MotionCommandHistoryRecord[] records)
+        {
+            _records = records;
+        }
+
+        public Task<IReadOnlyList<MotionCommandHistoryRecord>> ListRecentAsync(int limit, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<MotionCommandHistoryRecord>>(_records.Take(limit).ToArray());
+        }
     }
 }

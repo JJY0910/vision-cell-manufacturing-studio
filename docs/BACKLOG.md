@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] MotionView command history binding after SQLite motion command history repository
+- [ ] Motion command execution buttons in MotionView using `IMotionCommandUseCase`
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -76,4 +76,11 @@ Source: FR-069 SQLite motion command history
 Problem: SQLite motion command history persistence now stores request/result records, but no MotionView state reads and displays the latest rows yet.
 Proposed improvement: Add an Application query use case or read port for recent motion command history and bind it to MotionView with refresh/error state.
 Requirement impact: FR-063, FR-069, FR-200, NFR-004
+Priority: P1
+
+Date: 2026-06-01
+Source: FR-069 MotionView history binding
+Problem: MotionView can show recent persisted command history, but it still lacks operator controls for Servo/Home/Jog/Move/Stop execution through `IMotionCommandUseCase`.
+Proposed improvement: Add MotionView command buttons and target inputs that execute through Application use cases, refresh history after each command, and keep backend interlock validation authoritative.
+Requirement impact: FR-061, FR-062, FR-063, FR-064, FR-066, FR-067, FR-069, NFR-002, NFR-004
 Priority: P1

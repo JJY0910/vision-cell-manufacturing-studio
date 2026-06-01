@@ -109,6 +109,7 @@ Required visual:
 - Move absolute
 - Soft limit display
 - Motion log
+- Recent motion command history from `motion_command_history`
 
 ### TeachingView
 
