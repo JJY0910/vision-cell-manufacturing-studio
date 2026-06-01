@@ -53,9 +53,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<SqliteSchemaInitializer>();
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
         services.AddSingleton<SqliteTeachingPointRepository>();
+        services.AddSingleton<SqliteTeachingHistoryRepository>();
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<ITeachingPointRepository>(provider => provider.GetRequiredService<SqliteTeachingPointRepository>());
+        services.AddSingleton<ITeachingHistoryRepository>(provider => provider.GetRequiredService<SqliteTeachingHistoryRepository>());
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<DashboardViewModel>();

@@ -132,7 +132,8 @@ Implementation status:
 - SQLite persistence supports save, ID lookup, duplicate-name lookup, and updated-time ordered list queries.
 - WPF TeachingView binding supports refresh, save current position, and Go To selected point.
 - `VisionCell.Application.Teaching` defines a Teaching history entry/port for create/update/delete before/after JSON traceability.
-- SQLite history persistence and recipe-level Teaching Point ownership remain follow-up work.
+- SQLite history persistence stores append-only Teaching history rows, and Save Current Position appends a Created history row after a successful point save.
+- Update/delete history and recipe-level Teaching Point ownership remain follow-up work.
 
 ## Teaching Workflow
 
@@ -153,6 +154,7 @@ Implementation status:
 - Cannot go to point while EStop or ServoOff.
 - Editing point creates history row.
 - Deleting point asks confirmation and logs event.
+- Saving a new Teaching Point creates a `teaching_history` Created row with the saved point snapshot JSON.
 
 ## Motion Test Cases
 

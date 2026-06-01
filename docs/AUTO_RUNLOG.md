@@ -188,3 +188,10 @@
 - Scope: Add SQLite schema bootstrap and repository coverage for append-only Teaching History rows.
 - Validation target: Persistence tests, full Debug/Release build/test, GitHub Actions after PR creation.
 - Risks: Use-case integration and active recipe ownership remain intentionally outside this small persistence slice.
+
+## 2026-06-01 16:42 - In progress
+- Branch: `codex/feature/fr-104-teaching-save-history`
+- Scope: Wire `ITeachingHistoryRepository` into Save Current Position so successful Teaching Point creation records a Created history snapshot.
+- Validation target: Application/App tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 33 tests; Debug/Release solution build and test passed with 93 tests; WPF hidden launch smoke passed.
+- Risks: Update/delete history, active recipe ownership, and transactional point+history commits remain follow-up work.

@@ -22,7 +22,8 @@ public sealed class TeachingPointUseCaseTests
     {
         var controller = new SnapshotEquipmentController(CreateSnapshot(10.0, 20.0, 30.0, 40.0));
         var repository = new InMemoryTeachingPointRepository();
-        var useCase = CreateUseCase(controller, repository);
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(controller, repository, historyRepository: historyRepository);
 
         var result = await useCase.SaveCurrentPositionAsync(
             new TeachingPointSaveRequest(
@@ -41,6 +42,13 @@ public sealed class TeachingPointUseCaseTests
         result.Point.Memo.Should().Be("first pass");
         result.Point.CreatedAt.Should().Be(new DateTimeOffset(2026, 6, 1, 7, 0, 0, TimeSpan.Zero));
         repository.SavedPoints.Should().ContainSingle().Which.Should().Be(result.Point);
+        historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].TeachingPointId.Should().Be(result.Point.Id);
+        historyRepository.Entries[0].RecipeId.Should().BeNull();
+        historyRepository.Entries[0].Action.Should().Be(TeachingHistoryAction.Created);
+        historyRepository.Entries[0].BeforeJson.Should().BeNull();
+        historyRepository.Entries[0].AfterJson.Should().Contain("\"name\":\"Camera Teach\"");
+        historyRepository.Entries[0].AfterJson.Should().Contain("\"role\":\"Camera\"");
     }
 
     [Fact]
@@ -97,6 +105,28 @@ public sealed class TeachingPointUseCaseTests
     }
 
     [Fact]
+    public async Task SaveCurrentPositionAsync_Should_Not_Write_History_When_Duplicate_Name_Is_Rejected()
+    {
+        var controller = new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0));
+        var repository = new InMemoryTeachingPointRepository();
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var existing = TeachingPointFactory.Create(
+            "Park",
+            TeachingRole.Park,
+            new Position4D(0.0, 0.0, 0.0, 0.0),
+            PositionTolerance.Default).Point!;
+        repository.Points[existing.Id] = existing;
+        var useCase = CreateUseCase(controller, repository, historyRepository: historyRepository);
+
+        var result = await useCase.SaveCurrentPositionAsync(
+            new TeachingPointSaveRequest(" Park ", TeachingRole.Park, PositionTolerance.Default, null, TimeSpan.FromSeconds(1)),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        historyRepository.Entries.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task SaveCurrentPositionAsync_Should_Return_Validation_When_Axis_Snapshot_Is_Missing()
     {
         var controller = new SnapshotEquipmentController(CreateSnapshot(1.0, 2.0, 3.0, 4.0) with
@@ -133,6 +163,27 @@ public sealed class TeachingPointUseCaseTests
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(TeachingPointOperationStatus.RepositoryUnavailable);
         result.Message.Should().Contain("database unavailable");
+    }
+
+    [Fact]
+    public async Task SaveCurrentPositionAsync_Should_Return_Repository_Failure_When_History_Save_Throws()
+    {
+        var controller = new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0));
+        var repository = new InMemoryTeachingPointRepository();
+        var historyRepository = new InMemoryTeachingHistoryRepository
+        {
+            SaveHandler = (_, _) => throw new InvalidOperationException("history unavailable")
+        };
+        var useCase = CreateUseCase(controller, repository, historyRepository: historyRepository);
+
+        var result = await useCase.SaveCurrentPositionAsync(
+            new TeachingPointSaveRequest("Load", TeachingRole.Load, PositionTolerance.Default, null, TimeSpan.FromSeconds(1)),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(TeachingPointOperationStatus.RepositoryUnavailable);
+        result.Message.Should().Contain("history unavailable");
+        repository.SavedPoints.Should().ContainSingle();
     }
 
     [Fact]
@@ -184,13 +235,44 @@ public sealed class TeachingPointUseCaseTests
     private static TeachingPointUseCase CreateUseCase(
         IEquipmentController controller,
         ITeachingPointRepository repository,
-        IMotionCommandUseCase? motionCommandUseCase = null)
+        IMotionCommandUseCase? motionCommandUseCase = null,
+        ITeachingHistoryRepository? historyRepository = null)
     {
         return new TeachingPointUseCase(
             controller,
             repository,
+            historyRepository ?? new InMemoryTeachingHistoryRepository(),
             motionCommandUseCase ?? new CapturingMotionCommandUseCase(),
             () => new DateTimeOffset(2026, 6, 1, 7, 0, 0, TimeSpan.Zero));
+    }
+
+    private sealed class InMemoryTeachingHistoryRepository : ITeachingHistoryRepository
+    {
+        public List<TeachingHistoryEntry> Entries { get; } = new();
+        public Func<TeachingHistoryEntry, CancellationToken, Task>? SaveHandler { get; init; }
+
+        public async Task SaveAsync(TeachingHistoryEntry entry, CancellationToken cancellationToken)
+        {
+            if (SaveHandler is not null)
+            {
+                await SaveHandler(entry, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            Entries.Add(entry);
+        }
+
+        public Task<IReadOnlyList<TeachingHistoryEntry>> ListByPointAsync(
+            Guid teachingPointId,
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<TeachingHistoryEntry>>(
+                Entries
+                    .Where(entry => entry.TeachingPointId == teachingPointId)
+                    .Take(limit)
+                    .ToArray());
+        }
     }
 
     private static EquipmentSnapshot CreateSnapshot(double x, double y, double z, double theta)
