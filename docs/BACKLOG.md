@@ -281,4 +281,12 @@ Problem: TeachingView still relies on manual Recipe ID entry when writing Recipe
 Proposed improvement: Inject `IActiveRecipeContext` into TeachingViewModel, resolve active Recipe before Teaching mutations, and keep manual Recipe ID entry only as fallback when no active Recipe is selected.
 Requirement impact: FR-100, FR-104, FR-120, FR-122, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-122-teaching-active-context`.
+Status: Addressed by TeachingViewModel active Recipe resolution; inspection precheck remains open.
+
+Date: 2026-06-01
+Source: FR-180 Inspection active Recipe precheck
+Problem: InspectionView is still a placeholder and does not reject missing or invalid active Recipe context before an operator starts inspection.
+Proposed improvement: Add an InspectionViewModel precheck command backed by `IActiveRecipeContext`, with operator-visible blocked states for no active Recipe, invalid active Recipe, and repository unavailable.
+Requirement impact: FR-122, FR-180, FR-181, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-180-inspection-active-precheck`.

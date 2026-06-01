@@ -131,3 +131,9 @@ ONNX integration is P2. Placeholder must not block P0/P1.
 | height lift map | FAIL Lift |
 | invalid recipe | validation error |
 | camera grab timeout | sequence fails with CAM-001 |
+
+## Implementation status
+
+- InspectionView has an active Recipe precheck surface backed by `IActiveRecipeContext`.
+- Run Inspection currently rejects missing, invalid, or unavailable active Recipe context before any machine-like sequence can start.
+- Actual camera grab, 2D/3D inspection execution, result persistence, and overlay rendering remain follow-up work.

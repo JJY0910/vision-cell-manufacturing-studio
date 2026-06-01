@@ -80,7 +80,8 @@ Implementation status:
 - RecipeView can set the selected indexed Recipe active through the Application-layer index port and refresh the active-state summary.
 - `ActiveRecipeContext` exposes the active Recipe metadata through an Application-layer result contract for Teaching, inspection startup, and future interlock consumers.
 - TeachingView resolves active Recipe context before Save/Update/Delete mutations and passes the active Recipe ID into Teaching history requests, with manual Recipe ID entry retained as a fallback.
-- Active Recipe app startup restore, active context consumption by inspection, and multi-row Recipe editing remain follow-up work.
+- InspectionView uses active Recipe context as a precheck before Run Inspection can proceed to future sequence execution.
+- Active Recipe app startup restore, full inspection sequence execution, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 
