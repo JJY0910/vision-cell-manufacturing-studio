@@ -83,3 +83,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: MotionView still needed typed operator-entered jog and absolute move payloads instead of simulator presets.
 - Next selected work: `codex/feature/fr-063-typed-motion-targets` for typed MotionView command payloads through the Application/controller boundary.
+
+## 2026-06-01 15:12 - PR #8
+- Branch: `codex/feature/fr-063-typed-motion-targets`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/8
+- Squash/Merge commit: `627b780950b6a6e1ecebd27a9e55616e5c5cfcd5`
+- Scope: Added typed Jog and Move Absolute target payloads through MotionView, Application use case, controller request boundary, simulator execution, and motion command history.
+- Files changed: 21 files, including Motion command payload helpers, MotionView command inputs, simulator handling, SQLite axis extraction, tests, ADR-0003, specs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 56 tests. GitHub Actions `build-test` passed in 1m55s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Motion profile/tolerance fields were still fixed by defaults and needed typed operator input.
+- Next selected work: `codex/feature/fr-065-motion-profile-tolerance` for request-level velocity, acceleration, deceleration, jerk, and arrival tolerance payloads.

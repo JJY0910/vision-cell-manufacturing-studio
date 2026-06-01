@@ -112,6 +112,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Motion Commands" Style="{DynamicResource Text.CardTitle}" />
           <WrapPanel Grid.Row="1">
@@ -237,7 +238,65 @@
                     MinWidth="120"
                     Margin="0,0,8,8" />
           </Grid>
-          <TextBlock Grid.Row="4"
+          <Grid Grid.Row="4" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="88" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Velocity"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="1"
+                     Text="{Binding MoveVelocityText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="2"
+                       Text="Accel"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="3"
+                     Text="{Binding MoveAccelerationText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="4"
+                       Text="Decel"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="5"
+                     Text="{Binding MoveDecelerationText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="6"
+                       Text="Jerk"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="7"
+                     Text="{Binding MoveJerkText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+            <TextBlock Grid.Column="8"
+                       Text="Tol"
+                       Style="{DynamicResource Text.MetricLabel}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,8" />
+            <TextBox Grid.Column="9"
+                     Text="{Binding MoveArrivalToleranceText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="32"
+                     Margin="0,0,12,8" />
+          </Grid>
+          <TextBlock Grid.Row="5"
                      Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Last snapshot: -}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />

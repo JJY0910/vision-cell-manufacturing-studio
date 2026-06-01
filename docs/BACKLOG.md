@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] Motion profile/tolerance inputs for velocity, acceleration, and arrival tolerance
+- [ ] Motion profile presets and per-axis override policy
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -98,4 +98,12 @@ Source: FR-063 typed motion command payloads
 Problem: MotionView can now dispatch typed jog and absolute move targets, but velocity profile, acceleration, and arrival tolerance inputs are still fixed by the simulator/controller defaults.
 Proposed improvement: Add typed profile/tolerance payloads with UI validation, simulator acceptance checks, and command history persistence before real adapter integration.
 Requirement impact: FR-063, FR-064, FR-066, FR-067, FR-069, NFR-004
+Priority: P1
+Status: Addressed by ADR-0004 for request-level velocity, acceleration, deceleration, jerk, and arrival tolerance payloads.
+
+Date: 2026-06-01
+Source: FR-065 motion profile/tolerance payloads
+Problem: Move Absolute now captures a request-level profile and arrival tolerance, but there is no profile preset library, per-axis override policy, or recipe-level profile reuse model yet.
+Proposed improvement: Add named motion profile presets, clarify per-axis override behavior, and wire profile selection into recipe/teaching workflows before real adapter integration.
+Requirement impact: FR-063, FR-065, FR-100, FR-120, FR-200, NFR-004
 Priority: P1

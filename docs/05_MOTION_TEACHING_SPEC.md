@@ -81,13 +81,15 @@ Rules:
 Inputs:
 
 - X/Y/Z/T target
-- velocity profile
+- velocity profile: velocity, acceleration, deceleration, jerk
+- arrival tolerance
 - timeout
 
 Acceptance:
 
 - all axes arrive within tolerance
 - final position stored in command log
+- requested profile/tolerance stored in command log
 
 ### Stop
 

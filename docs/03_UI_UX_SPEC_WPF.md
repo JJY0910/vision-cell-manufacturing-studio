@@ -112,7 +112,7 @@ Required visual:
 - Recent motion command history from `motion_command_history`
 - Snapshot refresh and command status/correlation feedback
 - Axis cards display position, target, motion state, homing, servo, alarm, and soft-limit range from the latest controller snapshot.
-- Current implementation executes simulator-backed Servo On/Off, Home All, typed Jog +/- axis steps, typed Move Absolute X/Y/Z/Theta targets, and Stop through `IMotionCommandUseCase`.
+- Current implementation executes simulator-backed Servo On/Off, Home All, typed Jog +/- axis steps, typed Move Absolute X/Y/Z/Theta/profile/tolerance targets, and Stop through `IMotionCommandUseCase`.
 
 ### TeachingView
 
