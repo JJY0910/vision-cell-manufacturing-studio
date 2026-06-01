@@ -185,3 +185,4 @@ Problem: TeachingView now confirms before delete, but selected-point history row
 Proposed improvement: Add a selected-point history panel backed by `ITeachingHistoryRepository.ListByPointAsync`, showing Created/Updated/Deleted rows and timestamps for setup traceability.
 Requirement impact: FR-104, FR-200, NFR-004
 Priority: P0
+Status: Addressed with a selected-point Teaching history panel; active recipe ownership and custom dialog styling remain open.

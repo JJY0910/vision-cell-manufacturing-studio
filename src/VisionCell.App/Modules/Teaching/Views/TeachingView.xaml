@@ -7,6 +7,7 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
+        <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
       <DockPanel>
@@ -153,9 +154,16 @@
           </Grid.RowDefinitions>
           <DockPanel>
             <TextBlock Text="Teaching Points" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock DockPanel.Dock="Right"
-                       Text="{Binding Points.Count, StringFormat={}{0} points}"
-                       Style="{DynamicResource Text.Status}" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+              <TextBlock Text="{Binding Points.Count, StringFormat={}{0} points}"
+                         Style="{DynamicResource Text.Status}"
+                         VerticalAlignment="Center"
+                         Margin="0,0,12,0" />
+              <Button Content="Refresh History"
+                      Command="{Binding RefreshSelectedPointHistoryCommand}"
+                      Height="32"
+                      MinWidth="126" />
+            </StackPanel>
           </DockPanel>
           <ListView Grid.Row="1"
                     ItemsSource="{Binding Points}"
@@ -171,6 +179,36 @@
                 <GridViewColumn Header="Tolerance" DisplayMemberBinding="{Binding ToleranceText}" Width="260" />
                 <GridViewColumn Header="Updated" DisplayMemberBinding="{Binding UpdatedAtText}" Width="150" />
                 <GridViewColumn Header="Memo" DisplayMemberBinding="{Binding Memo}" Width="220" />
+              </GridView>
+            </ListView.View>
+          </ListView>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <DockPanel>
+            <TextBlock Text="Selected Point History" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding HistoryStatus}"
+                       Style="{DynamicResource Text.Status}" />
+          </DockPanel>
+          <ListView Grid.Row="1"
+                    ItemsSource="{Binding SelectedPointHistory}"
+                    Background="{DynamicResource Brush.PanelAlt}"
+                    BorderThickness="0"
+                    Foreground="{DynamicResource Brush.TextPrimary}">
+            <ListView.View>
+              <GridView>
+                <GridViewColumn Header="Time" DisplayMemberBinding="{Binding CreatedAtText}" Width="150" />
+                <GridViewColumn Header="Action" DisplayMemberBinding="{Binding ActionText}" Width="90" />
+                <GridViewColumn Header="Recipe" DisplayMemberBinding="{Binding RecipeText}" Width="110" />
+                <GridViewColumn Header="Before" DisplayMemberBinding="{Binding BeforeText}" Width="360" />
+                <GridViewColumn Header="After" DisplayMemberBinding="{Binding AfterText}" Width="360" />
               </GridView>
             </ListView.View>
           </ListView>
