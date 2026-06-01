@@ -127,3 +127,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Teaching point domain, persistence, and Go To workflow remained open.
 - Next selected work: `codex/feature/fr-100-teaching-point-model` for Teaching Point role/position/tolerance validation.
+
+## 2026-06-01 15:49 - PR #12
+- Branch: `codex/feature/fr-100-teaching-point-model`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/12
+- Squash/Merge commit: `79446098e4591b43b7c283198c9c29d302e04c35`
+- Scope: Added Motion-layer Teaching Point role, position, tolerance, validation issue, and creation result models with soft-limit and tolerance tests.
+- Files changed: 10 files, including `src/VisionCell.Motion/Teaching/*`, Motion tests, Teaching spec, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 69 tests. GitHub Actions `build-test` passed in 1m45s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Application save/go-to boundary, SQLite persistence, and WPF TeachingView binding remained open.
+- Next selected work: `codex/feature/fr-100-teaching-usecase` for Save Current Position and Go To Application use case boundaries.
