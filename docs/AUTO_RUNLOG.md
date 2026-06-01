@@ -286,3 +286,10 @@
 - Validation target: Persistence targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 49 tests; Persistence targeted tests passed with 29 tests; App targeted tests passed with 25 tests; Debug/Release solution build and test passed with 136 tests; WPF hidden launch smoke passed.
 - Risks: This slice only adds repository-level active state; RecipeView activation and app startup restore remain follow-up work.
+
+## 2026-06-01 19:55 - In progress
+- Branch: `codex/feature/fr-122-recipe-view-activate`
+- Scope: Bind RecipeView Set Active command to the Recipe index active-state contract and refresh selected Recipe state after activation.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 29 tests; Debug/Release solution build and test passed with 140 tests; WPF hidden launch smoke passed.
+- Risks: Active Recipe app startup restore and Teaching/inspection context consumption remain follow-up work.

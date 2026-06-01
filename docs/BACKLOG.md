@@ -257,4 +257,12 @@ Problem: RecipeView can save and list Recipe rows, but there is not yet a reposi
 Proposed improvement: Add active Recipe query/switch methods to the Recipe index port and SQLite repository, then bind RecipeView activation in a follow-up UI slice.
 Requirement impact: FR-120, FR-122, FR-123, FR-124, NFR-004, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-122-active-recipe-index`.
+Status: Addressed by the Recipe index repository active query/switch contract; RecipeView activation is in progress on `codex/feature/fr-122-recipe-view-activate`.
+
+Date: 2026-06-01
+Source: FR-122 RecipeView active command
+Problem: The Recipe index can mark one row active, but operators still need an HMI command to activate the selected Recipe and see the active summary update.
+Proposed improvement: Bind RecipeView Set Active to `IRecipeIndexRepository.SetActiveAsync`, refresh the list after success, and surface rejected/missing-row paths in `StatusText`.
+Requirement impact: FR-120, FR-122, FR-123, FR-124, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-122-recipe-view-activate`.
