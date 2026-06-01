@@ -78,7 +78,8 @@ Implementation status:
 - RecipeView can save a valid single-camera-position Recipe from operator-entered metadata, camera, Teaching, and ROI fields, then refresh/select the indexed row.
 - `SqliteRecipeIndexRepository` can query the active Recipe row and atomically switch active state to one existing indexed Recipe without clearing the previous active row on a missing target.
 - RecipeView can set the selected indexed Recipe active through the Application-layer index port and refresh the active-state summary.
-- Active Recipe app startup restore and multi-row Recipe editing remain follow-up work.
+- `ActiveRecipeContext` exposes the active Recipe metadata through an Application-layer result contract for Teaching, inspection startup, and future interlock consumers.
+- Active Recipe app startup restore, active context consumption by Teaching/inspection, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 
@@ -106,3 +107,4 @@ Implementation status:
 - Current Application Recipe save workflow reports document/index failures explicitly but does not make file-system and SQLite updates atomic.
 - Current RecipeView save surface creates one Camera Teaching point and one ROI row; multi-row editors remain follow-up work.
 - Current active Recipe state is stored in the SQLite Recipe index; a separate app settings pointer has not been added.
+- Current active Recipe context checks metadata validity but does not yet load the JSON document.

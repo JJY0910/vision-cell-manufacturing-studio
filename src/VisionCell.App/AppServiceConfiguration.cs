@@ -61,6 +61,7 @@ public static class AppServiceConfiguration
             provider.GetRequiredService<IRecipeDocumentStore>(),
             provider.GetRequiredService<IRecipeIndexRepository>(),
             provider.GetRequiredService<RecipeValidator>()));
+        services.AddSingleton<IActiveRecipeContext, ActiveRecipeContext>();
         services.AddSingleton<ITeachingPointRepository>(provider => provider.GetRequiredService<SqliteTeachingPointRepository>());
         services.AddSingleton<ITeachingHistoryRepository>(provider => provider.GetRequiredService<SqliteTeachingHistoryRepository>());
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();

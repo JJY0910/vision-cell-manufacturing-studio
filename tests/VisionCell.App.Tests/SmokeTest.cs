@@ -99,6 +99,17 @@ public sealed class DashboardAndShellViewModelTests
             indexed.Should().NotBeNull();
             indexed!.Checksum.Should().Be(result.Entry.Checksum);
             indexed.DocumentPath.Should().Be(result.Entry.DocumentPath);
+
+            var activeContext = provider.GetRequiredService<IActiveRecipeContext>();
+            var notSelected = await activeContext.GetActiveAsync(CancellationToken.None);
+            notSelected.Status.Should().Be(ActiveRecipeContextStatus.NotSelected);
+
+            var activated = await index.SetActiveAsync("APP-COMPOSITION-RCP", "1.0.0", CancellationToken.None);
+            var active = await activeContext.GetActiveAsync(CancellationToken.None);
+            activated.Should().BeTrue();
+            active.IsSuccess.Should().BeTrue();
+            active.RecipeId.Should().Be("APP-COMPOSITION-RCP");
+            active.Version.Should().Be("1.0.0");
         }
         finally
         {
