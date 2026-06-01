@@ -244,3 +244,10 @@
 - Validation target: Persistence targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
 - Local validation: Persistence targeted tests passed with 20 tests; Debug/Release solution build and test passed with 116 tests; WPF hidden launch smoke passed.
 - Risks: SQLite Recipe indexing, active recipe app settings, and RecipeView editing remain follow-up work.
+
+## 2026-06-01 18:42 - In progress
+- Branch: `codex/feature/fr-120-recipe-sqlite-index`
+- Scope: Add ADR-backed SQLite Recipe index migration/repository for metadata list and lookup workflows.
+- Validation target: Persistence targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
+- Local validation: Persistence targeted tests passed with 25 tests; Debug/Release solution build and test passed with 121 tests; WPF hidden launch smoke passed.
+- Risks: JSON document save and SQLite index update are not yet an atomic workflow; active recipe settings and RecipeView editing remain follow-up work.

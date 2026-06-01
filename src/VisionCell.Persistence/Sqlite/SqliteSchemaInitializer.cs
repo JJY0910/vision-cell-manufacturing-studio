@@ -7,6 +7,7 @@ public sealed class SqliteSchemaInitializer
     private const string MotionHistoryMigrationId = "001_motion_command_history";
     private const string TeachingPointsMigrationId = "002_teaching_points";
     private const string TeachingHistoryMigrationId = "003_teaching_history";
+    private const string RecipesMigrationId = "004_recipes";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -24,6 +25,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, TeachingPointsMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateTeachingHistoryTableAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, TeachingHistoryMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateRecipesTableAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, RecipesMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -95,6 +98,29 @@ public sealed class SqliteSchemaInitializer
               before_json TEXT NULL,
               after_json TEXT NULL,
               created_at TEXT NOT NULL
+            );
+            """;
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateRecipesTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS recipes (
+              id TEXT PRIMARY KEY,
+              recipe_id TEXT NOT NULL,
+              version TEXT NOT NULL,
+              product_name TEXT NOT NULL,
+              file_path TEXT NOT NULL,
+              checksum TEXT NOT NULL,
+              is_active INTEGER NOT NULL DEFAULT 0,
+              is_valid INTEGER NOT NULL DEFAULT 0,
+              validation_summary TEXT NULL,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              UNIQUE(recipe_id, version)
             );
             """;
 

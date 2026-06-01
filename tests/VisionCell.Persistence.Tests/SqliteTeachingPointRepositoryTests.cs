@@ -29,7 +29,7 @@ public sealed class SqliteTeachingPointRepositoryTests
         saved.Memo.Should().Be("first pass");
         saved.CreatedAt.Should().Be(point.CreatedAt);
         saved.UpdatedAt.Should().Be(point.UpdatedAt);
-        migrationCount.Should().Be(3);
+        migrationCount.Should().Be(4);
     }
 
     [Fact]
