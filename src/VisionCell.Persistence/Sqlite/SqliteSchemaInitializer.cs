@@ -6,6 +6,7 @@ public sealed class SqliteSchemaInitializer
 {
     private const string MotionHistoryMigrationId = "001_motion_command_history";
     private const string TeachingPointsMigrationId = "002_teaching_points";
+    private const string TeachingHistoryMigrationId = "003_teaching_history";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -21,6 +22,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, MotionHistoryMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateTeachingPointsTableAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, TeachingPointsMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateTeachingHistoryTableAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, TeachingHistoryMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -74,6 +77,24 @@ public sealed class SqliteSchemaInitializer
               memo TEXT NULL,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL
+            );
+            """;
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateTeachingHistoryTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS teaching_history (
+              id TEXT PRIMARY KEY,
+              teaching_point_id TEXT NOT NULL,
+              recipe_id TEXT NULL,
+              action TEXT NOT NULL,
+              before_json TEXT NULL,
+              after_json TEXT NULL,
+              created_at TEXT NOT NULL
             );
             """;
 

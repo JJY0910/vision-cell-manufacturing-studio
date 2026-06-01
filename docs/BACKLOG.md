@@ -147,3 +147,10 @@ Proposed improvement: Add active recipe ownership for Teaching Points and write 
 Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
 Priority: P0
 Status: Application history entry and repository port added; SQLite history persistence and recipe ownership remain open.
+
+Date: 2026-06-01
+Source: FR-104 SQLite teaching history repository
+Problem: Teaching history rows can now be stored and queried in SQLite, but Save/Update/Delete teaching workflows do not yet append entries automatically and active recipe ownership is still not wired.
+Proposed improvement: Inject `ITeachingHistoryRepository` into the teaching use case, serialize before/after snapshots for create/update/delete, and associate entries with the active recipe when recipe selection is available.
+Requirement impact: FR-104, FR-120, FR-121, FR-200, NFR-004
+Priority: P0
