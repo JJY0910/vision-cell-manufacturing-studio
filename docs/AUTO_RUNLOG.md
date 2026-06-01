@@ -138,3 +138,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: Application save/go-to boundary, SQLite persistence, and WPF TeachingView binding remained open.
 - Next selected work: `codex/feature/fr-100-teaching-usecase` for Save Current Position and Go To Application use case boundaries.
+
+## 2026-06-01 15:59 - PR #13
+- Branch: `codex/feature/fr-100-teaching-usecase`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/13
+- Squash/Merge commit: `9ffa00eb5130be89c9372ba439ff0d5aef241e90`
+- Scope: Added Application-layer Teaching Point Save Current Position and Go To use case boundaries, repository port, explicit result statuses, and tests.
+- Files changed: 12 files, including `src/VisionCell.Application/Teaching/*`, Application tests, Teaching spec, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 75 tests. GitHub Actions `build-test` passed in 1m37s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: SQLite persistence and WPF TeachingView binding remained open.
+- Next selected work: `codex/feature/fr-100-teaching-sqlite-repository` for concrete Teaching Point persistence.

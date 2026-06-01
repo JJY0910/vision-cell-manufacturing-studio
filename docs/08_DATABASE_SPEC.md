@@ -96,6 +96,33 @@ CREATE TABLE IF NOT EXISTS defects (
 );
 ```
 
+### teaching_points
+
+```sql
+CREATE TABLE IF NOT EXISTS teaching_points (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  role TEXT NOT NULL,
+  x REAL NOT NULL,
+  y REAL NOT NULL,
+  z REAL NOT NULL,
+  theta REAL NOT NULL,
+  tolerance_x REAL NOT NULL,
+  tolerance_y REAL NOT NULL,
+  tolerance_z REAL NOT NULL,
+  tolerance_theta REAL NOT NULL,
+  memo TEXT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `teaching_points` through migration id `002_teaching_points`.
+- `SqliteTeachingPointRepository` implements `ITeachingPointRepository` for ID lookup, case-insensitive name lookup, and save/upsert.
+- The `name` column uses a case-insensitive unique constraint to support duplicate-name validation before WPF binding.
+
 ### motion_command_history
 
 ```sql
@@ -113,7 +140,7 @@ CREATE TABLE IF NOT EXISTS motion_command_history (
 
 Implementation note:
 
-- `VisionCell.Persistence` initializes `schema_version` and `motion_command_history` idempotently through `SqliteSchemaInitializer`.
+- `VisionCell.Persistence` initializes `schema_version`, `motion_command_history`, and `teaching_points` idempotently through `SqliteSchemaInitializer`.
 - `SqliteMotionCommandHistoryRepository` writes `MachineCommandRequest` and `MachineCommandResult` JSON with correlation ID and elapsed time.
 
 ## Migration Policy
@@ -127,6 +154,7 @@ Implementation note:
 
 - `IEventRepository`
 - `IRecipeRepository`
+- `ITeachingPointRepository`
 - `ITeachingHistoryRepository`
 - `IInspectionResultRepository`
 - `IMotionHistoryRepository`

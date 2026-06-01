@@ -8,7 +8,7 @@
 - [ ] FR-060 Axis state display
 - [ ] FR-061 Axis Home
 - [ ] FR-062 Axis Jog
-- [ ] FR-100 Teaching point save/go-to (domain model and Application use case boundary added; persistence/UI pending)
+- [ ] FR-100 Teaching point save/go-to (domain, Application use case, and SQLite repository added; WPF UI pending)
 - [ ] FR-120 Recipe CRUD
 - [ ] FR-140 Camera simulator grab
 - [ ] FR-160 2D inspection baseline
@@ -128,5 +128,13 @@ Date: 2026-06-01
 Source: FR-100 teaching application use case
 Problem: Save Current Position and Go To now have an Application boundary, but there is no concrete Persistence repository or WPF TeachingView binding to make the workflow operator-visible.
 Proposed improvement: Implement the SQLite teaching point repository with duplicate-name constraints and bind TeachingView commands/list state to the new Application use case.
+Requirement impact: FR-100, FR-101, FR-103, FR-104, FR-120, FR-200, NFR-004
+Priority: P0
+Status: SQLite teaching point repository and schema added; WPF TeachingView binding and edit history remain open.
+
+Date: 2026-06-01
+Source: FR-100 SQLite teaching repository
+Problem: Teaching Points now persist in SQLite, but operators still cannot save, list, or execute Go To from the WPF TeachingView.
+Proposed improvement: Register the teaching repository/use case in App composition and bind TeachingView to save current position, list saved points, and execute Go To through the Application boundary.
 Requirement impact: FR-100, FR-101, FR-103, FR-104, FR-120, FR-200, NFR-004
 Priority: P0
