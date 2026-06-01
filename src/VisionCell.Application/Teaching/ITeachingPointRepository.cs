@@ -1,0 +1,12 @@
+using VisionCell.Motion.Teaching;
+
+namespace VisionCell.Application.Teaching;
+
+public interface ITeachingPointRepository
+{
+    Task<TeachingPoint?> FindByIdAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<TeachingPoint?> FindByNameAsync(string name, CancellationToken cancellationToken);
+
+    Task SaveAsync(TeachingPoint point, CancellationToken cancellationToken);
+}

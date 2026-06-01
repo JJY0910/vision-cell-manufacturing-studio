@@ -125,8 +125,11 @@ Roles:
 Implementation status:
 
 - `VisionCell.Motion.Teaching` defines the Teaching Point domain model, role enum, per-axis tolerance model, and creation validation.
+- `VisionCell.Application.Teaching` defines the Save Current Position and Go To Teaching Point use case boundary, repository port, and explicit result statuses.
 - Teaching point creation rejects empty names, unsupported roles, non-finite coordinates, coordinates outside the default axis soft limits, and non-positive tolerances.
-- Active recipe persistence, duplicate-name validation, edit history, and Go To Teaching Point execution remain Application/App/Persistence follow-up work.
+- Save Current Position reads the current equipment snapshot with timeout/cancellation, validates duplicate names through the repository port, and saves only validated points.
+- Go To Teaching Point loads a saved point and dispatches a traceable Move Absolute request through `IMotionCommandUseCase`.
+- SQLite persistence, WPF TeachingView binding, and edit history remain App/Persistence follow-up work.
 
 ## Teaching Workflow
 
