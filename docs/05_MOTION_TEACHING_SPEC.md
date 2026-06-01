@@ -135,7 +135,8 @@ Implementation status:
 - SQLite history persistence stores append-only Teaching history rows, and Save Current Position appends a Created history row after a successful point save.
 - Application update/delete use cases append Updated/Deleted history rows with before/after Teaching Point JSON.
 - WPF TeachingView binds selected-point update/delete commands to the Application contract.
-- Delete confirmation, selected-point history display, and recipe-level Teaching Point ownership remain follow-up work.
+- WPF TeachingView asks for confirmation before deleting a selected Teaching Point.
+- Selected-point history display and recipe-level Teaching Point ownership remain follow-up work.
 
 ## Teaching Workflow
 

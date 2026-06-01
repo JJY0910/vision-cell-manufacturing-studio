@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Teaching;
+using VisionCell.App.Interaction;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Motion.Teaching;
 
@@ -16,11 +17,16 @@ public sealed partial class TeachingViewModel : ObservableObject
     private const int TeachingPointLimit = 50;
     private readonly ITeachingPointUseCase _teachingPointUseCase;
     private readonly IEquipmentController _equipmentController;
+    private readonly IUserConfirmationService _confirmationService;
 
-    public TeachingViewModel(ITeachingPointUseCase teachingPointUseCase, IEquipmentController equipmentController)
+    public TeachingViewModel(
+        ITeachingPointUseCase teachingPointUseCase,
+        IEquipmentController equipmentController,
+        IUserConfirmationService confirmationService)
     {
         _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
         _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
+        _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         SaveCurrentPositionCommand = new AsyncRelayCommand(SaveCurrentPositionAsync, () => !IsBusy);
         UpdateSelectedCommand = new AsyncRelayCommand(UpdateSelectedAsync, () => !IsBusy && SelectedPoint is not null);
@@ -181,6 +187,16 @@ public sealed partial class TeachingViewModel : ObservableObject
         if (SelectedPoint is null)
         {
             StatusText = "Select a teaching point before delete";
+            return;
+        }
+
+        var confirmed = await _confirmationService.ConfirmAsync(
+            "Delete Teaching Point",
+            $"Delete teaching point '{SelectedPoint.Name}'?",
+            cancellationToken).ConfigureAwait(true);
+        if (!confirmed)
+        {
+            StatusText = $"Teaching delete cancelled for '{SelectedPoint.Name}'";
             return;
         }
 

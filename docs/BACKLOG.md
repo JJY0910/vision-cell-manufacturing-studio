@@ -177,3 +177,11 @@ Problem: TeachingView can update/delete selected points through the Application 
 Proposed improvement: Add a confirmation boundary for delete and a selected-point history panel backed by `ITeachingHistoryRepository.ListByPointAsync`.
 Requirement impact: FR-104, FR-200, NFR-004
 Priority: P0
+Status: Delete confirmation boundary added; selected-point history display remains open.
+
+Date: 2026-06-01
+Source: FR-104 Teaching delete confirmation
+Problem: TeachingView now confirms before delete, but selected-point history rows are still not visible in the operator workflow.
+Proposed improvement: Add a selected-point history panel backed by `ITeachingHistoryRepository.ListByPointAsync`, showing Created/Updated/Deleted rows and timestamps for setup traceability.
+Requirement impact: FR-104, FR-200, NFR-004
+Priority: P0
