@@ -1,6 +1,6 @@
 # Command Interlock Matrix
 
-This is the Phase 1 design baseline for HMI command enablement and backend validation. UI disabled state is not enough; each command also needs backend validation before execution.
+This is the Phase 1 implementation baseline for HMI command enablement and backend validation. UI disabled state is not enough; each command also needs backend validation before execution.
 
 ## State Inputs
 
@@ -10,6 +10,7 @@ This is the Phase 1 design baseline for HMI command enablement and backend valid
 | `servoOn` | Servo output is enabled. |
 | `homed` | Required axis or axes are homed. |
 | `axisBusy` | One or more axes are homing or moving. |
+| `axisAlarm` | One or more axes have an active alarm. |
 | `emergencyStop` | Emergency stop input is active. |
 | `doorClosed` | Door closed sensor is active. |
 | `manualMode` | Machine mode is Manual. |
@@ -17,24 +18,29 @@ This is the Phase 1 design baseline for HMI command enablement and backend valid
 | `recipeLoaded` | Active recipe is selected and valid enough to run. |
 | `safetyOk` | `!emergencyStop && doorClosed` plus required utility states. |
 | `withinSoftLimit` | Target position is inside configured axis soft limit. |
+| `controllerBusy` | Controller command is in progress. |
+| `sequenceRunning` | Inspection sequence is running. |
+| `cameraConnected` | Camera simulator or real camera is connected. |
+| `ioReady` | Required digital I/O and utilities are ready. |
+| `alarmActive` | Alarm is active and can be reset. |
 
 ## Matrix
 
 | Command | Enable Conditions | Reject Conditions | Notes |
 |---|---|---|---|
-| Connect | `!connected` | None for simulator baseline | Must support timeout/cancellation. |
-| Disconnect | `connected && !axisBusy` | `axisBusy` | Should move to safe state when later hardware drivers exist. |
-| Servo On | `connected && manualMode && safetyOk && !axisBusy` | `!connected`, `emergencyStop`, `!doorClosed`, `axisBusy` | Backend must emit explicit interlock failure. |
-| Servo Off | `connected && servoOn` | `axisBusy` unless Stop has completed | Emergency stop may force Servo Off. |
-| Home | `connected && manualMode && servoOn && safetyOk && !axisBusy` | `!servoOn`, `emergencyStop`, `!doorClosed`, `axisBusy` | Per-axis and Home All both need cancellation. |
-| Jog | `connected && manualMode && servoOn && homed && safetyOk && !axisBusy && withinSoftLimit` | `!homed`, `!withinSoftLimit`, `axisBusy`, `autoMode` | Continuous jog is later scope. |
-| Move Absolute | `connected && manualMode && servoOn && homed && safetyOk && !axisBusy && withinSoftLimit` | `!homed`, `!withinSoftLimit`, `axisBusy`, `autoMode` | Must log target and elapsed time. |
-| Stop | `connected && axisBusy` | `!connected` | Stop must be cancellable-safe and produce a command result. |
-| Reset Alarm | `connected && !emergencyStop && !axisBusy` | `emergencyStop`, `axisBusy` | Must validate current root cause before clearing. |
-| Run Inspection | `connected && autoMode && recipeLoaded && homed && safetyOk && !axisBusy` | `manualMode`, `!recipeLoaded`, `!homed`, `emergencyStop`, `!doorClosed`, `axisBusy` | Phase 1 only defines the interlock; implementation is later. |
+| Connect | `!connected && !controllerBusy` | `connected`, `controllerBusy` | Must support timeout/cancellation. |
+| Disconnect | `connected && !sequenceRunning && !controllerBusy` | `!connected`, `sequenceRunning`, `controllerBusy` | Should move to safe state when later hardware drivers exist. |
+| Servo On | `connected && safetyOk && !emergencyStop && doorClosed && !axisAlarm && !axisBusy` | `!connected`, `!safetyOk`, `emergencyStop`, `!doorClosed`, `axisAlarm`, `axisBusy` | Backend emits explicit interlock failure. |
+| Servo Off | `connected && servoOn && !axisBusy && !sequenceRunning` | `!connected`, `!servoOn`, `axisBusy`, `sequenceRunning` | Emergency stop may force Servo Off in future hardware adapter. |
+| Home | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning` | Per-axis and Home All both need cancellation in the motion PR. |
+| Jog | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Jog does not require homing for setup/teaching movement. |
+| Move Absolute | `connected && manualMode && servoOn && axisHomed && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!axisHomed`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Must log target and elapsed time in the motion PR. |
+| Stop | `connected && (axisBusy || sequenceRunning)` | `!connected`, `!axisBusy && !sequenceRunning` | Stop must be cancellable-safe and produce a command result. |
+| Reset Alarm | `connected && alarmActive && !emergencyStop && doorClosed` | `!connected`, `!alarmActive`, `emergencyStop`, `!doorClosed` | Must validate current root cause before clearing. |
+| Run Inspection | `connected && autoMode && recipeLoaded && cameraConnected && ioReady && safetyOk && !sequenceRunning && allRequiredAxesHomed && !axisBusy && !axisAlarm` | `!connected`, `manualMode`, `!recipeLoaded`, `!cameraConnected`, `!ioReady`, `!safetyOk`, `sequenceRunning`, `!allRequiredAxesHomed`, `axisBusy`, `axisAlarm` | Phase 1 implements interlock baseline only; inspection execution remains later scope. |
 
 ## Follow-Up
 
-- Implement command state objects in each screen ViewModel.
-- Add backend validation tests for each reject condition.
+- Extend command state objects from Dashboard to Motion and Inspection views when those commands get real execution handlers.
+- Add hardware adapter validation tests when real controller, motion, camera, and I/O adapters exist.
 - Add structured `SystemEvent` entries for every rejected command.

@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.Application.Interlocks;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Events;
+using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
@@ -17,13 +19,16 @@ public sealed partial class DashboardViewModel : ObservableObject
     private static readonly TimeSpan ControllerCommandTimeout = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
     private readonly IEquipmentController _equipmentController;
+    private readonly ICommandInterlockService _interlockService;
+    private InterlockContext _interlockContext = InterlockContext.Disconnected;
 
-    public DashboardViewModel(IEquipmentController equipmentController)
+    public DashboardViewModel(IEquipmentController equipmentController, ICommandInterlockService interlockService)
     {
         _equipmentController = equipmentController;
+        _interlockService = interlockService;
 
-        ConnectCommand = new AsyncRelayCommand(ConnectAsync, () => !IsConnected);
-        DisconnectCommand = new AsyncRelayCommand(DisconnectAsync, () => IsConnected);
+        ConnectCommand = new AsyncRelayCommand(ConnectAsync, () => IsCommandEnabled(CommandKind.Connect));
+        DisconnectCommand = new AsyncRelayCommand(DisconnectAsync, () => IsCommandEnabled(CommandKind.Disconnect));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
 
         ApplySnapshot(CreateDisconnectedSnapshot(DateTimeOffset.UtcNow));
@@ -33,6 +38,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     public ObservableCollection<StatusPillViewModel> StatusPills { get; } = new();
     public ObservableCollection<AxisStatusViewModel> Axes { get; } = new();
     public ObservableCollection<IoBitStatusViewModel> IoBits { get; } = new();
+    public ObservableCollection<CommandAvailabilityViewModel> CommandAvailabilities { get; } = new();
     public ObservableCollection<SystemEvent> Events { get; } = new();
 
     public IAsyncRelayCommand ConnectCommand { get; }
@@ -67,6 +73,15 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTimeOffset _lastSnapshotAt;
+
+    public string ConnectDisabledReason => GetCommandAvailability(CommandKind.Connect).DisabledReason;
+    public string DisconnectDisabledReason => GetCommandAvailability(CommandKind.Disconnect).DisabledReason;
+
+    public CommandAvailabilityViewModel GetCommandAvailability(CommandKind command)
+    {
+        return CommandAvailabilities.FirstOrDefault(item => item.Command == command)
+            ?? CreateAvailabilityViewModel(_interlockService.Evaluate(command, _interlockContext));
+    }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
@@ -104,6 +119,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     private void ApplySnapshot(EquipmentSnapshot snapshot)
     {
+        _interlockContext = CreateInterlockContext(snapshot);
         IsConnected = snapshot.IsConnected;
         ConnectionStatus = snapshot.IsConnected ? "Connected" : "Disconnected";
         ModeStatus = snapshot.Mode.ToString();
@@ -139,6 +155,8 @@ public sealed partial class DashboardViewModel : ObservableObject
         {
             IoBits.Add(new IoBitStatusViewModel(bit.Name, bit.Address, bit.Direction, bit.Value, bit.IsForced));
         }
+
+        RefreshCommandAvailabilities();
     }
 
     private static string FormatSafety(SafetySnapshot safety)
@@ -163,6 +181,77 @@ public sealed partial class DashboardViewModel : ObservableObject
         {
             Events.RemoveAt(Events.Count - 1);
         }
+    }
+
+    private void RefreshCommandAvailabilities()
+    {
+        CommandAvailabilities.Clear();
+        foreach (var command in Enum.GetValues<CommandKind>())
+        {
+            CommandAvailabilities.Add(CreateAvailabilityViewModel(_interlockService.Evaluate(command, _interlockContext)));
+        }
+
+        ConnectCommand.NotifyCanExecuteChanged();
+        DisconnectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ConnectDisabledReason));
+        OnPropertyChanged(nameof(DisconnectDisabledReason));
+    }
+
+    private bool IsCommandEnabled(CommandKind command)
+    {
+        return _interlockService.Evaluate(command, _interlockContext).IsEnabled;
+    }
+
+    private static CommandAvailabilityViewModel CreateAvailabilityViewModel(CommandAvailability availability)
+    {
+        return new CommandAvailabilityViewModel(
+            availability.Command,
+            FormatCommand(availability.Command),
+            availability.IsEnabled,
+            availability.DisabledReason);
+    }
+
+    private static InterlockContext CreateInterlockContext(EquipmentSnapshot snapshot)
+    {
+        var anyAxisBusy = snapshot.Axes.Any(axis => axis.IsMoving);
+        var anyAxisAlarm = snapshot.Axes.Any(axis => axis.Alarm is not null) || snapshot.Alarm is not null;
+        var allAxesHomed = snapshot.Axes.Count > 0 && snapshot.Axes.All(axis => axis.IsHomed);
+        var servoOn = snapshot.Safety.ServoEnabled || snapshot.Axes.Any(axis => axis.ServoOn);
+        var safetyOk = !snapshot.Safety.EmergencyStopActive && snapshot.Safety.DoorClosed && snapshot.Safety.AirPressureOk;
+        var withinSoftLimit = snapshot.Axes.All(axis => axis.SoftLimit.Contains(axis.Target));
+
+        return new InterlockContext(
+            Connected: snapshot.IsConnected,
+            ControllerBusy: false,
+            SequenceRunning: false,
+            EmergencyStopActive: snapshot.Safety.EmergencyStopActive,
+            DoorClosed: snapshot.Safety.DoorClosed,
+            SafetyOk: safetyOk,
+            ManualMode: snapshot.Mode == MachineMode.Manual,
+            AutoMode: snapshot.Mode == MachineMode.Auto,
+            ServoOn: servoOn,
+            AxisHomed: allAxesHomed,
+            AllRequiredAxesHomed: allAxesHomed,
+            AxisBusy: anyAxisBusy,
+            AxisAlarm: anyAxisAlarm,
+            WithinSoftLimit: withinSoftLimit,
+            RecipeLoaded: false,
+            CameraConnected: snapshot.Camera.IsReady,
+            IoReady: snapshot.Safety.AirPressureOk,
+            AlarmActive: snapshot.Alarm is not null || snapshot.Mode == MachineMode.Alarm || anyAxisAlarm);
+    }
+
+    private static string FormatCommand(CommandKind command)
+    {
+        return command switch
+        {
+            CommandKind.ServoOn => "Servo On",
+            CommandKind.ServoOff => "Servo Off",
+            CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.ResetAlarm => "Reset Alarm",
+            CommandKind.RunInspection => "Run Inspection",
+            _ => command.ToString()
+        };
     }
 
     private static EquipmentSnapshot CreateDisconnectedSnapshot(DateTimeOffset timestamp)

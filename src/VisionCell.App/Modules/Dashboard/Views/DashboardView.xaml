@@ -15,11 +15,13 @@
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
           <Button Content="Connect"
                   Command="{Binding ConnectCommand}"
+                  ToolTip="{Binding ConnectDisabledReason}"
                   Height="36"
                   MinWidth="92"
                   Margin="0,0,8,0" />
           <Button Content="Disconnect"
                   Command="{Binding DisconnectCommand}"
+                  ToolTip="{Binding DisconnectDisabledReason}"
                   Height="36"
                   MinWidth="104"
                   Margin="0,0,8,0" />
@@ -79,6 +81,10 @@
           <ColumnDefinition Width="2*" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <Border Style="{DynamicResource Card.Panel}" Margin="0,8,8,8">
           <Grid>
             <Grid.RowDefinitions>
@@ -140,6 +146,33 @@
                 </GridView>
               </ListView.View>
             </ListView>
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Command Interlocks" Style="{DynamicResource Text.CardTitle}" />
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding CommandAvailabilities}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <UniformGrid Columns="5" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{DynamicResource Card.Compact}" ToolTip="{Binding Reason}">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.StatusStrong}" />
+                      <TextBlock Text="{Binding State}" Style="{DynamicResource Text.MetricLabel}" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
           </Grid>
         </Border>
       </Grid>

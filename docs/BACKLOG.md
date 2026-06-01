@@ -24,7 +24,7 @@
 - [ ] Motion command history
 - [ ] CSV report export
 - [ ] Error code catalog
-- [ ] FR-004 command interlock matrix follow-up implementation
+- [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
 - [ ] Motion command timeout/cancellation hardening
@@ -45,8 +45,8 @@ Priority:
 
 Date: 2026-06-01
 Source: Phase 1 WPF Shell / Dashboard implementation
-Problem: FR-004 command enabled conditions and backend interlock validation are only represented at the connection/dashboard level; full Motion/Inspection/Recipe command matrices still need feature-specific implementation.
-Proposed improvement: Add per-screen command state objects and backend validation tests for EStop, Door Open, Servo Off, Auto mode, and active recipe prerequisites.
+Problem: FR-004 command enabled conditions now have a Core/Application/Dashboard/backend baseline, but feature-specific Motion/Inspection/Recipe command handlers and hardware adapter validation are still pending.
+Proposed improvement: Extend the baseline command state objects into Motion, Inspection, and Recipe views as those command handlers are implemented, and add adapter-level tests for EStop, Door Open, Servo Off, Auto mode, and active recipe prerequisites.
 Requirement impact: FR-004, FR-040, FR-041, FR-042, FR-083, FR-122, FR-180
 Priority: P1
 
