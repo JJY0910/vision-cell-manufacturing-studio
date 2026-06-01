@@ -223,3 +223,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 18 tests; Debug/Release solution build and test passed with 104 tests; WPF hidden launch smoke passed.
 - Risks: Active recipe ownership remains follow-up work, so history `recipe_id` can still be null.
+
+## 2026-06-01 18:04 - In progress
+- Branch: `codex/feature/fr-120-teaching-recipe-context`
+- Scope: Add ADR-backed optional recipe context to Teaching save/update/delete requests and history rows.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 39 tests; App targeted tests passed with 18 tests after a transient parallel build copy race; Debug/Release solution build and test passed with 105 tests; WPF hidden launch smoke passed.
+- Risks: Full Recipe CRUD and app-settings based active recipe selection remain follow-up work.

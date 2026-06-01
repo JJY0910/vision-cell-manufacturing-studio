@@ -62,7 +62,7 @@ Implementation note:
 - `VisionCell.Persistence` initializes `teaching_history` through migration id `003_teaching_history`.
 - `SqliteTeachingHistoryRepository` implements `ITeachingHistoryRepository` for append-only save and latest-first per-point history queries.
 - Save Current Position writes a Created history row through `ITeachingHistoryRepository` after the Teaching Point is persisted.
-- `recipe_id` is nullable until active recipe ownership is wired into the teaching workflow.
+- Teaching save/update/delete requests write `recipe_id` into history rows when an active recipe id is provided; it remains nullable until RecipeView owns active recipe selection.
 
 ### inspection_results
 

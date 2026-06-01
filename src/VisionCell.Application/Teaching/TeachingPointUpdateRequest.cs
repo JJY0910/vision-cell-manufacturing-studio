@@ -9,4 +9,5 @@ public sealed record TeachingPointUpdateRequest(
     TeachingRole Role,
     Position4D Position,
     PositionTolerance Tolerance,
-    string? Memo);
+    string? Memo,
+    string? RecipeId = null);

@@ -137,7 +137,8 @@ Implementation status:
 - WPF TeachingView binds selected-point update/delete commands to the Application contract.
 - WPF TeachingView asks for confirmation before deleting a selected Teaching Point.
 - WPF TeachingView displays recent selected-point history rows from `ITeachingHistoryRepository.ListByPointAsync`.
-- Recipe-level Teaching Point ownership remains follow-up work.
+- Teaching mutation requests carry an optional recipe id into Created/Updated/Deleted history rows.
+- Full Recipe-level Teaching Point ownership remains follow-up work.
 
 ## Teaching Workflow
 

@@ -7,4 +7,5 @@ public sealed record TeachingPointSaveRequest(
     TeachingRole Role,
     PositionTolerance Tolerance,
     string? Memo,
-    TimeSpan SnapshotTimeout);
+    TimeSpan SnapshotTimeout,
+    string? RecipeId = null);

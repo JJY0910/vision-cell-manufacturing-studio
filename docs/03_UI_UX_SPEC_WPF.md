@@ -130,7 +130,8 @@ Implementation status:
 - TeachingView supports selected-point edit/delete commands through the Application contract.
 - TeachingView asks for confirmation before deleting a selected point.
 - TeachingView shows recent selected-point history rows from `teaching_history`, including timestamp, action, recipe, and before/after JSON summary.
-- Recipe ownership controls remain follow-up work.
+- TeachingView has an Active Recipe input that is written into Teaching history rows for save/update/delete until RecipeView owns active recipe selection.
+- Full Recipe ownership controls remain follow-up work.
 
 ### RecipeView
 

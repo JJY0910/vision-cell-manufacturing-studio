@@ -70,6 +70,29 @@ public sealed class TeachingPointUseCaseTests
     }
 
     [Fact]
+    public async Task SaveCurrentPositionAsync_Should_Write_Recipe_Context_To_History()
+    {
+        var controller = new SnapshotEquipmentController(CreateSnapshot(1.0, 2.0, 3.0, 4.0));
+        var repository = new InMemoryTeachingPointRepository();
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(controller, repository, historyRepository: historyRepository);
+
+        var result = await useCase.SaveCurrentPositionAsync(
+            new TeachingPointSaveRequest(
+                "Camera",
+                TeachingRole.Camera,
+                PositionTolerance.Default,
+                null,
+                TimeSpan.FromSeconds(1),
+                " RCP-001 "),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].RecipeId.Should().Be("RCP-001");
+    }
+
+    [Fact]
     public async Task ListAsync_Should_Reject_NonPositive_Limit()
     {
         var useCase = CreateUseCase(
@@ -212,7 +235,8 @@ public sealed class TeachingPointUseCaseTests
                 TeachingRole.Review,
                 new Position4D(5.0, 6.0, 7.0, 8.0),
                 new PositionTolerance(0.02, 0.03, 0.04, 0.05),
-                " after "),
+                " after ",
+                "RCP-EDIT"),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -224,6 +248,7 @@ public sealed class TeachingPointUseCaseTests
         result.Point.UpdatedAt.Should().Be(new DateTimeOffset(2026, 6, 1, 7, 0, 0, TimeSpan.Zero));
         repository.Points[existing.Id].Should().Be(result.Point);
         historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].RecipeId.Should().Be("RCP-EDIT");
         historyRepository.Entries[0].Action.Should().Be(TeachingHistoryAction.Updated);
         historyRepository.Entries[0].BeforeJson.Should().Contain("\"name\":\"Camera\"");
         historyRepository.Entries[0].AfterJson.Should().Contain("\"name\":\"Camera Updated\"");
@@ -308,13 +333,14 @@ public sealed class TeachingPointUseCaseTests
             repository,
             historyRepository: historyRepository);
 
-        var result = await useCase.DeleteAsync(new TeachingPointDeleteRequest(point.Id), CancellationToken.None);
+        var result = await useCase.DeleteAsync(new TeachingPointDeleteRequest(point.Id, "RCP-DELETE"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.DeletedPoint.Should().Be(point);
         repository.Points.Should().NotContainKey(point.Id);
         repository.DeletedIds.Should().ContainSingle().Which.Should().Be(point.Id);
         historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].RecipeId.Should().Be("RCP-DELETE");
         historyRepository.Entries[0].Action.Should().Be(TeachingHistoryAction.Deleted);
         historyRepository.Entries[0].BeforeJson.Should().Contain("\"name\":\"Delete Me\"");
         historyRepository.Entries[0].AfterJson.Should().BeNull();
