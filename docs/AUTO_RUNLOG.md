@@ -216,3 +216,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 16 tests; Debug/Release solution build and test passed with 102 tests; WPF hidden launch smoke passed.
 - Risks: Selected-point history display and active recipe ownership remain follow-up work.
+
+## 2026-06-01 17:52 - In progress
+- Branch: `codex/feature/fr-104-teaching-history-display`
+- Scope: Add selected-point Teaching history display backed by `ITeachingHistoryRepository.ListByPointAsync`.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 18 tests; Debug/Release solution build and test passed with 104 tests; WPF hidden launch smoke passed.
+- Risks: Active recipe ownership remains follow-up work, so history `recipe_id` can still be null.

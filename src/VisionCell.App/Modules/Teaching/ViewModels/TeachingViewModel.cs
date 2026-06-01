@@ -15,19 +15,25 @@ public sealed partial class TeachingViewModel : ObservableObject
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(3);
     private const int TeachingPointLimit = 50;
+    private const int TeachingHistoryLimit = 12;
     private readonly ITeachingPointUseCase _teachingPointUseCase;
+    private readonly ITeachingHistoryRepository _historyRepository;
     private readonly IEquipmentController _equipmentController;
     private readonly IUserConfirmationService _confirmationService;
+    private int _historyRefreshVersion;
 
     public TeachingViewModel(
         ITeachingPointUseCase teachingPointUseCase,
+        ITeachingHistoryRepository historyRepository,
         IEquipmentController equipmentController,
         IUserConfirmationService confirmationService)
     {
         _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
+        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+        RefreshSelectedPointHistoryCommand = new AsyncRelayCommand(RefreshSelectedPointHistoryAsync);
         SaveCurrentPositionCommand = new AsyncRelayCommand(SaveCurrentPositionAsync, () => !IsBusy);
         UpdateSelectedCommand = new AsyncRelayCommand(UpdateSelectedAsync, () => !IsBusy && SelectedPoint is not null);
         DeleteSelectedCommand = new AsyncRelayCommand(DeleteSelectedAsync, () => !IsBusy && SelectedPoint is not null);
@@ -46,7 +52,9 @@ public sealed partial class TeachingViewModel : ObservableObject
     };
 
     public ObservableCollection<TeachingPointItemViewModel> Points { get; } = new();
+    public ObservableCollection<TeachingHistoryItemViewModel> SelectedPointHistory { get; } = new();
     public IAsyncRelayCommand RefreshCommand { get; }
+    public IAsyncRelayCommand RefreshSelectedPointHistoryCommand { get; }
     public IAsyncRelayCommand SaveCurrentPositionCommand { get; }
     public IAsyncRelayCommand UpdateSelectedCommand { get; }
     public IAsyncRelayCommand DeleteSelectedCommand { get; }
@@ -85,6 +93,15 @@ public sealed partial class TeachingViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasPoints;
 
+    [ObservableProperty]
+    private bool _hasSelectedPointHistory;
+
+    [ObservableProperty]
+    private string _historyStatus = "Select a teaching point to view history";
+
+    [ObservableProperty]
+    private DateTimeOffset? _lastHistoryRefreshAt;
+
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
         try
@@ -102,6 +119,7 @@ public sealed partial class TeachingViewModel : ObservableObject
                 ? Points.FirstOrDefault()
                 : Points.FirstOrDefault(point => point.Id == selectedId.Value) ?? Points.FirstOrDefault();
             StatusText = HasPoints ? $"{Points.Count} teaching points loaded" : "No teaching points saved";
+            await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -138,6 +156,7 @@ public sealed partial class TeachingViewModel : ObservableObject
             StatusText = $"Saved teaching point '{result.Point.Name}'";
             await RefreshAsync(cancellationToken).ConfigureAwait(true);
             SelectedPoint = Points.FirstOrDefault(point => point.Id == result.Point.Id) ?? SelectedPoint;
+            await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }, cancellationToken).ConfigureAwait(true);
     }
 
@@ -179,6 +198,7 @@ public sealed partial class TeachingViewModel : ObservableObject
             StatusText = $"Updated teaching point '{result.Point.Name}'";
             await RefreshAsync(cancellationToken).ConfigureAwait(true);
             SelectedPoint = Points.FirstOrDefault(point => point.Id == result.Point.Id) ?? SelectedPoint;
+            await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }, cancellationToken).ConfigureAwait(true);
     }
 
@@ -217,6 +237,7 @@ public sealed partial class TeachingViewModel : ObservableObject
             SelectedPoint = null;
             StatusText = $"Deleted teaching point '{selectedName}'";
             await RefreshAsync(cancellationToken).ConfigureAwait(true);
+            await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }, cancellationToken).ConfigureAwait(true);
     }
 
@@ -241,7 +262,62 @@ public sealed partial class TeachingViewModel : ObservableObject
             StatusText = result.IsSuccess
                 ? $"Go To '{SelectedPoint.Name}' completed"
                 : $"Go To '{SelectedPoint.Name}' failed: {result.Message}";
+            await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }, cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task RefreshSelectedPointHistoryAsync(CancellationToken cancellationToken)
+    {
+        var refreshVersion = Interlocked.Increment(ref _historyRefreshVersion);
+        var selected = SelectedPoint;
+        SelectedPointHistory.Clear();
+        HasSelectedPointHistory = false;
+
+        if (selected is null)
+        {
+            LastHistoryRefreshAt = null;
+            HistoryStatus = "Select a teaching point to view history";
+            return;
+        }
+
+        try
+        {
+            var entries = await _historyRepository.ListByPointAsync(
+                selected.Id,
+                TeachingHistoryLimit,
+                cancellationToken).ConfigureAwait(true);
+
+            if (refreshVersion != _historyRefreshVersion || SelectedPoint?.Id != selected.Id)
+            {
+                return;
+            }
+
+            SelectedPointHistory.Clear();
+            foreach (var entry in entries)
+            {
+                SelectedPointHistory.Add(new TeachingHistoryItemViewModel(entry));
+            }
+
+            HasSelectedPointHistory = SelectedPointHistory.Count > 0;
+            LastHistoryRefreshAt = DateTimeOffset.UtcNow;
+            HistoryStatus = HasSelectedPointHistory
+                ? $"{SelectedPointHistory.Count} teaching history records loaded"
+                : $"No teaching history for '{selected.Name}'";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (refreshVersion == _historyRefreshVersion)
+            {
+                HistoryStatus = "Teaching history refresh cancelled";
+            }
+        }
+        catch (Exception ex)
+        {
+            if (refreshVersion == _historyRefreshVersion)
+            {
+                HistoryStatus = $"Teaching history refresh failed: {ex.Message}";
+            }
+        }
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -261,6 +337,15 @@ public sealed partial class TeachingViewModel : ObservableObject
         if (value is not null)
         {
             LoadSelectedPointIntoEditor(value.Point);
+            RefreshSelectedPointHistoryCommand.Execute(null);
+        }
+        else
+        {
+            Interlocked.Increment(ref _historyRefreshVersion);
+            SelectedPointHistory.Clear();
+            HasSelectedPointHistory = false;
+            LastHistoryRefreshAt = null;
+            HistoryStatus = "Select a teaching point to view history";
         }
     }
 

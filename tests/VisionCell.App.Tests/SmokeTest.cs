@@ -354,6 +354,60 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Teaching_RefreshAsync_Should_Load_Selected_Point_History()
+    {
+        var point = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var historyEntry = TeachingHistoryEntry.Create(
+            point.Id,
+            null,
+            TeachingHistoryAction.Updated,
+            "{\"Name\":\"Camera\"}",
+            "{\"Name\":\"Camera Revised\"}",
+            () => new DateTimeOffset(2026, 6, 1, 9, 30, 0, TimeSpan.Zero));
+        var historyRepository = new FakeTeachingHistoryRepository(historyEntry);
+        var teaching = CreateTeachingViewModel(
+            new FakeTeachingPointUseCase(point),
+            historyRepository: historyRepository);
+
+        await teaching.RefreshAsync(CancellationToken.None);
+
+        historyRepository.ListRequests.Should().Contain(request => request.TeachingPointId == point.Id);
+        teaching.HasSelectedPointHistory.Should().BeTrue();
+        teaching.SelectedPointHistory.Should().ContainSingle();
+        teaching.SelectedPointHistory[0].ActionText.Should().Be("Updated");
+        teaching.SelectedPointHistory[0].BeforeText.Should().Contain("Camera");
+        teaching.SelectedPointHistory[0].AfterText.Should().Contain("Camera Revised");
+        teaching.HistoryStatus.Should().Be("1 teaching history records loaded");
+    }
+
+    [Fact]
+    public async Task Teaching_RefreshSelectedPointHistoryAsync_Should_Surface_Load_Failure()
+    {
+        var point = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var historyRepository = new FakeTeachingHistoryRepository
+        {
+            ListHandler = (_, _, _) => throw new InvalidOperationException("history store unavailable")
+        };
+        var teaching = CreateTeachingViewModel(
+            new FakeTeachingPointUseCase(point),
+            historyRepository: historyRepository);
+
+        await teaching.RefreshAsync(CancellationToken.None);
+
+        teaching.HasSelectedPointHistory.Should().BeFalse();
+        teaching.SelectedPointHistory.Should().BeEmpty();
+        teaching.HistoryStatus.Should().Contain("history store unavailable");
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -388,10 +442,12 @@ public sealed class DashboardAndShellViewModelTests
     private static TeachingViewModel CreateTeachingViewModel(
         FakeTeachingPointUseCase? useCase = null,
         FakeEquipmentController? equipmentController = null,
-        FakeUserConfirmationService? confirmationService = null)
+        FakeUserConfirmationService? confirmationService = null,
+        FakeTeachingHistoryRepository? historyRepository = null)
     {
         return new TeachingViewModel(
             useCase ?? new FakeTeachingPointUseCase(),
+            historyRepository ?? new FakeTeachingHistoryRepository(),
             equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
             confirmationService ?? new FakeUserConfirmationService(true));
     }
@@ -414,6 +470,45 @@ public sealed class DashboardAndShellViewModelTests
         {
             Prompts.Add((title, message));
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class FakeTeachingHistoryRepository : ITeachingHistoryRepository
+    {
+        private readonly List<TeachingHistoryEntry> _entries = new();
+
+        public FakeTeachingHistoryRepository(params TeachingHistoryEntry[] entries)
+        {
+            _entries.AddRange(entries);
+        }
+
+        public List<(Guid TeachingPointId, int Limit)> ListRequests { get; } = new();
+
+        public Func<Guid, int, CancellationToken, Task<IReadOnlyList<TeachingHistoryEntry>>>? ListHandler { get; init; }
+
+        public Task SaveAsync(TeachingHistoryEntry entry, CancellationToken cancellationToken)
+        {
+            _entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<TeachingHistoryEntry>> ListByPointAsync(
+            Guid teachingPointId,
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            ListRequests.Add((teachingPointId, limit));
+            if (ListHandler is not null)
+            {
+                return ListHandler(teachingPointId, limit, cancellationToken);
+            }
+
+            return Task.FromResult<IReadOnlyList<TeachingHistoryEntry>>(
+                _entries
+                    .Where(entry => entry.TeachingPointId == teachingPointId)
+                    .OrderByDescending(entry => entry.CreatedAt)
+                    .Take(limit)
+                    .ToArray());
         }
     }
 
