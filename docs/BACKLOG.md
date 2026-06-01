@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] Motion command history persistence and UI log binding after simulator command results are persisted
+- [ ] SQLite motion command history repository and MotionView log binding after Application motion use case port
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -62,4 +62,11 @@ Source: FR-060 motion command hardening
 Problem: Simulator motion commands now return explicit success/rejected/timeout/cancelled results, but there is still no persisted motion command history table writer or MotionView log binding.
 Proposed improvement: Add an application use case that records `motion_command_history` entries and exposes the latest command results in MotionView without placing business logic in WPF code-behind.
 Requirement impact: FR-063, FR-064, FR-067, FR-069, FR-200, NFR-004
+Priority: P1
+
+Date: 2026-06-01
+Source: FR-063 Application motion use case
+Problem: The Application layer can now create traceable motion command requests and record them through a history port, but no SQLite repository or MotionView binding exists yet.
+Proposed improvement: Implement the Persistence-layer SQLite `motion_command_history` repository with idempotent schema migration, then bind recent command history into MotionView through a view-model state object.
+Requirement impact: FR-063, FR-069, FR-200, NFR-004
 Priority: P1
