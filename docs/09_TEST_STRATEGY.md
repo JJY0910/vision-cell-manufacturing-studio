@@ -62,7 +62,9 @@ tests/VisionCell.App.Tests
 
 - Inspection run Application boundary accepts active valid Recipe with ready interlocks and emits step timeline state.
 - Inspection run rejects missing/invalid active Recipe before controller execution.
+- Inspection run rejects missing/invalid active Recipe document before snapshot or controller execution.
 - Inspection run rejects failed Run Inspection interlocks before controller execution.
+- Inspection run dispatches Sequence Move To Camera from the Recipe Camera Teaching point and rejects missing Camera Teaching points.
 - Stop/cancel path returns explicit cancelled result and cancelled/skipped step state.
 - Camera grab success path returns a correlated synthetic frame and updates the Inspection timeline.
 - Camera timeout failure path returns CAM-001 and skips downstream vision/judge/persist steps.

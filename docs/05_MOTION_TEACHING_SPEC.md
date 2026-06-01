@@ -51,6 +51,7 @@ Application orchestration:
 - The controller result is recorded with the same request correlation ID.
 - Command history is written through `IMotionCommandHistoryRepository`; `SqliteMotionCommandHistoryRepository` persists and reads recent command rows for MotionView.
 - MotionView operator controls dispatch Servo On/Off, Home All, Jog +/- with operator-selected axis/step, Move Absolute with operator-entered X/Y/Z/Theta targets and profile preset/profile/tolerance values, and Stop through `IMotionCommandUseCase`.
+- InspectionRunUseCase dispatches internal `SequenceMoveToCamera` through `IMotionCommandUseCase`; it is allowed only in Auto mode with an active sequence and loaded Recipe.
 
 ### Servo On/Off
 

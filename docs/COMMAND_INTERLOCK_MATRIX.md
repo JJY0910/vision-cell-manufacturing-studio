@@ -35,6 +35,7 @@ This is the Phase 1 implementation baseline for HMI command enablement and backe
 | Home | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning` | Simulator baseline returns success, timeout, cancellation, and stopped-before-completion results. |
 | Jog | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Jog does not require homing for setup/teaching movement. |
 | Move Absolute | `connected && manualMode && servoOn && axisHomed && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!axisHomed`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Simulator consumes typed target/profile preset/profile/tolerance payloads, maps soft-limit rejects to `MOT-004`, maps timeout alarms to `MOT-003`, and persists correlated command history through the Application/Persistence path. |
+| Sequence Move To Camera | `connected && autoMode && recipeLoaded && sequenceRunning && servoOn && allRequiredAxesHomed && safetyOk && !axisBusy && !axisAlarm && withinSoftLimit` | `!connected`, `manualMode`, `!recipeLoaded`, `!sequenceRunning`, `!servoOn`, `!allRequiredAxesHomed`, `!safetyOk`, `axisBusy`, `axisAlarm`, `!withinSoftLimit` | Internal Auto-sequence motion only; InspectionRunUseCase creates the typed target from the active Recipe Camera Teaching point. |
 | Stop | `connected && (axisBusy || sequenceRunning)` | `!connected`, `!axisBusy && !sequenceRunning` | Stop must be cancellable-safe and produce a command result. |
 | Reset Alarm | `connected && alarmActive && !emergencyStop && doorClosed` | `!connected`, `!alarmActive`, `emergencyStop`, `!doorClosed` | Must validate current root cause before clearing. |
 | Enter Manual | `connected && !controllerBusy && !axisBusy && !sequenceRunning` | `!connected`, `controllerBusy`, `axisBusy`, `sequenceRunning` | Returns simulator mode to Manual without changing servo or homing state. |
@@ -44,6 +45,6 @@ This is the Phase 1 implementation baseline for HMI command enablement and backe
 ## Follow-Up
 
 - Extend command state objects from Dashboard to Motion and Inspection views when those commands get full user-facing handlers.
-- Extend motion command history with profile preset reuse from Recipe/Teaching workflows.
+- Extend motion command history UI filtering so internal sequence moves can be separated from operator commands.
 - Add hardware adapter validation tests when real controller, motion, camera, and I/O adapters exist.
 - Add structured `SystemEvent` entries for every persisted command result.

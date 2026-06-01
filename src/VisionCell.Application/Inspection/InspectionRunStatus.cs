@@ -6,11 +6,13 @@ public enum InspectionRunStatus
     ActiveRecipeNotSelected,
     ActiveRecipeInvalid,
     ActiveRecipeUnavailable,
+    RecipeDocumentUnavailable,
     InterlockRejected,
     CommandRejected,
     CommandTimeout,
     CommandCancelled,
     CommandFailed,
+    MoveToCameraFailed,
     CameraGrabFailed,
     Failed
 }

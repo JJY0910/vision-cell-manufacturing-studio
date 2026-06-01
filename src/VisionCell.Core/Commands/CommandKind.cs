@@ -9,6 +9,7 @@ public enum CommandKind
     Home,
     Jog,
     MoveAbsolute,
+    SequenceMoveToCamera,
     Stop,
     ResetAlarm,
     EnterManualMode,

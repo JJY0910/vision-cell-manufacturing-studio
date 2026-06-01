@@ -979,6 +979,7 @@ public sealed class DashboardAndShellViewModelTests
             recipe,
             request,
             commandResult,
+            null,
             cameraGrabResult,
             new[]
             {

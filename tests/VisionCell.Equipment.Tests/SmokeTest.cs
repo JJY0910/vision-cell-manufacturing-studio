@@ -101,6 +101,31 @@ public sealed class VirtualEquipmentControllerTests
     }
 
     [Fact]
+    public async Task ExecuteCommandAsync_Should_Run_Sequence_Move_To_Camera_In_Auto_Sequence()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.EnterAutoMode, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Sequence Move To Camera",
+            TimeSpan.FromSeconds(1),
+            new AbsoluteMoveTarget(12.0, 24.0, 6.0, 1.5).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(
+            CommandKind.SequenceMoveToCamera,
+            ReadyManualContext() with { ManualMode = false, AutoMode = true, SequenceRunning = true },
+            request,
+            CancellationToken.None);
+        var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Success);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.X).Position.Should().Be(12.0);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.Y).Position.Should().Be(24.0);
+    }
+
+    [Fact]
     public async Task ExecuteCommandAsync_Should_Reject_EnterAuto_When_Axes_Not_Homed()
     {
         var controller = new VirtualEquipmentController();

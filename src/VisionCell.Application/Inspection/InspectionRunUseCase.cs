@@ -1,10 +1,14 @@
 using System.Diagnostics;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Motion.Commands;
+using VisionCell.Motion.Teaching;
 
 namespace VisionCell.Application.Inspection;
 
@@ -30,18 +34,24 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     };
 
     private readonly IActiveRecipeContext _activeRecipeContext;
+    private readonly IRecipeDocumentStore _recipeDocumentStore;
     private readonly IEquipmentController _controller;
+    private readonly IMotionCommandUseCase _motionCommandUseCase;
     private readonly ICameraDevice _cameraDevice;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
         IActiveRecipeContext activeRecipeContext,
+        IRecipeDocumentStore recipeDocumentStore,
         IEquipmentController controller,
+        IMotionCommandUseCase motionCommandUseCase,
         ICameraDevice cameraDevice,
         Func<DateTimeOffset>? clock = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
+        _recipeDocumentStore = recipeDocumentStore ?? throw new ArgumentNullException(nameof(recipeDocumentStore));
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
+        _motionCommandUseCase = motionCommandUseCase ?? throw new ArgumentNullException(nameof(motionCommandUseCase));
         _cameraDevice = cameraDevice ?? throw new ArgumentNullException(nameof(cameraDevice));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
@@ -59,26 +69,42 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         var startedAt = _clock();
         var recorder = new StepRecorder(progress);
         RecipeIndexEntry? recipe = null;
+        RecipeDefinition? recipeDocument = null;
         MachineCommandRequest? commandRequest = null;
         MachineCommandResult? commandResult = null;
+        MotionCommandExecutionResult? moveToCameraResult = null;
         CameraGrabResult? cameraGrabResult = null;
 
         try
         {
             var recipeStopwatch = Stopwatch.StartNew();
-            recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Running, "Reading active Recipe context.", null);
+            recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Running, "Reading active Recipe context and document.", null);
             var activeRecipe = await _activeRecipeContext.GetActiveAsync(cancellationToken).ConfigureAwait(false);
-            recipeStopwatch.Stop();
 
             if (!activeRecipe.IsSuccess || activeRecipe.Entry is null)
             {
+                recipeStopwatch.Stop();
                 recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Failed, activeRecipe.Message, recipeStopwatch.Elapsed);
                 recorder.SkipPending("Blocked before sequence start.");
                 return Finish(MapActiveRecipeStatus(activeRecipe.Status), activeRecipe.Message);
             }
 
             recipe = activeRecipe.Entry;
-            recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Success, activeRecipe.Message, recipeStopwatch.Elapsed);
+            var documentResult = await _recipeDocumentStore
+                .LoadAsync(recipe.RecipeId, recipe.Version, cancellationToken)
+                .ConfigureAwait(false);
+            recipeStopwatch.Stop();
+
+            if (!documentResult.IsSuccess || documentResult.Recipe is null)
+            {
+                var message = FormatRecipeDocumentFailure(recipe, documentResult);
+                recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Failed, message, recipeStopwatch.Elapsed);
+                recorder.SkipPending("Blocked before sequence start.");
+                return Finish(MapRecipeDocumentStatus(documentResult.Status), message);
+            }
+
+            recipeDocument = documentResult.Recipe;
+            recorder.Update(LoadRecipeStep, InspectionSequenceStepStatus.Success, $"Active Recipe document loaded: {recipe.RecipeId} v{recipe.Version}.", recipeStopwatch.Elapsed);
 
             var safetyStopwatch = Stopwatch.StartNew();
             recorder.Update(SafetyStep, InspectionSequenceStepStatus.Running, "Reading equipment snapshot and evaluating inspection interlocks.", null);
@@ -116,12 +142,40 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             }
 
             recorder.Update(StartSequenceStep, InspectionSequenceStepStatus.Success, commandResult.Message, commandStopwatch.Elapsed);
-            recorder.Update(MoveToCameraStep, InspectionSequenceStepStatus.Skipped, "Camera-position move awaits Recipe document teaching execution.", TimeSpan.Zero);
+
+            var cameraPoint = FindCameraTeachingPoint(recipeDocument);
+            if (cameraPoint is null)
+            {
+                const string message = "Active Recipe does not contain a Camera teaching point.";
+                recorder.Update(MoveToCameraStep, InspectionSequenceStepStatus.Failed, message, TimeSpan.Zero);
+                recorder.SkipPending("Skipped because camera position is unavailable.");
+                return Finish(InspectionRunStatus.ActiveRecipeInvalid, message);
+            }
+
+            var moveStopwatch = Stopwatch.StartNew();
+            recorder.Update(MoveToCameraStep, InspectionSequenceStepStatus.Running, $"Moving to Camera teaching point '{cameraPoint.Name}'.", null);
+            moveToCameraResult = await _motionCommandUseCase.ExecuteAsync(
+                CreateMoveToCameraRequest(context, cameraPoint, request.CommandTimeout, commandRequest.CorrelationId),
+                cancellationToken).ConfigureAwait(false);
+            moveStopwatch.Stop();
+
+            if (!moveToCameraResult.CommandResult.IsSuccess)
+            {
+                recorder.Update(
+                    MoveToCameraStep,
+                    MapStepStatus(moveToCameraResult.CommandResult.Status),
+                    moveToCameraResult.CommandResult.Message,
+                    moveStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because Move To Camera did not complete.");
+                return Finish(MapMoveStatus(moveToCameraResult.CommandResult.Status), moveToCameraResult.CommandResult.Message);
+            }
+
+            recorder.Update(MoveToCameraStep, InspectionSequenceStepStatus.Success, moveToCameraResult.CommandResult.Message, moveStopwatch.Elapsed);
 
             var grabStopwatch = Stopwatch.StartNew();
             recorder.Update(GrabImageStep, InspectionSequenceStepStatus.Running, "Grabbing camera frame.", null);
             cameraGrabResult = await _cameraDevice.GrabAsync(
-                CreateCameraGrabRequest(recipe, commandRequest.CorrelationId, request.GrabTimeout),
+                CreateCameraGrabRequest(recipeDocument, commandRequest.CorrelationId, request.GrabTimeout),
                 cancellationToken).ConfigureAwait(false);
             grabStopwatch.Stop();
 
@@ -160,6 +214,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 recipe,
                 commandRequest,
                 commandResult,
+                moveToCameraResult,
                 cameraGrabResult,
                 recorder.Snapshot(),
                 startedAt,
@@ -168,7 +223,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     }
 
     private CameraGrabRequest CreateCameraGrabRequest(
-        RecipeIndexEntry recipe,
+        RecipeDefinition recipe,
         CorrelationId correlationId,
         TimeSpan timeout)
     {
@@ -178,9 +233,65 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             _clock(),
             recipe.RecipeId,
             recipe.Version,
-            exposureMilliseconds: 5.0,
-            gain: 1.0,
-            lightIntensity: 80);
+            recipe.Camera.ExposureMs,
+            recipe.Camera.Gain,
+            recipe.Camera.LightIntensity);
+    }
+
+    private static MotionCommandExecutionRequest CreateMoveToCameraRequest(
+        InterlockContext context,
+        RecipeTeachingPoint point,
+        TimeSpan timeout,
+        CorrelationId parentCorrelationId)
+    {
+        var arrivalTolerance = new[]
+        {
+            point.Tolerance.X,
+            point.Tolerance.Y,
+            point.Tolerance.Z,
+            point.Tolerance.Theta
+        }.Min();
+
+        var target = new AbsoluteMoveTarget(
+            point.Position.X,
+            point.Position.Y,
+            point.Position.Z,
+            point.Position.Theta,
+            MotionProfilePreset.Standard.Velocity,
+            MotionProfilePreset.Standard.Acceleration,
+            MotionProfilePreset.Standard.Deceleration,
+            MotionProfilePreset.Standard.Jerk,
+            arrivalTolerance,
+            MotionProfilePreset.Standard.Name);
+
+        var parameters = new Dictionary<string, string>(target.ToParameters(), StringComparer.Ordinal)
+        {
+            ["TeachingPointId"] = point.Id,
+            ["TeachingPointName"] = point.Name,
+            ["ParentCorrelationId"] = parentCorrelationId.ToString()
+        };
+
+        var sequenceContext = context with { SequenceRunning = true };
+        return new MotionCommandExecutionRequest(
+            CommandKind.SequenceMoveToCamera,
+            sequenceContext,
+            timeout,
+            parameters);
+    }
+
+    private static RecipeTeachingPoint? FindCameraTeachingPoint(RecipeDefinition recipe)
+    {
+        return recipe.Motion.TeachingPoints.FirstOrDefault(point => point.Role == TeachingRole.Camera);
+    }
+
+    private static string FormatRecipeDocumentFailure(
+        RecipeIndexEntry recipe,
+        RecipeDocumentLoadResult result)
+    {
+        var detail = result.ValidationIssues.Count == 0
+            ? result.Message
+            : $"{result.Message} {string.Join("; ", result.ValidationIssues.Select(issue => issue.Message))}";
+        return $"Unable to load active Recipe document '{recipe.RecipeId}' v{recipe.Version}: {detail}";
     }
 
     private MachineCommandRequest CreateCommandRequest(RecipeIndexEntry recipe, TimeSpan timeout)
@@ -209,6 +320,16 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         };
     }
 
+    private static InspectionRunStatus MapRecipeDocumentStatus(RecipeDocumentOperationStatus status)
+    {
+        return status switch
+        {
+            RecipeDocumentOperationStatus.ValidationFailed => InspectionRunStatus.ActiveRecipeInvalid,
+            RecipeDocumentOperationStatus.InvalidDocument => InspectionRunStatus.ActiveRecipeInvalid,
+            _ => InspectionRunStatus.RecipeDocumentUnavailable
+        };
+    }
+
     private static InspectionRunStatus MapCommandStatus(CommandStatus status)
     {
         return status switch
@@ -218,6 +339,16 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             CommandStatus.Cancelled => InspectionRunStatus.CommandCancelled,
             CommandStatus.Failed => InspectionRunStatus.CommandFailed,
             _ => InspectionRunStatus.Failed
+        };
+    }
+
+    private static InspectionRunStatus MapMoveStatus(CommandStatus status)
+    {
+        return status switch
+        {
+            CommandStatus.Timeout => InspectionRunStatus.CommandTimeout,
+            CommandStatus.Cancelled => InspectionRunStatus.CommandCancelled,
+            _ => InspectionRunStatus.MoveToCameraFailed
         };
     }
 
