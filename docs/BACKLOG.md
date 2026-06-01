@@ -321,4 +321,20 @@ Problem: InspectionRunUseCase can grab an image, but Move To Camera is still ski
 Proposed improvement: Load the active Recipe document, add an internal `SequenceMoveToCamera` command, execute the Recipe Camera Teaching point through `IMotionCommandUseCase`, and use Recipe camera settings for grab.
 Requirement impact: FR-100, FR-102, FR-121, FR-122, FR-140, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-180-recipe-camera-move`.
+Status: Addressed by ADR-0017 and PR #40.
+
+Date: 2026-06-01
+Source: FR-160/FR-180 Deterministic 2D inspection
+Problem: InspectionRunUseCase can move and grab an image, but the Inspect 2D and Judge steps still need deterministic simulator evidence before 3D, overlay, and persistence slices.
+Proposed improvement: Add `IVisionInspectionEngine`, deterministic Gray8 Missing/Scratch/Offset checks, Application conversion from CameraFrame/Recipe ROI to Vision request, and Judge Pass/Fail timeline state.
+Requirement impact: FR-140, FR-160, FR-161, FR-163, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-160-deterministic-2d-inspection`.
+
+Date: 2026-06-01
+Source: FR-170/FR-200 Inspection follow-up slices
+Problem: 2D inspection and Judge can now run, but 3D height-map inspection, overlay rendering, and SQLite result persistence are still pending.
+Proposed improvement: Add synthetic 3D height-map evaluation, image overlay artifact generation, and `InspectionResult` persistence with Recipe/Lot/Judge/Defect/timing records.
+Requirement impact: FR-170, FR-171, FR-172, FR-180, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: Open.

@@ -100,16 +100,16 @@ public sealed partial class RecipeViewModel : ObservableObject
     private string _roiNameText = "IC Top";
 
     [ObservableProperty]
-    private string _roiXText = "120";
+    private string _roiXText = "116";
 
     [ObservableProperty]
-    private string _roiYText = "80";
+    private string _roiYText = "74";
 
     [ObservableProperty]
-    private string _roiWidthText = "300";
+    private string _roiWidthText = "92";
 
     [ObservableProperty]
-    private string _roiHeightText = "200";
+    private string _roiHeightText = "88";
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {

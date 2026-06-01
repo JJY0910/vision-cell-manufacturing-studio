@@ -27,6 +27,8 @@
 
 ## 2D Algorithm Baseline
 
+Phase 1 implementation: `Deterministic2DInspectionEngine` in `VisionCell.Vision`.
+
 1. ROI crop
 2. grayscale
 3. blur
@@ -35,6 +37,14 @@
 6. expected area/position comparison
 7. defect bbox generation
 8. overlay rendering
+
+Current deterministic engine scope:
+
+- Input: Gray8 `VisionImageFrame`, Recipe ROI list, and Recipe 2D parameters.
+- Missing: dark-area ratio exceeds `MissingAreaThreshold`.
+- Scratch: horizontal or vertical dark-line score exceeds `ScratchThreshold`.
+- Offset: isolated foreground centroid offset exceeds `OffsetTolerancePx`.
+- Invalid ROI: result is `Judgment.Invalid` and the inspection sequence stops before Judge.
 
 ## 3D Synthetic Height Map
 
@@ -140,5 +150,7 @@ ONNX integration is P2. Placeholder must not block P0/P1.
 - The simulator can now transition from Manual to Auto mode through Dashboard once servo, homing, safety, camera, and I/O interlocks are satisfied.
 - `InspectionRunUseCase` executes Grab Image through `ICameraDevice` after Move To Camera and surfaces the correlated simulator frame in InspectionView Last Grab.
 - `VirtualCameraDevice` returns deterministic synthetic Gray8 frames and explicit timeout/failure/not-ready results for FR-140/FR-141 tests.
+- `InspectionRunUseCase` converts the grabbed Gray8 frame and Recipe ROI parameters into `VisionInspectionRequest`, runs `IVisionInspectionEngine`, and records Inspect 2D plus Judge timeline states.
+- `Deterministic2DInspectionEngine` covers Phase 1 Missing, Scratch, Offset, and invalid ROI decisions for simulator evidence.
 - Stop Inspection requests cancellation for the active run token through `InspectionViewModel`.
-- 2D/3D inspection execution, result persistence, and overlay rendering remain follow-up work and are currently reported as skipped timeline steps after camera grab.
+- 3D inspection, result persistence, and overlay rendering remain follow-up work; Persist Result is currently reported as a skipped timeline step after Judge.

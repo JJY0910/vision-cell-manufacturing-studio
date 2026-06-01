@@ -30,6 +30,7 @@ using VisionCell.Motion.Axes;
 using VisionCell.Motion.Commands;
 using VisionCell.Motion.Teaching;
 using VisionCell.Simulator;
+using VisionCell.Vision.Inspection;
 using Xunit;
 
 namespace VisionCell_App_Tests;
@@ -111,6 +112,10 @@ public sealed class DashboardAndShellViewModelTests
             active.IsSuccess.Should().BeTrue();
             active.RecipeId.Should().Be("APP-COMPOSITION-RCP");
             active.Version.Should().Be("1.0.0");
+
+            provider.GetRequiredService<IVisionInspectionEngine>()
+                .Should()
+                .BeOfType<Deterministic2DInspectionEngine>();
         }
         finally
         {
@@ -536,6 +541,7 @@ public sealed class DashboardAndShellViewModelTests
         inspection.StatusText.Should().Contain("Inspection sequence accepted");
         inspection.StatusText.Should().Contain("RCP-INSPECT");
         inspection.SequenceSteps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == "Success");
+        inspection.SequenceSteps.Should().Contain(step => step.Name == "Judge" && step.Detail.Contains("Pass", StringComparison.Ordinal));
         inspection.LastGrabText.Should().Contain("16 x 12");
         inspection.LastGrabText.Should().Contain("Fake camera");
         inspection.LastGrabImageSource.Should().NotBeNull();
@@ -934,7 +940,7 @@ public sealed class DashboardAndShellViewModelTests
             }),
             new RecipeCameraSettings(5.0, 1.0, 80),
             new RecipeVisionSection(
-                new[] { new RecipeRoi("IC_TOP", "IC Top", 120, 80, 300, 200) },
+                new[] { new RecipeRoi("IC_TOP", "IC Top", 116, 74, 92, 88) },
                 new RecipeVisionParameters(0.75, 8, 0.65, 1.0, 0.15, 0.15)),
             new RecipeSequence(new[] { "SafetyCheck", "MoveToCamera", "Grab", "Inspect2D", "Inspect3D", "Judge", "Persist" }));
     }
@@ -954,7 +960,8 @@ public sealed class DashboardAndShellViewModelTests
         InspectionRunStatus status,
         string message,
         RecipeIndexEntry? recipe = null,
-        CameraGrabResult? cameraGrabResult = null)
+        CameraGrabResult? cameraGrabResult = null,
+        VisionInspectionResult? visionResult = null)
     {
         var timestamp = DateTimeOffset.UtcNow;
         var request = recipe is null
@@ -972,6 +979,16 @@ public sealed class DashboardAndShellViewModelTests
         var commandResult = request is null
             ? null
             : MachineCommandResult.Success("Run Inspection accepted.", TimeSpan.FromMilliseconds(10), request.CorrelationId);
+        var resolvedVisionResult = visionResult ?? (request is null || status != InspectionRunStatus.Accepted
+            ? null
+            : new VisionInspectionResult(
+                Judgment.Pass,
+                Array.Empty<Defect>(),
+                "2D inspection Pass: 1 ROI(s) evaluated.",
+                recipe!.RecipeId,
+                recipe.Version,
+                TimeSpan.FromMilliseconds(2),
+                timestamp.AddMilliseconds(11)));
 
         return new InspectionRunResult(
             status,
@@ -981,12 +998,15 @@ public sealed class DashboardAndShellViewModelTests
             commandResult,
             null,
             cameraGrabResult,
+            resolvedVisionResult,
             new[]
             {
                 new InspectionSequenceStepRecord("Load Recipe", recipe is null ? InspectionSequenceStepStatus.Failed : InspectionSequenceStepStatus.Success, message, TimeSpan.FromMilliseconds(1)),
                 new InspectionSequenceStepRecord("Safety Interlock", recipe is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, recipe is null ? "Skipped" : "Inspection interlocks passed.", TimeSpan.FromMilliseconds(1)),
                 new InspectionSequenceStepRecord("Start Sequence", status == InspectionRunStatus.Accepted ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, message, TimeSpan.FromMilliseconds(1)),
-                new InspectionSequenceStepRecord("Grab Image", cameraGrabResult?.IsSuccess == true ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, cameraGrabResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1))
+                new InspectionSequenceStepRecord("Grab Image", cameraGrabResult?.IsSuccess == true ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, cameraGrabResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Inspect 2D", resolvedVisionResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedVisionResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Judge", resolvedVisionResult is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, resolvedVisionResult is null ? "Skipped" : $"Judge: {resolvedVisionResult.Judgment}.", TimeSpan.Zero)
             },
             timestamp,
             timestamp.AddMilliseconds(12));
