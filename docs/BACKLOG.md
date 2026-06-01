@@ -265,4 +265,12 @@ Problem: The Recipe index can mark one row active, but operators still need an H
 Proposed improvement: Bind RecipeView Set Active to `IRecipeIndexRepository.SetActiveAsync`, refresh the list after success, and surface rejected/missing-row paths in `StatusText`.
 Requirement impact: FR-120, FR-122, FR-123, FR-124, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-122-recipe-view-activate`.
+Status: Addressed by RecipeView Set Active command; active context consumption by Teaching/inspection remains open.
+
+Date: 2026-06-01
+Source: FR-122 Active Recipe context provider
+Problem: RecipeView can select an active Recipe, but Teaching and inspection workflows need a shared Application-layer way to read the active Recipe without depending on SQLite repository details.
+Proposed improvement: Add an active Recipe context provider that maps active metadata to Success/NotSelected/InvalidRecipe/RepositoryUnavailable statuses.
+Requirement impact: FR-120, FR-122, FR-180, FR-200, NFR-004, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-122-active-recipe-context`.

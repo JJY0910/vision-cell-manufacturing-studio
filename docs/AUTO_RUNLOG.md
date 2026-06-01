@@ -293,3 +293,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 29 tests; Debug/Release solution build and test passed with 140 tests; WPF hidden launch smoke passed.
 - Risks: Active Recipe app startup restore and Teaching/inspection context consumption remain follow-up work.
+
+## 2026-06-01 20:10 - In progress
+- Branch: `codex/feature/fr-122-active-recipe-context`
+- Scope: Add an ADR-backed Application active Recipe context provider over the Recipe index active row for Teaching and inspection consumers.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 53 tests; App targeted tests passed with 29 tests; Debug/Release solution build and test passed with 144 tests; WPF hidden launch smoke passed.
+- Risks: This slice exposes active context but does not yet inject it into Teaching mutation requests or inspection sequence startup.
