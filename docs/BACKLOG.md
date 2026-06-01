@@ -21,7 +21,7 @@
 - [ ] Synthetic 3D height map inspection
 - [ ] Recipe version history
 - [ ] Failure injection panel
-- [ ] Motion command history
+- [ ] Motion command history chart/export polish
 - [ ] CSV report export
 - [ ] Error code catalog
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
