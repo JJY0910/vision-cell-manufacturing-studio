@@ -8,6 +8,7 @@ public sealed class SqliteSchemaInitializer
     private const string TeachingPointsMigrationId = "002_teaching_points";
     private const string TeachingHistoryMigrationId = "003_teaching_history";
     private const string RecipesMigrationId = "004_recipes";
+    private const string InspectionResultsMigrationId = "005_inspection_results";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -27,6 +28,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, TeachingHistoryMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateRecipesTableAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, RecipesMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateInspectionResultTablesAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, InspectionResultsMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -121,6 +124,45 @@ public sealed class SqliteSchemaInitializer
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL,
               UNIQUE(recipe_id, version)
+            );
+            """;
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateInspectionResultTablesAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS inspection_results (
+              id TEXT PRIMARY KEY,
+              correlation_id TEXT NOT NULL,
+              lot_id TEXT NOT NULL,
+              recipe_id TEXT NOT NULL,
+              recipe_version TEXT NOT NULL,
+              judgment TEXT NOT NULL,
+              defect_summary TEXT NULL,
+              source_image_path TEXT NOT NULL,
+              overlay_image_path TEXT NULL,
+              height_map_path TEXT NULL,
+              cycle_time_ms INTEGER NOT NULL,
+              step_timings_json TEXT NOT NULL,
+              parameters_json TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS defects (
+              id TEXT PRIMARY KEY,
+              result_id TEXT NOT NULL,
+              defect_type TEXT NOT NULL,
+              score REAL NOT NULL,
+              roi_id TEXT NULL,
+              bbox_x INTEGER NOT NULL,
+              bbox_y INTEGER NOT NULL,
+              bbox_w INTEGER NOT NULL,
+              bbox_h INTEGER NOT NULL,
+              message TEXT NULL,
+              FOREIGN KEY(result_id) REFERENCES inspection_results(id)
             );
             """;
 

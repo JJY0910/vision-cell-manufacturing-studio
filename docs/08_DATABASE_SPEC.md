@@ -112,6 +112,13 @@ CREATE TABLE IF NOT EXISTS defects (
 );
 ```
 
+Implementation note:
+
+- `VisionCell.Persistence` initializes `inspection_results` and `defects` through migration id `005_inspection_results`.
+- `SqliteInspectionResultRepository` implements `IInspectionResultRepository` and `IInspectionResultReader` for FR-200 result logging.
+- The repository stores Recipe ID/version, lot ID, final Judge, defect summary, source image URI, optional overlay/height-map artifact paths, cycle time, step timings JSON, parameters JSON, and per-defect bounding boxes.
+- Overlay and height-map artifact file generation is intentionally left nullable until the overlay rendering/export slice is implemented.
+
 ### teaching_points
 
 ```sql

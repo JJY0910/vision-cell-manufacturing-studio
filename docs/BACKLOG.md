@@ -11,9 +11,9 @@
 - [ ] FR-100 Teaching point save/go-to (domain, Application use case, SQLite repository, list query, and WPF binding added; recipe ownership pending)
 - [ ] FR-120 Recipe CRUD
 - [x] FR-140 Camera simulator grab (synthetic Gray8 frame and Last Grab UI binding)
-- [ ] FR-160 2D inspection baseline
+- [x] FR-160 2D inspection baseline
 - [ ] FR-180 Inspection sequence
-- [ ] FR-200 SQLite result logging
+- [x] FR-200 SQLite result logging (Judge, defect, timing, and Recipe metadata persisted; overlay artifact generation pending)
 
 ## P1 Quality Backlog
 
@@ -329,7 +329,7 @@ Problem: InspectionRunUseCase can move and grab an image, but the Inspect 2D and
 Proposed improvement: Add `IVisionInspectionEngine`, deterministic Gray8 Missing/Scratch/Offset checks, Application conversion from CameraFrame/Recipe ROI to Vision request, and Judge Pass/Fail timeline state.
 Requirement impact: FR-140, FR-160, FR-161, FR-163, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-160-deterministic-2d-inspection`.
+Status: Addressed by ADR-0018 and PR #41.
 
 Date: 2026-06-01
 Source: FR-162 Synthetic height-map inspection
@@ -337,12 +337,20 @@ Problem: 2D inspection and Judge can run, but Inspect 3D still needs determinist
 Proposed improvement: Add synthetic height-map generation, deterministic 3D inspection, Application Inspect 3D execution, and final Judge aggregation across 2D/3D results.
 Requirement impact: FR-162, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-170-deterministic-3d-inspection`.
+Status: Addressed by ADR-0019 and PR #42.
 
 Date: 2026-06-01
 Source: FR-200 Inspection result persistence
 Problem: 2D/3D inspection and Judge can now run, but overlay rendering and SQLite result persistence are still pending.
 Proposed improvement: Add image overlay artifact generation and `InspectionResult` persistence with Recipe/Lot/Judge/Defect/timing records.
 Requirement impact: FR-180, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-200-inspection-result-persistence` for SQLite metadata/defect/timing persistence; overlay artifact generation remains open.
+
+Date: 2026-06-01
+Source: FR-200 Inspection result persistence
+Problem: SQLite result rows can now store nullable overlay and height-map artifact paths, but no overlay renderer or artifact writer creates files for Offline Debug or reports yet.
+Proposed improvement: Add deterministic overlay rendering and artifact path policy that writes generated overlays/height-map snapshots under a safe local-data subdirectory and records those paths in `inspection_results`.
+Requirement impact: FR-160, FR-162, FR-180, FR-200, NFR-004, NFR-008, NFR-TEST-001
 Priority: P0
 Status: Open.

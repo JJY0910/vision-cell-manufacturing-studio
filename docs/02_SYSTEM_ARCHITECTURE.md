@@ -156,7 +156,8 @@ Current implementation status:
 - Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
 - 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.
 - 3D inspection now flows through `SyntheticHeightMapFactory`, `IHeightMapInspectionEngine`, and `DeterministicHeightMapInspectionEngine`, using Recipe ROI and height parameters before Judge.
-- Result persistence and UI overlay rendering remain separate follow-up slices.
+- Result persistence now flows through Application `IInspectionResultRepository` and Persistence `SqliteInspectionResultRepository`, storing Judge, defect, timing, Recipe, and correlation metadata after Judge.
+- UI overlay rendering and image/height-map artifact generation remain separate follow-up slices.
 
 ## Error Handling Policy
 

@@ -18,6 +18,7 @@ using VisionCell.App.Navigation;
 using VisionCell.App.Shell;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Persistence.Inspection;
 using VisionCell.Persistence.Motion;
 using VisionCell.Persistence.Recipes;
 using VisionCell.Persistence.Sqlite;
@@ -55,11 +56,14 @@ public static class AppServiceConfiguration
         services.AddSingleton(_ => new SqliteConnectionFactory(databasePath));
         services.AddSingleton<SqliteSchemaInitializer>();
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
+        services.AddSingleton<SqliteInspectionResultRepository>();
         services.AddSingleton<SqliteRecipeIndexRepository>();
         services.AddSingleton<SqliteTeachingPointRepository>();
         services.AddSingleton<SqliteTeachingHistoryRepository>();
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
+        services.AddSingleton<IInspectionResultRepository>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
+        services.AddSingleton<IInspectionResultReader>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IRecipeIndexRepository>(provider => provider.GetRequiredService<SqliteRecipeIndexRepository>());
         services.AddSingleton<IRecipeDocumentStore>(provider => new JsonRecipeDocumentStore(
             recipeRootPath,

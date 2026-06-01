@@ -29,6 +29,7 @@ using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
 using VisionCell.Motion.Commands;
 using VisionCell.Motion.Teaching;
+using VisionCell.Persistence.Inspection;
 using VisionCell.Simulator;
 using VisionCell.Vision.Inspection;
 using Xunit;
@@ -122,6 +123,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<SyntheticHeightMapFactory>()
                 .Should()
                 .NotBeNull();
+            provider.GetRequiredService<IInspectionResultRepository>()
+                .Should()
+                .BeOfType<SqliteInspectionResultRepository>();
         }
         finally
         {
@@ -1017,6 +1021,7 @@ public sealed class DashboardAndShellViewModelTests
             cameraGrabResult,
             resolvedVisionResult,
             resolvedHeightMapResult,
+            status == InspectionRunStatus.Accepted ? Guid.NewGuid() : null,
             new[]
             {
                 new InspectionSequenceStepRecord("Load Recipe", recipe is null ? InspectionSequenceStepStatus.Failed : InspectionSequenceStepStatus.Success, message, TimeSpan.FromMilliseconds(1)),
