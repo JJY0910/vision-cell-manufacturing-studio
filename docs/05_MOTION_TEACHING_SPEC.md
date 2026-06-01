@@ -131,7 +131,8 @@ Implementation status:
 - Go To Teaching Point loads a saved point and dispatches a traceable Move Absolute request through `IMotionCommandUseCase`.
 - SQLite persistence supports save, ID lookup, duplicate-name lookup, and updated-time ordered list queries.
 - WPF TeachingView binding supports refresh, save current position, and Go To selected point.
-- Edit history and recipe-level Teaching Point ownership remain follow-up work.
+- `VisionCell.Application.Teaching` defines a Teaching history entry/port for create/update/delete before/after JSON traceability.
+- SQLite history persistence and recipe-level Teaching Point ownership remain follow-up work.
 
 ## Teaching Workflow
 
