@@ -289,4 +289,12 @@ Problem: InspectionView is still a placeholder and does not reject missing or in
 Proposed improvement: Add an InspectionViewModel precheck command backed by `IActiveRecipeContext`, with operator-visible blocked states for no active Recipe, invalid active Recipe, and repository unavailable.
 Requirement impact: FR-122, FR-180, FR-181, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-180-inspection-active-precheck`.
+Status: Addressed by InspectionView active Recipe precheck; Application run use case is in progress on `codex/feature/fr-181-inspection-run-use-case`.
+
+Date: 2026-06-01
+Source: FR-181/FR-182 Inspection run use case
+Problem: InspectionView can precheck active Recipe context, but Run Inspection still needs an Application sequence boundary with timeline state and operator cancellation.
+Proposed improvement: Add `IInspectionRunUseCase`, ordered sequence step records, ViewModel timeline binding, and Stop Inspection cancellation of the active run token.
+Requirement impact: FR-122, FR-180, FR-181, FR-182, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-181-inspection-run-use-case`.

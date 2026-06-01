@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
@@ -65,6 +66,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<ITeachingPointRepository>(provider => provider.GetRequiredService<SqliteTeachingPointRepository>());
         services.AddSingleton<ITeachingHistoryRepository>(provider => provider.GetRequiredService<SqliteTeachingHistoryRepository>());
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
+        services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
         services.AddSingleton<DashboardViewModel>();
