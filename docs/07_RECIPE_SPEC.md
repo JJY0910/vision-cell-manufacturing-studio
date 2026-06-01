@@ -66,6 +66,12 @@ assets/recipes/PKG-MEMORY-MODULE.v1.0.0.recipe.json
 - thresholds within defined ranges
 - sequence contains required steps
 
+Implementation status:
+
+- `VisionCell.Application.Recipes` defines `RecipeDefinition`, metadata/camera/vision/sequence child records, validation issue/result records, and `RecipeValidator`.
+- `RecipeValidator` checks required metadata, semantic version format, Teaching Point domain validation, ROI bounds against the default 1920x1080 image size, camera/vision parameter ranges, and required sequence steps.
+- JSON persistence, SQLite indexing, active recipe settings, and RecipeView editing remain follow-up work.
+
 ## Versioning Policy
 
 - Major: structure/inspection behavior incompatible
