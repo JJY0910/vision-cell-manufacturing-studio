@@ -46,6 +46,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private readonly IVisionInspectionEngine _visionInspectionEngine;
     private readonly IHeightMapInspectionEngine _heightMapInspectionEngine;
     private readonly SyntheticHeightMapFactory _syntheticHeightMapFactory;
+    private readonly IInspectionArtifactWriter _inspectionArtifactWriter;
     private readonly IInspectionResultRepository _inspectionResultRepository;
     private readonly Func<DateTimeOffset> _clock;
 
@@ -58,6 +59,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         IVisionInspectionEngine visionInspectionEngine,
         IHeightMapInspectionEngine heightMapInspectionEngine,
         SyntheticHeightMapFactory syntheticHeightMapFactory,
+        IInspectionArtifactWriter inspectionArtifactWriter,
         IInspectionResultRepository inspectionResultRepository,
         Func<DateTimeOffset>? clock = null)
     {
@@ -69,6 +71,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _visionInspectionEngine = visionInspectionEngine ?? throw new ArgumentNullException(nameof(visionInspectionEngine));
         _heightMapInspectionEngine = heightMapInspectionEngine ?? throw new ArgumentNullException(nameof(heightMapInspectionEngine));
         _syntheticHeightMapFactory = syntheticHeightMapFactory ?? throw new ArgumentNullException(nameof(syntheticHeightMapFactory));
+        _inspectionArtifactWriter = inspectionArtifactWriter ?? throw new ArgumentNullException(nameof(inspectionArtifactWriter));
         _inspectionResultRepository = inspectionResultRepository ?? throw new ArgumentNullException(nameof(inspectionResultRepository));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
@@ -94,6 +97,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         CameraGrabResult? cameraGrabResult = null;
         VisionInspectionResult? visionResult = null;
         VisionInspectionResult? heightMapResult = null;
+        VisionHeightMap? heightMap = null;
         Guid? persistedResultId = null;
 
         try
@@ -250,14 +254,14 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Running, "Running deterministic 3D height-map inspection.", null);
             try
             {
+                var heightMapRequest = CreateHeightMapInspectionRequest(
+                    recipeDocument,
+                    cameraGrabResult.Frame!,
+                    commandRequest.CorrelationId,
+                    request.VisionTimeout);
+                heightMap = heightMapRequest.HeightMap;
                 heightMapResult = await _heightMapInspectionEngine
-                    .InspectAsync(
-                        CreateHeightMapInspectionRequest(
-                            recipeDocument,
-                            cameraGrabResult.Frame!,
-                            commandRequest.CorrelationId,
-                            request.VisionTimeout),
-                        cancellationToken)
+                    .InspectAsync(heightMapRequest, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -290,16 +294,35 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Running, "Persisting inspection result.", null);
             try
             {
+                var lotId = CreateLotId(startedAt);
+                var defects = CreateInspectionDefectRecords(visionResult, heightMapResult);
+                var artifacts = await _inspectionArtifactWriter
+                    .WriteAsync(
+                        CreateInspectionArtifactWriteRequest(
+                            persistedResultId.Value,
+                            lotId,
+                            recipeDocument,
+                            commandRequest,
+                            cameraGrabResult.Frame!,
+                            heightMap!,
+                            finalJudgment,
+                            defects,
+                            startedAt),
+                        cancellationToken)
+                    .ConfigureAwait(false);
                 await _inspectionResultRepository
                     .SaveAsync(
                         CreateInspectionResultSaveRequest(
                             persistedResultId.Value,
+                            lotId,
                             recipe,
                             commandRequest,
                             cameraGrabResult.Frame!,
                             visionResult,
                             heightMapResult,
                             finalJudgment,
+                            artifacts,
+                            defects,
                             recorder.Snapshot(),
                             startedAt),
                         cancellationToken)
@@ -466,29 +489,19 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
 
     private InspectionResultSaveRequest CreateInspectionResultSaveRequest(
         Guid resultId,
+        string lotId,
         RecipeIndexEntry recipe,
         MachineCommandRequest commandRequest,
         CameraFrame frame,
         VisionInspectionResult visionResult,
         VisionInspectionResult heightMapResult,
         Judgment finalJudgment,
+        InspectionArtifactWriteResult artifacts,
+        IReadOnlyList<InspectionDefectRecord> defects,
         IReadOnlyList<InspectionSequenceStepRecord> stepTimings,
         DateTimeOffset startedAt)
     {
         var completedAt = _clock();
-        var defects = visionResult.Defects
-            .Concat(heightMapResult.Defects)
-            .Select(defect => new InspectionDefectRecord(
-                defect.Type,
-                defect.Score,
-                RoiId: null,
-                defect.X,
-                defect.Y,
-                defect.Width,
-                defect.Height,
-                defect.Message))
-            .ToArray();
-
         var parameters = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["RecipeId"] = recipe.RecipeId,
@@ -505,19 +518,72 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         return new InspectionResultSaveRequest(
             resultId,
             commandRequest.CorrelationId.ToString(),
-            CreateLotId(startedAt),
+            lotId,
             recipe.RecipeId,
             recipe.Version,
             finalJudgment,
-            defects.Length == 0 ? "No defects" : $"{defects.Length} defect(s)",
+            defects.Count == 0 ? "No defects" : $"{defects.Count} defect(s)",
             CreateSourceImagePath(frame, commandRequest.CorrelationId),
-            OverlayImagePath: null,
-            HeightMapPath: null,
+            artifacts.OverlayImagePath,
+            artifacts.HeightMapPath,
             completedAt - startedAt,
             stepTimings,
             parameters,
             defects,
             completedAt);
+    }
+
+    private static IReadOnlyList<InspectionDefectRecord> CreateInspectionDefectRecords(
+        VisionInspectionResult visionResult,
+        VisionInspectionResult heightMapResult)
+    {
+        return visionResult.Defects
+            .Concat(heightMapResult.Defects)
+            .Select(defect => new InspectionDefectRecord(
+                defect.Type,
+                defect.Score,
+                RoiId: null,
+                defect.X,
+                defect.Y,
+                defect.Width,
+                defect.Height,
+                defect.Message))
+            .ToArray();
+    }
+
+    private static InspectionArtifactWriteRequest CreateInspectionArtifactWriteRequest(
+        Guid resultId,
+        string lotId,
+        RecipeDefinition recipe,
+        MachineCommandRequest commandRequest,
+        CameraFrame frame,
+        VisionHeightMap heightMap,
+        Judgment finalJudgment,
+        IReadOnlyList<InspectionDefectRecord> defects,
+        DateTimeOffset startedAt)
+    {
+        return new InspectionArtifactWriteRequest(
+            resultId,
+            commandRequest.CorrelationId.ToString(),
+            lotId,
+            recipe.RecipeId,
+            recipe.Version,
+            finalJudgment,
+            new InspectionArtifactImageFrame(
+                frame.Width,
+                frame.Height,
+                frame.Stride,
+                frame.Pixels),
+            new InspectionArtifactHeightMap(
+                heightMap.Width,
+                heightMap.Height,
+                heightMap.Values,
+                heightMap.Unit),
+            recipe.Vision.Rois
+                .Select(roi => new InspectionArtifactRoi(roi.Id, roi.Name, roi.X, roi.Y, roi.Width, roi.Height))
+                .ToArray(),
+            defects,
+            startedAt);
     }
 
     private static string CreateLotId(DateTimeOffset startedAt)

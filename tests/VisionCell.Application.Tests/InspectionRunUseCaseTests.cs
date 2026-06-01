@@ -31,6 +31,7 @@ public sealed class InspectionRunUseCaseTests
         var motion = new FakeMotionCommandUseCase();
         var vision = new FakeVisionInspectionEngine();
         var heightMap = new FakeHeightMapInspectionEngine();
+        var artifacts = new FakeInspectionArtifactWriter();
         var results = new FakeInspectionResultRepository();
         var useCase = CreateUseCase(
             new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
@@ -38,6 +39,7 @@ public sealed class InspectionRunUseCaseTests
             motionCommandUseCase: motion,
             visionInspectionEngine: vision,
             heightMapInspectionEngine: heightMap,
+            inspectionArtifactWriter: artifacts,
             inspectionResultRepository: results);
         var progress = new CapturingProgress();
 
@@ -67,10 +69,16 @@ public sealed class InspectionRunUseCaseTests
         heightMap.Requests[0].RecipeId.Should().Be("RCP-AUTO");
         var persistedResultId = result.PersistedResultId;
         persistedResultId.Should().NotBeNull();
+        artifacts.Requests.Should().ContainSingle();
+        artifacts.Requests[0].ResultId.Should().Be(persistedResultId.GetValueOrDefault());
+        artifacts.Requests[0].Rois.Should().ContainSingle(roi => roi.Id == "ROI-01");
+        artifacts.Requests[0].HeightMap.Values.Should().NotBeEmpty();
         results.Requests.Should().ContainSingle();
         results.Requests[0].Id.Should().Be(persistedResultId.GetValueOrDefault());
         results.Requests[0].Judgment.Should().Be(Judgment.Pass);
         results.Requests[0].CorrelationId.Should().Be(result.Request.CorrelationId.ToString());
+        results.Requests[0].OverlayImagePath.Should().EndWith(".overlay.bmp");
+        results.Requests[0].HeightMapPath.Should().EndWith(".height.bmp");
         motion.Requests.Should().ContainSingle();
         motion.Requests[0].Command.Should().Be(CommandKind.SequenceMoveToCamera);
         motion.Requests[0].InterlockContext.AutoMode.Should().BeTrue();
@@ -245,6 +253,33 @@ public sealed class InspectionRunUseCaseTests
     }
 
     [Fact]
+    public async Task RunAsync_Should_Fail_Persist_Result_When_Artifact_Writer_Fails()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-ARTIFACT-FAIL", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var artifacts = new FakeInspectionArtifactWriter
+        {
+            WriteHandler = _ => throw new InvalidOperationException("artifact path unavailable")
+        };
+        var results = new FakeInspectionResultRepository();
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            inspectionArtifactWriter: artifacts,
+            inspectionResultRepository: results);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.ResultPersistenceFailed);
+        result.Message.Should().Contain("artifact path unavailable");
+        result.PersistedResultId.Should().NotBeNull();
+        artifacts.Requests.Should().ContainSingle();
+        results.Requests.Should().BeEmpty();
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Failed);
+    }
+
+    [Fact]
     public async Task RunAsync_Should_Fail_When_Active_Recipe_Document_Cannot_Be_Loaded()
     {
         var recipe = CreateRecipeIndexEntry("RCP-MISSING-DOC", "1.0.0");
@@ -342,6 +377,7 @@ public sealed class InspectionRunUseCaseTests
         IVisionInspectionEngine? visionInspectionEngine = null,
         IHeightMapInspectionEngine? heightMapInspectionEngine = null,
         SyntheticHeightMapFactory? syntheticHeightMapFactory = null,
+        IInspectionArtifactWriter? inspectionArtifactWriter = null,
         IInspectionResultRepository? inspectionResultRepository = null)
     {
         return new InspectionRunUseCase(
@@ -353,6 +389,7 @@ public sealed class InspectionRunUseCaseTests
             visionInspectionEngine ?? new FakeVisionInspectionEngine(),
             heightMapInspectionEngine ?? new FakeHeightMapInspectionEngine(),
             syntheticHeightMapFactory ?? new SyntheticHeightMapFactory(),
+            inspectionArtifactWriter ?? new FakeInspectionArtifactWriter(),
             inspectionResultRepository ?? new FakeInspectionResultRepository(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
@@ -695,6 +732,25 @@ public sealed class InspectionRunUseCaseTests
             Requests.Add(request);
             cancellationToken.ThrowIfCancellationRequested();
             return SaveHandler(request);
+        }
+    }
+
+    private sealed class FakeInspectionArtifactWriter : IInspectionArtifactWriter
+    {
+        public List<InspectionArtifactWriteRequest> Requests { get; } = new();
+
+        public Func<InspectionArtifactWriteRequest, Task<InspectionArtifactWriteResult>> WriteHandler { get; init; } =
+            request => Task.FromResult(new InspectionArtifactWriteResult(
+                $"inspection-artifacts/20260601/{request.ResultId:N}.overlay.bmp",
+                $"inspection-artifacts/20260601/{request.ResultId:N}.height.bmp"));
+
+        public Task<InspectionArtifactWriteResult> WriteAsync(
+            InspectionArtifactWriteRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return WriteHandler(request);
         }
     }
 }
