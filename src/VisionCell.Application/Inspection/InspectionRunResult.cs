@@ -15,6 +15,7 @@ public sealed record InspectionRunResult(
     MotionCommandExecutionResult? MoveToCameraResult,
     CameraGrabResult? CameraGrabResult,
     VisionInspectionResult? VisionResult,
+    VisionInspectionResult? HeightMapResult,
     IReadOnlyList<InspectionSequenceStepRecord> Steps,
     DateTimeOffset StartedAt,
     DateTimeOffset CompletedAt)

@@ -349,3 +349,10 @@
 - Validation target: Vision/Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Vision targeted tests passed with 5 tests; Application targeted tests passed with 64 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 170 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`. Initial parallel targeted run hit a shared Debug DLL file lock and was rerun serially.
 - Risks: Engine is a deterministic simulator baseline, not production metrology; 3D inspection, overlay rendering, and result persistence remain follow-up work.
+
+## 2026-06-01 23:20 - In progress
+- Branch: `codex/feature/fr-170-deterministic-3d-inspection`
+- Scope: Add ADR-backed synthetic height-map generation, deterministic Lift/Dent/LeadBent checks, InspectionRunUseCase Inspect 3D execution, and 2D/3D Judge aggregation.
+- Validation target: Vision/Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Vision targeted tests passed with 10 tests; Application targeted tests passed with 66 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 177 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: Height-map inspection is deterministic simulator evidence, not production metrology; overlay rendering and result persistence remain follow-up work.

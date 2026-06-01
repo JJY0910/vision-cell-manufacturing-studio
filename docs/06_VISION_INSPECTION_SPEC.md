@@ -48,6 +48,8 @@ Current deterministic engine scope:
 
 ## 3D Synthetic Height Map
 
+Phase 1 implementation: `SyntheticHeightMapFactory` and `DeterministicHeightMapInspectionEngine` in `VisionCell.Vision`.
+
 Representation:
 
 ```csharp
@@ -64,6 +66,14 @@ Rules:
 - tolerance: low/high
 - ROI 평균/최대/gradient를 계산
 - threshold 초과 시 Lift/Dent/LeadBent
+
+Current deterministic engine scope:
+
+- Input: synthetic `VisionHeightMap`, Recipe ROI list, and Recipe height parameters.
+- Lift: ROI max height exceeds `ExpectedHeight + HeightToleranceHigh`.
+- Dent: ROI min height is below `ExpectedHeight - HeightToleranceLow`.
+- LeadBent: local adjacent height gradient exceeds derived lead-bent gradient tolerance.
+- Invalid ROI or non-finite height-map value: result is `Judgment.Invalid` and the sequence stops before Judge.
 
 ## Inspection Result
 
@@ -152,5 +162,7 @@ ONNX integration is P2. Placeholder must not block P0/P1.
 - `VirtualCameraDevice` returns deterministic synthetic Gray8 frames and explicit timeout/failure/not-ready results for FR-140/FR-141 tests.
 - `InspectionRunUseCase` converts the grabbed Gray8 frame and Recipe ROI parameters into `VisionInspectionRequest`, runs `IVisionInspectionEngine`, and records Inspect 2D plus Judge timeline states.
 - `Deterministic2DInspectionEngine` covers Phase 1 Missing, Scratch, Offset, and invalid ROI decisions for simulator evidence.
+- `InspectionRunUseCase` now creates a synthetic height map from the grabbed Gray8 frame, runs `IHeightMapInspectionEngine`, and records Inspect 3D before the final Judge.
+- `DeterministicHeightMapInspectionEngine` covers Phase 1 Lift, Dent, LeadBent, invalid height-map, and invalid ROI decisions for FR-162 evidence.
 - Stop Inspection requests cancellation for the active run token through `InspectionViewModel`.
-- 3D inspection, result persistence, and overlay rendering remain follow-up work; Persist Result is currently reported as a skipped timeline step after Judge.
+- Result persistence and overlay rendering remain follow-up work; Persist Result is currently reported as a skipped timeline step after Judge.

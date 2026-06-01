@@ -30,11 +30,13 @@ public sealed class InspectionRunUseCaseTests
         };
         var motion = new FakeMotionCommandUseCase();
         var vision = new FakeVisionInspectionEngine();
+        var heightMap = new FakeHeightMapInspectionEngine();
         var useCase = CreateUseCase(
             new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
             controller,
             motionCommandUseCase: motion,
-            visionInspectionEngine: vision);
+            visionInspectionEngine: vision,
+            heightMapInspectionEngine: heightMap);
         var progress = new CapturingProgress();
 
         var result = await useCase.RunAsync(CreateRequest(), progress, CancellationToken.None);
@@ -57,6 +59,10 @@ public sealed class InspectionRunUseCaseTests
         vision.Requests.Should().ContainSingle();
         vision.Requests[0].RecipeId.Should().Be("RCP-AUTO");
         vision.Requests[0].Rois.Should().ContainSingle(roi => roi.Id == "ROI-01");
+        result.HeightMapResult.Should().NotBeNull();
+        result.HeightMapResult!.Judgment.Should().Be(Judgment.Pass);
+        heightMap.Requests.Should().ContainSingle();
+        heightMap.Requests[0].RecipeId.Should().Be("RCP-AUTO");
         motion.Requests.Should().ContainSingle();
         motion.Requests[0].Command.Should().Be(CommandKind.SequenceMoveToCamera);
         motion.Requests[0].InterlockContext.AutoMode.Should().BeTrue();
@@ -73,6 +79,7 @@ public sealed class InspectionRunUseCaseTests
         result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Inspect 3D" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Success && step.Message.Contains("Pass", StringComparison.Ordinal));
         result.Steps.Should().Contain(step => step.Name == "Persist Result" && step.Status == InspectionSequenceStepStatus.Skipped);
         progress.Updates.Should().Contain(update => update.Status == InspectionSequenceStepStatus.Running);
@@ -135,6 +142,74 @@ public sealed class InspectionRunUseCaseTests
         vision.Requests.Should().ContainSingle();
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Failed);
         result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Skipped);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Fail_Inspect_3D_When_Height_Map_Result_Is_Invalid()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-HEIGHT-INVALID", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var heightMap = new FakeHeightMapInspectionEngine
+        {
+            InspectHandler = request => Task.FromResult(new VisionInspectionResult(
+                Judgment.Invalid,
+                new[] { new Defect("InvalidRoi", 1.0, 0, 0, 10, 10, "ROI is outside the height map.") },
+                "3D inspection invalid: 1 ROI boundary issue(s).",
+                request.RecipeId,
+                request.RecipeVersion,
+                TimeSpan.FromMilliseconds(2),
+                request.RequestedAt.AddMilliseconds(2)))
+        };
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            heightMapInspectionEngine: heightMap);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.HeightMapInspectionFailed);
+        result.Message.Should().Contain("3D inspection invalid");
+        result.VisionResult.Should().NotBeNull();
+        result.HeightMapResult.Should().NotBeNull();
+        result.HeightMapResult!.Judgment.Should().Be(Judgment.Invalid);
+        heightMap.Requests.Should().ContainSingle();
+        result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Inspect 3D" && step.Status == InspectionSequenceStepStatus.Failed);
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Status == InspectionSequenceStepStatus.Skipped);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Run_3D_And_Judge_Fail_When_2D_Detects_Defect()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-2D-FAIL", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var vision = new FakeVisionInspectionEngine
+        {
+            InspectHandler = request => Task.FromResult(new VisionInspectionResult(
+                Judgment.Fail,
+                new[] { new Defect("Scratch", 0.9, 10, 10, 40, 1, "Scratch detected.") },
+                "2D inspection Fail: 1 defect(s) detected.",
+                request.RecipeId,
+                request.RecipeVersion,
+                TimeSpan.FromMilliseconds(2),
+                request.RequestedAt.AddMilliseconds(2)))
+        };
+        var heightMap = new FakeHeightMapInspectionEngine();
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            visionInspectionEngine: vision,
+            heightMapInspectionEngine: heightMap);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.Accepted);
+        result.Message.Should().Contain("judge Fail");
+        result.VisionResult!.Judgment.Should().Be(Judgment.Fail);
+        result.HeightMapResult!.Judgment.Should().Be(Judgment.Pass);
+        heightMap.Requests.Should().ContainSingle();
+        result.Steps.Should().Contain(step => step.Name == "Inspect 3D" && step.Status == InspectionSequenceStepStatus.Success);
+        result.Steps.Should().Contain(step => step.Name == "Judge" && step.Message.Contains("2D defects: 1", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -232,7 +307,9 @@ public sealed class InspectionRunUseCaseTests
         IRecipeDocumentStore? documentStore = null,
         IMotionCommandUseCase? motionCommandUseCase = null,
         ICameraDevice? cameraDevice = null,
-        IVisionInspectionEngine? visionInspectionEngine = null)
+        IVisionInspectionEngine? visionInspectionEngine = null,
+        IHeightMapInspectionEngine? heightMapInspectionEngine = null,
+        SyntheticHeightMapFactory? syntheticHeightMapFactory = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
@@ -241,6 +318,8 @@ public sealed class InspectionRunUseCaseTests
             motionCommandUseCase ?? new FakeMotionCommandUseCase(),
             cameraDevice ?? new FakeCameraDevice(),
             visionInspectionEngine ?? new FakeVisionInspectionEngine(),
+            heightMapInspectionEngine ?? new FakeHeightMapInspectionEngine(),
+            syntheticHeightMapFactory ?? new SyntheticHeightMapFactory(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
 
@@ -536,6 +615,30 @@ public sealed class InspectionRunUseCaseTests
 
         public Task<VisionInspectionResult> InspectAsync(
             VisionInspectionRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return InspectHandler(request);
+        }
+    }
+
+    private sealed class FakeHeightMapInspectionEngine : IHeightMapInspectionEngine
+    {
+        public List<HeightMapInspectionRequest> Requests { get; } = new();
+
+        public Func<HeightMapInspectionRequest, Task<VisionInspectionResult>> InspectHandler { get; init; } =
+            request => Task.FromResult(new VisionInspectionResult(
+                Judgment.Pass,
+                Array.Empty<Defect>(),
+                "3D inspection Pass: 1 ROI(s) evaluated.",
+                request.RecipeId,
+                request.RecipeVersion,
+                TimeSpan.FromMilliseconds(2),
+                request.RequestedAt.AddMilliseconds(2)));
+
+        public Task<VisionInspectionResult> InspectAsync(
+            HeightMapInspectionRequest request,
             CancellationToken cancellationToken)
         {
             Requests.Add(request);

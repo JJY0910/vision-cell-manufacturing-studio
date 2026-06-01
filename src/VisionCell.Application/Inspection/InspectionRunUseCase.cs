@@ -44,6 +44,8 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private readonly IMotionCommandUseCase _motionCommandUseCase;
     private readonly ICameraDevice _cameraDevice;
     private readonly IVisionInspectionEngine _visionInspectionEngine;
+    private readonly IHeightMapInspectionEngine _heightMapInspectionEngine;
+    private readonly SyntheticHeightMapFactory _syntheticHeightMapFactory;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
@@ -53,6 +55,8 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         IMotionCommandUseCase motionCommandUseCase,
         ICameraDevice cameraDevice,
         IVisionInspectionEngine visionInspectionEngine,
+        IHeightMapInspectionEngine heightMapInspectionEngine,
+        SyntheticHeightMapFactory syntheticHeightMapFactory,
         Func<DateTimeOffset>? clock = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
@@ -61,6 +65,8 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _motionCommandUseCase = motionCommandUseCase ?? throw new ArgumentNullException(nameof(motionCommandUseCase));
         _cameraDevice = cameraDevice ?? throw new ArgumentNullException(nameof(cameraDevice));
         _visionInspectionEngine = visionInspectionEngine ?? throw new ArgumentNullException(nameof(visionInspectionEngine));
+        _heightMapInspectionEngine = heightMapInspectionEngine ?? throw new ArgumentNullException(nameof(heightMapInspectionEngine));
+        _syntheticHeightMapFactory = syntheticHeightMapFactory ?? throw new ArgumentNullException(nameof(syntheticHeightMapFactory));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -84,6 +90,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         MotionCommandExecutionResult? moveToCameraResult = null;
         CameraGrabResult? cameraGrabResult = null;
         VisionInspectionResult? visionResult = null;
+        VisionInspectionResult? heightMapResult = null;
 
         try
         {
@@ -234,13 +241,50 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             }
 
             recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Success, visionResult.Message, visionStopwatch.Elapsed);
-            recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Skipped, "3D inspection is pending FR-170 implementation.", TimeSpan.Zero);
-            recorder.Update(JudgeStep, InspectionSequenceStepStatus.Success, FormatJudgeMessage(visionResult), TimeSpan.Zero);
+
+            var heightMapStopwatch = Stopwatch.StartNew();
+            recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Running, "Running deterministic 3D height-map inspection.", null);
+            try
+            {
+                heightMapResult = await _heightMapInspectionEngine
+                    .InspectAsync(
+                        CreateHeightMapInspectionRequest(
+                            recipeDocument,
+                            cameraGrabResult.Frame!,
+                            commandRequest.CorrelationId,
+                            request.VisionTimeout),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                heightMapStopwatch.Stop();
+                var message = $"3D inspection failed: {ex.Message}";
+                recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Failed, message, heightMapStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because 3D inspection did not complete.");
+                return Finish(InspectionRunStatus.HeightMapInspectionFailed, message);
+            }
+
+            heightMapStopwatch.Stop();
+            if (heightMapResult.Judgment == Judgment.Invalid)
+            {
+                recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Failed, heightMapResult.Message, heightMapStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because 3D inspection returned an invalid result.");
+                return Finish(InspectionRunStatus.HeightMapInspectionFailed, heightMapResult.Message);
+            }
+
+            recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Success, heightMapResult.Message, heightMapStopwatch.Elapsed);
+            var finalJudgment = DetermineFinalJudgment(visionResult, heightMapResult);
+            recorder.Update(JudgeStep, InspectionSequenceStepStatus.Success, FormatJudgeMessage(visionResult, heightMapResult), TimeSpan.Zero);
             recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Skipped, "Result persistence is pending FR-200 implementation.", TimeSpan.Zero);
 
             return Finish(
                 InspectionRunStatus.Accepted,
-                $"Inspection sequence completed with 2D judge {visionResult.Judgment} for recipe '{recipe.RecipeId}' v{recipe.Version}.");
+                $"Inspection sequence completed with judge {finalJudgment} for recipe '{recipe.RecipeId}' v{recipe.Version}.");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -266,6 +310,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 moveToCameraResult,
                 cameraGrabResult,
                 visionResult,
+                heightMapResult,
                 recorder.Snapshot(),
                 startedAt,
                 _clock());
@@ -278,14 +323,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         CorrelationId correlationId,
         TimeSpan timeout)
     {
-        var image = new VisionImageFrame(
-            frame.Width,
-            frame.Height,
-            frame.Stride,
-            MapPixelFormat(frame.PixelFormat),
-            frame.Pixels,
-            frame.GrabbedAt,
-            frame.Metadata);
+        var image = CreateVisionImageFrame(frame);
 
         var rois = recipe.Vision.Rois
             .Select(roi => new VisionRoi(roi.Id, roi.Name, roi.X, roi.Y, roi.Width, roi.Height))
@@ -307,6 +345,53 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             _clock());
     }
 
+    private HeightMapInspectionRequest CreateHeightMapInspectionRequest(
+        RecipeDefinition recipe,
+        CameraFrame frame,
+        CorrelationId correlationId,
+        TimeSpan timeout)
+    {
+        var image = CreateVisionImageFrame(frame);
+        var heightMap = _syntheticHeightMapFactory.CreateFromGray8(
+            image,
+            recipe.Vision.Parameters.ExpectedHeight,
+            new Dictionary<string, string>
+            {
+                ["RecipeId"] = recipe.RecipeId,
+                ["RecipeVersion"] = recipe.Version
+            });
+        var rois = recipe.Vision.Rois
+            .Select(roi => new VisionRoi(roi.Id, roi.Name, roi.X, roi.Y, roi.Width, roi.Height))
+            .ToArray();
+        var parameters = new HeightMapInspectionParameters(
+            recipe.Vision.Parameters.ExpectedHeight,
+            recipe.Vision.Parameters.HeightToleranceLow,
+            recipe.Vision.Parameters.HeightToleranceHigh,
+            CalculateLeadBentGradientTolerance(recipe.Vision.Parameters));
+
+        return new HeightMapInspectionRequest(
+            correlationId,
+            recipe.RecipeId,
+            recipe.Version,
+            heightMap,
+            rois,
+            parameters,
+            timeout,
+            _clock());
+    }
+
+    private static VisionImageFrame CreateVisionImageFrame(CameraFrame frame)
+    {
+        return new VisionImageFrame(
+            frame.Width,
+            frame.Height,
+            frame.Stride,
+            MapPixelFormat(frame.PixelFormat),
+            frame.Pixels,
+            frame.GrabbedAt,
+            frame.Metadata);
+    }
+
     private static VisionPixelFormat MapPixelFormat(CameraPixelFormat pixelFormat)
     {
         return pixelFormat switch
@@ -316,11 +401,28 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         };
     }
 
-    private static string FormatJudgeMessage(VisionInspectionResult result)
+    private static double CalculateLeadBentGradientTolerance(RecipeVisionParameters parameters)
     {
-        return result.Judgment == Judgment.Pass
-            ? "Judge: Pass. No 2D defects detected."
-            : $"Judge: Fail. {result.Defects.Count} 2D defect(s) detected.";
+        return Math.Max(0.01, (parameters.HeightToleranceLow + parameters.HeightToleranceHigh) * 0.75);
+    }
+
+    private static Judgment DetermineFinalJudgment(
+        VisionInspectionResult visionResult,
+        VisionInspectionResult heightMapResult)
+    {
+        return visionResult.Judgment == Judgment.Fail || heightMapResult.Judgment == Judgment.Fail
+            ? Judgment.Fail
+            : Judgment.Pass;
+    }
+
+    private static string FormatJudgeMessage(
+        VisionInspectionResult visionResult,
+        VisionInspectionResult heightMapResult)
+    {
+        var finalJudgment = DetermineFinalJudgment(visionResult, heightMapResult);
+        return finalJudgment == Judgment.Pass
+            ? "Judge: Pass. No 2D/3D defects detected."
+            : $"Judge: Fail. 2D defects: {visionResult.Defects.Count}; 3D defects: {heightMapResult.Defects.Count}.";
     }
 
     private CameraGrabRequest CreateCameraGrabRequest(
