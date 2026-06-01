@@ -335,3 +335,10 @@
 - Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 60 tests; Equipment targeted tests passed with 20 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 161 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`. Initial parallel targeted test run hit a shared Debug DLL file lock and was rerun serially.
 - Risks: Synthetic frame is Gray8 only; Move To Camera, 2D/3D algorithms, judge, overlay, and result persistence remain follow-up work.
+
+## 2026-06-01 22:25 - In progress
+- Branch: `codex/feature/fr-180-recipe-camera-move`
+- Scope: Load active Recipe documents during inspection, add internal `SequenceMoveToCamera`, move to the Recipe Camera Teaching point, and use Recipe camera settings for grab.
+- Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 63 tests; Equipment targeted tests passed with 21 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 165 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: 2D/3D algorithms, judge, overlay, and result persistence remain follow-up work.

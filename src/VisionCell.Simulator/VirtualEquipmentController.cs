@@ -184,6 +184,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 timeout,
                 cancellationToken,
                 () => ApplyMoveAbsolute(request.Parameters)),
+            CommandKind.SequenceMoveToCamera => RunMotionCommandAsync(
+                FormatCommand(command),
+                MoveLatency,
+                timeout,
+                cancellationToken,
+                () => ApplyMoveAbsolute(request.Parameters)),
             CommandKind.Stop => RunStopCommandAsync(timeout, cancellationToken),
             CommandKind.ResetAlarm => RunControllerCommandAsync(
                 FormatCommand(command),
@@ -478,6 +484,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
             CommandKind.ServoOn => "Servo On",
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.SequenceMoveToCamera => "Sequence Move To Camera",
             CommandKind.ResetAlarm => "Reset Alarm",
             CommandKind.EnterManualMode => "Enter Manual",
             CommandKind.EnterAutoMode => "Enter Auto",

@@ -60,6 +60,18 @@ public static class CommandInterlockRules
                 Require(!context.SequenceRunning, "ILK-SEQUENCE-001", InterlockSeverity.Warning, "Move Absolute requires sequence stopped.", violations);
                 Require(context.WithinSoftLimit, "ILK-MOTION-004", InterlockSeverity.Warning, "Move Absolute target must be within soft limit.", violations);
                 break;
+            case CommandKind.SequenceMoveToCamera:
+                RequireConnected(context, command, violations);
+                Require(context.ServoOn, "ILK-MOTION-003", InterlockSeverity.Alarm, "Sequence Move To Camera requires servo on.", violations);
+                Require(context.SafetyOk, "ILK-SAFETY-001", InterlockSeverity.Alarm, "Sequence Move To Camera requires safety OK.", violations);
+                Require(context.AutoMode, "ILK-MODE-002", InterlockSeverity.Warning, "Sequence Move To Camera requires Auto mode.", violations);
+                Require(context.RecipeLoaded, "ILK-RECIPE-001", InterlockSeverity.Warning, "Sequence Move To Camera requires loaded recipe.", violations);
+                Require(context.SequenceRunning, "ILK-SEQUENCE-002", InterlockSeverity.Warning, "Sequence Move To Camera requires active sequence.", violations);
+                Require(context.AxisHomed && context.AllRequiredAxesHomed, "ILK-MOTION-006", InterlockSeverity.Warning, "Sequence Move To Camera requires all required axes homed.", violations);
+                Require(!context.AxisBusy, "ILK-MOTION-002", InterlockSeverity.Warning, "Sequence Move To Camera requires axis idle.", violations);
+                Require(!context.AxisAlarm, "ILK-MOTION-001", InterlockSeverity.Alarm, "Sequence Move To Camera requires no active axis alarm.", violations);
+                Require(context.WithinSoftLimit, "ILK-MOTION-004", InterlockSeverity.Warning, "Sequence Move To Camera target must be within soft limit.", violations);
+                break;
             case CommandKind.Stop:
                 RequireConnected(context, command, violations);
                 Require(context.AxisBusy || context.SequenceRunning, "ILK-STOP-001", InterlockSeverity.Warning, "Stop requires moving axis or running sequence.", violations);
@@ -132,6 +144,7 @@ public static class CommandInterlockRules
             CommandKind.ServoOn => "Servo On",
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.SequenceMoveToCamera => "Sequence Move To Camera",
             CommandKind.ResetAlarm => "Reset Alarm",
             CommandKind.EnterManualMode => "Enter Manual",
             CommandKind.EnterAutoMode => "Enter Auto",

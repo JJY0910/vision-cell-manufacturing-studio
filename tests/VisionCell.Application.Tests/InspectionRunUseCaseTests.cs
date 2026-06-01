@@ -1,5 +1,6 @@
 using FluentAssertions;
 using VisionCell.Application.Inspection;
+using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
@@ -10,6 +11,7 @@ using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
+using VisionCell.Motion.Teaching;
 using Xunit;
 
 namespace VisionCell_Application_Tests;
@@ -25,7 +27,8 @@ public sealed class InspectionRunUseCaseTests
             ExecuteHandler = (_, _, request, _) => Task.FromResult(
                 MachineCommandResult.Success("Run Inspection accepted.", TimeSpan.FromMilliseconds(11), request.CorrelationId))
         };
-        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller);
+        var motion = new FakeMotionCommandUseCase();
+        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, motionCommandUseCase: motion);
         var progress = new CapturingProgress();
 
         var result = await useCase.RunAsync(CreateRequest(), progress, CancellationToken.None);
@@ -38,9 +41,17 @@ public sealed class InspectionRunUseCaseTests
         result.Request.Parameters.Should().Contain("RecipeId", "RCP-AUTO");
         result.CommandResult.Should().NotBeNull();
         result.CommandResult!.CorrelationId.Should().Be(result.Request.CorrelationId);
+        result.MoveToCameraResult.Should().NotBeNull();
+        result.MoveToCameraResult!.CommandResult.IsSuccess.Should().BeTrue();
         result.CameraGrabResult.Should().NotBeNull();
         result.CameraGrabResult!.IsSuccess.Should().BeTrue();
         result.CameraGrabResult.Frame!.Metadata.Should().Contain("RecipeId", "RCP-AUTO");
+        motion.Requests.Should().ContainSingle();
+        motion.Requests[0].Command.Should().Be(CommandKind.SequenceMoveToCamera);
+        motion.Requests[0].InterlockContext.AutoMode.Should().BeTrue();
+        motion.Requests[0].InterlockContext.SequenceRunning.Should().BeTrue();
+        motion.Requests[0].GetParameters().Should().Contain("X", "10");
+        motion.Requests[0].GetParameters().Should().Contain("ParentCorrelationId", result.Request.CorrelationId.ToString());
         controller.ExecuteCount.Should().Be(1);
         controller.LastCommand.Should().Be(CommandKind.RunInspection);
         controller.LastContext!.RecipeLoaded.Should().BeTrue();
@@ -48,7 +59,7 @@ public sealed class InspectionRunUseCaseTests
         result.Steps.Should().Contain(step => step.Name == "Load Recipe" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Safety Interlock" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == InspectionSequenceStepStatus.Success);
-        result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Skipped);
+        result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Success);
         progress.Updates.Should().Contain(update => update.Status == InspectionSequenceStepStatus.Running);
     }
@@ -65,7 +76,7 @@ public sealed class InspectionRunUseCaseTests
                 TimeSpan.FromMilliseconds(10),
                 request.CorrelationId))
         };
-        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, camera);
+        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, cameraDevice: camera);
 
         var result = await useCase.RunAsync(CreateRequest() with { GrabTimeout = TimeSpan.FromMilliseconds(10) }, progress: null, CancellationToken.None);
 
@@ -78,6 +89,49 @@ public sealed class InspectionRunUseCaseTests
         camera.Requests[0].CorrelationId.Should().Be(result.Request!.CorrelationId);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Failed);
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Skipped);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Fail_When_Active_Recipe_Document_Cannot_Be_Loaded()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-MISSING-DOC", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var documentStore = new FakeRecipeDocumentStore
+        {
+            LoadHandler = (_, _) => Task.FromResult(RecipeDocumentLoadResult.NotFound(@"C:\recipes\missing.recipe.json"))
+        };
+        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, documentStore: documentStore);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.RecipeDocumentUnavailable);
+        result.Message.Should().Contain("Unable to load active Recipe document");
+        controller.SnapshotCount.Should().Be(0);
+        controller.ExecuteCount.Should().Be(0);
+        documentStore.LoadRequests.Should().ContainSingle().Which.Should().Be(("RCP-MISSING-DOC", "1.0.0"));
+        result.Steps.Should().Contain(step => step.Name == "Load Recipe" && step.Status == InspectionSequenceStepStatus.Failed);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Fail_Move_To_Camera_When_Recipe_Has_No_Camera_Teaching_Point()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-NO-CAMERA", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var documentStore = new FakeRecipeDocumentStore(CreateRecipeDefinition("RCP-NO-CAMERA", "1.0.0", TeachingRole.Safe));
+        var motion = new FakeMotionCommandUseCase();
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            documentStore: documentStore,
+            motionCommandUseCase: motion);
+
+        var result = await useCase.RunAsync(CreateRequest(), progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.ActiveRecipeInvalid);
+        result.Message.Should().Contain("Camera teaching point");
+        motion.Requests.Should().BeEmpty();
+        result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Failed);
+        result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Skipped);
     }
 
     [Fact]
@@ -129,11 +183,15 @@ public sealed class InspectionRunUseCaseTests
     private static InspectionRunUseCase CreateUseCase(
         IActiveRecipeContext activeRecipeContext,
         IEquipmentController controller,
+        IRecipeDocumentStore? documentStore = null,
+        IMotionCommandUseCase? motionCommandUseCase = null,
         ICameraDevice? cameraDevice = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
+            documentStore ?? new FakeRecipeDocumentStore(),
             controller,
+            motionCommandUseCase ?? new FakeMotionCommandUseCase(),
             cameraDevice ?? new FakeCameraDevice(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
@@ -158,6 +216,34 @@ public sealed class InspectionRunUseCaseTests
             ValidationSummary: "Valid",
             CreatedAt: timestamp.AddMinutes(-10),
             UpdatedAt: timestamp);
+    }
+
+    private static RecipeDefinition CreateRecipeDefinition(
+        string recipeId,
+        string version,
+        TeachingRole teachingRole = TeachingRole.Camera)
+    {
+        var timestamp = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+        return new RecipeDefinition(
+            recipeId,
+            $"{recipeId} Product",
+            version,
+            timestamp.AddDays(-1),
+            timestamp,
+            new RecipeMotionSection(new[]
+            {
+                new RecipeTeachingPoint(
+                    "CAMERA_POS_01",
+                    "Camera Position 01",
+                    teachingRole,
+                    new Position4D(10.0, 20.0, 5.0, 0.0),
+                    PositionTolerance.Default)
+            }),
+            new RecipeCameraSettings(7.5, 1.2, 70),
+            new RecipeVisionSection(
+                new[] { new RecipeRoi("ROI-01", "Main ROI", 10, 10, 100, 80) },
+                new RecipeVisionParameters(0.75, 8, 0.65, 1.0, 0.15, 0.15)),
+            new RecipeSequence(new[] { "SafetyCheck", "MoveToCamera", "Grab", "Inspect2D", "Inspect3D", "Judge", "Persist" }));
     }
 
     private static EquipmentSnapshot CreateSnapshot(
@@ -217,6 +303,74 @@ public sealed class InspectionRunUseCaseTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class FakeRecipeDocumentStore : IRecipeDocumentStore
+    {
+        private readonly RecipeDefinition _recipe;
+
+        public FakeRecipeDocumentStore()
+            : this(CreateRecipeDefinition("RCP-AUTO", "1.0.0"))
+        {
+        }
+
+        public FakeRecipeDocumentStore(RecipeDefinition recipe)
+        {
+            _recipe = recipe;
+        }
+
+        public List<(string RecipeId, string Version)> LoadRequests { get; } = new();
+
+        public Func<string, string, Task<RecipeDocumentLoadResult>>? LoadHandler { get; init; }
+
+        public Task<RecipeDocumentSaveResult> SaveAsync(RecipeDefinition recipe, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<RecipeDocumentLoadResult> LoadAsync(
+            string recipeId,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            LoadRequests.Add((recipeId, version));
+            cancellationToken.ThrowIfCancellationRequested();
+            if (LoadHandler is not null)
+            {
+                return LoadHandler(recipeId, version);
+            }
+
+            var recipe = _recipe with { RecipeId = recipeId, Version = version };
+            return Task.FromResult(RecipeDocumentLoadResult.Success(recipe, $@"C:\recipes\{recipeId}.v{version}.recipe.json"));
+        }
+    }
+
+    private sealed class FakeMotionCommandUseCase : IMotionCommandUseCase
+    {
+        public List<MotionCommandExecutionRequest> Requests { get; } = new();
+
+        public Func<MotionCommandExecutionRequest, Task<MotionCommandExecutionResult>> ExecuteHandler { get; init; } =
+            request =>
+            {
+                var commandRequest = new MachineCommandRequest(
+                    "Sequence Move To Camera",
+                    CorrelationId.New(),
+                    request.Timeout,
+                    DateTimeOffset.UtcNow,
+                    request.GetParameters());
+                return Task.FromResult(new MotionCommandExecutionResult(
+                    commandRequest,
+                    MachineCommandResult.Success("Sequence Move To Camera completed.", TimeSpan.FromMilliseconds(4), commandRequest.CorrelationId)));
+            };
+
+        public Task<MotionCommandExecutionResult> ExecuteAsync(
+            MotionCommandExecutionRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return ExecuteHandler(request);
         }
     }
 

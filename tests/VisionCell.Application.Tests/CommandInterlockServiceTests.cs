@@ -68,6 +68,17 @@ public sealed class CommandInterlockServiceTests
     }
 
     [Fact]
+    public void SequenceMoveToCamera_Should_Require_Auto_Mode_Loaded_Recipe_And_Running_Sequence()
+    {
+        var readySequence = ReadyAutoContext() with { SequenceRunning = true };
+
+        _service.Evaluate(CommandKind.SequenceMoveToCamera, readySequence).IsEnabled.Should().BeTrue();
+        _service.Evaluate(CommandKind.SequenceMoveToCamera, readySequence with { AutoMode = false, ManualMode = true }).IsEnabled.Should().BeFalse();
+        _service.Evaluate(CommandKind.SequenceMoveToCamera, readySequence with { RecipeLoaded = false }).IsEnabled.Should().BeFalse();
+        _service.Evaluate(CommandKind.SequenceMoveToCamera, readySequence with { SequenceRunning = false }).IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
     public void Stop_Should_Be_Enabled_When_Axis_Busy_Or_Sequence_Running()
     {
         _service.Evaluate(CommandKind.Stop, ReadyManualContext() with { AxisBusy = true }).IsEnabled.Should().BeTrue();

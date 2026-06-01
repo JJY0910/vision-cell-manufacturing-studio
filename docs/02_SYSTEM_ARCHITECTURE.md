@@ -151,9 +151,9 @@ PublishUiEvents
 Current implementation status:
 
 - `InspectionRunUseCase` owns the first Application-layer inspection sequence boundary.
-- The use case validates active Recipe context, evaluates Run Inspection interlocks, submits a correlated controller command, and returns ordered timeline state for WPF binding.
+- The use case validates active Recipe context, loads the Recipe document, evaluates Run Inspection interlocks, submits a correlated controller command, moves to the Recipe Camera Teaching point through `IMotionCommandUseCase`, and returns ordered timeline state for WPF binding.
 - Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
-- Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, returning a correlated synthetic Gray8 frame to the Inspection UI.
+- Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
 - 2D/3D inspection, judge, result persistence, and UI overlay rendering remain separate follow-up slices.
 
 ## Error Handling Policy

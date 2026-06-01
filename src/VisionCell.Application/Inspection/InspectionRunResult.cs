@@ -1,4 +1,5 @@
 using VisionCell.Application.Recipes;
+using VisionCell.Application.Motion;
 using VisionCell.Core.Commands;
 using VisionCell.Equipment.Cameras;
 
@@ -10,6 +11,7 @@ public sealed record InspectionRunResult(
     RecipeIndexEntry? Recipe,
     MachineCommandRequest? Request,
     MachineCommandResult? CommandResult,
+    MotionCommandExecutionResult? MoveToCameraResult,
     CameraGrabResult? CameraGrabResult,
     IReadOnlyList<InspectionSequenceStepRecord> Steps,
     DateTimeOffset StartedAt,

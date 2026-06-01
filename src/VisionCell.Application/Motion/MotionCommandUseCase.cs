@@ -14,6 +14,7 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
         CommandKind.Home,
         CommandKind.Jog,
         CommandKind.MoveAbsolute,
+        CommandKind.SequenceMoveToCamera,
         CommandKind.Stop
     };
 
@@ -94,6 +95,7 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
             CommandKind.ServoOn => "Servo On",
             CommandKind.ServoOff => "Servo Off",
             CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.SequenceMoveToCamera => "Sequence Move To Camera",
             CommandKind.EnterManualMode => "Enter Manual",
             CommandKind.EnterAutoMode => "Enter Auto",
             CommandKind.RunInspection => "Run Inspection",

@@ -10,7 +10,7 @@
 - [ ] FR-062 Axis Jog
 - [ ] FR-100 Teaching point save/go-to (domain, Application use case, SQLite repository, list query, and WPF binding added; recipe ownership pending)
 - [ ] FR-120 Recipe CRUD
-- [ ] FR-140 Camera simulator grab
+- [x] FR-140 Camera simulator grab (synthetic Gray8 frame and Last Grab UI binding)
 - [ ] FR-160 2D inspection baseline
 - [ ] FR-180 Inspection sequence
 - [ ] FR-200 SQLite result logging
@@ -313,4 +313,12 @@ Problem: InspectionRunUseCase can start the sequence but needs a tested camera a
 Proposed improvement: Add `ICameraDevice`, camera grab request/result/frame contracts, a `VirtualCameraDevice`, InspectionRunUseCase Grab Image execution, and Last Grab UI binding.
 Requirement impact: FR-140, FR-141, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-141-camera-grab-simulator`.
+Status: Addressed by ADR-0016 and PR #39; Move To Camera Recipe execution remains in progress.
+
+Date: 2026-06-01
+Source: FR-180 Recipe Camera move execution
+Problem: InspectionRunUseCase can grab an image, but Move To Camera is still skipped and camera settings still use default simulator values.
+Proposed improvement: Load the active Recipe document, add an internal `SequenceMoveToCamera` command, execute the Recipe Camera Teaching point through `IMotionCommandUseCase`, and use Recipe camera settings for grab.
+Requirement impact: FR-100, FR-102, FR-121, FR-122, FR-140, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-180-recipe-camera-move`.
