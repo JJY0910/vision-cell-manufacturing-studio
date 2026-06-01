@@ -118,6 +118,22 @@ public sealed class SqliteTeachingPointRepositoryTests
         rowCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task DeleteAsync_Should_Remove_Teaching_Point_By_Id()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateTeachingRepository();
+        var point = CreatePoint("Delete Target");
+
+        await repository.SaveAsync(point, CancellationToken.None);
+        await repository.DeleteAsync(point.Id, CancellationToken.None);
+        var saved = await repository.FindByIdAsync(point.Id, CancellationToken.None);
+        var rowCount = await database.CountRowsAsync("teaching_points", CancellationToken.None);
+
+        saved.Should().BeNull();
+        rowCount.Should().Be(0);
+    }
+
     private static TeachingPoint CreatePoint(string name)
     {
         return CreatePoint(

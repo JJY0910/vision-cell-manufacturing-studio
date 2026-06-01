@@ -187,6 +187,158 @@ public sealed class TeachingPointUseCaseTests
     }
 
     [Fact]
+    public async Task UpdateAsync_Should_Save_Updated_Point_And_Write_History()
+    {
+        var existing = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default,
+            "before",
+            Guid.Parse("35404bf2-1c41-4d72-a753-b7cced61aebb"),
+            DateTimeOffset.Parse("2026-06-01T06:00:00Z")).Point!;
+        var repository = new InMemoryTeachingPointRepository();
+        repository.Points[existing.Id] = existing;
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            repository,
+            historyRepository: historyRepository);
+
+        var result = await useCase.UpdateAsync(
+            new TeachingPointUpdateRequest(
+                existing.Id,
+                " Camera Updated ",
+                TeachingRole.Review,
+                new Position4D(5.0, 6.0, 7.0, 8.0),
+                new PositionTolerance(0.02, 0.03, 0.04, 0.05),
+                " after "),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Point.Should().NotBeNull();
+        result.Point!.Id.Should().Be(existing.Id);
+        result.Point.Name.Should().Be("Camera Updated");
+        result.Point.Role.Should().Be(TeachingRole.Review);
+        result.Point.CreatedAt.Should().Be(existing.CreatedAt);
+        result.Point.UpdatedAt.Should().Be(new DateTimeOffset(2026, 6, 1, 7, 0, 0, TimeSpan.Zero));
+        repository.Points[existing.Id].Should().Be(result.Point);
+        historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].Action.Should().Be(TeachingHistoryAction.Updated);
+        historyRepository.Entries[0].BeforeJson.Should().Contain("\"name\":\"Camera\"");
+        historyRepository.Entries[0].AfterJson.Should().Contain("\"name\":\"Camera Updated\"");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Should_Reject_Duplicate_Name_Belonging_To_Another_Point()
+    {
+        var point = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var duplicate = TeachingPointFactory.Create(
+            "Review",
+            TeachingRole.Review,
+            new Position4D(5.0, 6.0, 7.0, 8.0),
+            PositionTolerance.Default).Point!;
+        var repository = new InMemoryTeachingPointRepository();
+        repository.Points[point.Id] = point;
+        repository.Points[duplicate.Id] = duplicate;
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            repository,
+            historyRepository: historyRepository);
+
+        var result = await useCase.UpdateAsync(
+            new TeachingPointUpdateRequest(
+                point.Id,
+                "review",
+                TeachingRole.Camera,
+                point.Position,
+                point.Tolerance,
+                null),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(TeachingPointOperationStatus.ValidationFailed);
+        result.ValidationIssues.Should().Contain(issue => issue.Code == "TeachingPoint.NameDuplicate");
+        historyRepository.Entries.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Should_Return_NotFound_When_Point_Is_Missing()
+    {
+        var repository = new InMemoryTeachingPointRepository();
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            repository,
+            historyRepository: historyRepository);
+
+        var result = await useCase.UpdateAsync(
+            new TeachingPointUpdateRequest(
+                Guid.NewGuid(),
+                "Missing",
+                TeachingRole.Camera,
+                new Position4D(1.0, 2.0, 3.0, 4.0),
+                PositionTolerance.Default,
+                null),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(TeachingPointOperationStatus.NotFound);
+        historyRepository.Entries.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Should_Delete_Point_And_Write_History()
+    {
+        var point = TeachingPointFactory.Create(
+            "Delete Me",
+            TeachingRole.Park,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var repository = new InMemoryTeachingPointRepository();
+        repository.Points[point.Id] = point;
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            repository,
+            historyRepository: historyRepository);
+
+        var result = await useCase.DeleteAsync(new TeachingPointDeleteRequest(point.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.DeletedPoint.Should().Be(point);
+        repository.Points.Should().NotContainKey(point.Id);
+        repository.DeletedIds.Should().ContainSingle().Which.Should().Be(point.Id);
+        historyRepository.Entries.Should().ContainSingle();
+        historyRepository.Entries[0].Action.Should().Be(TeachingHistoryAction.Deleted);
+        historyRepository.Entries[0].BeforeJson.Should().Contain("\"name\":\"Delete Me\"");
+        historyRepository.Entries[0].AfterJson.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Should_Return_NotFound_When_Point_Is_Missing()
+    {
+        var repository = new InMemoryTeachingPointRepository();
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            repository,
+            historyRepository: historyRepository);
+
+        var result = await useCase.DeleteAsync(new TeachingPointDeleteRequest(Guid.NewGuid()), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(TeachingPointOperationStatus.NotFound);
+        repository.DeletedIds.Should().BeEmpty();
+        historyRepository.Entries.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GoToAsync_Should_Load_Point_And_Dispatch_MoveAbsolute_Command()
     {
         var point = TeachingPointFactory.Create(
@@ -335,6 +487,7 @@ public sealed class TeachingPointUseCaseTests
     {
         public Dictionary<Guid, TeachingPoint> Points { get; } = new();
         public List<TeachingPoint> SavedPoints { get; } = new();
+        public List<Guid> DeletedIds { get; } = new();
         public int? LastListLimit { get; private set; }
         public Func<TeachingPoint, CancellationToken, Task>? SaveHandler { get; init; }
 
@@ -366,6 +519,13 @@ public sealed class TeachingPointUseCaseTests
 
             Points[point.Id] = point;
             SavedPoints.Add(point);
+        }
+
+        public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+        {
+            Points.Remove(id);
+            DeletedIds.Add(id);
+            return Task.CompletedTask;
         }
     }
 

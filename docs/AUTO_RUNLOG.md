@@ -195,3 +195,10 @@
 - Validation target: Application/App tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 33 tests; Debug/Release solution build and test passed with 93 tests; WPF hidden launch smoke passed.
 - Risks: Update/delete history, active recipe ownership, and transactional point+history commits remain follow-up work.
+
+## 2026-06-01 17:26 - In progress
+- Branch: `codex/feature/fr-104-teaching-edit-delete-contract`
+- Scope: Add ADR-backed Teaching Point update/delete Application contract, SQLite delete support, and history rows for Updated/Deleted actions.
+- Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 38 tests; Persistence targeted tests passed with 15 tests; App targeted tests passed with 13 tests; Debug/Release solution build and test passed with 99 tests; WPF hidden launch smoke passed.
+- Risks: WPF edit/delete controls, active recipe ownership, and transactional point+history commits remain follow-up work.

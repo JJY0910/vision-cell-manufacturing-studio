@@ -12,6 +12,14 @@ public interface ITeachingPointUseCase
         TeachingPointSaveRequest request,
         CancellationToken cancellationToken);
 
+    Task<TeachingPointSaveResult> UpdateAsync(
+        TeachingPointUpdateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<TeachingPointDeleteResult> DeleteAsync(
+        TeachingPointDeleteRequest request,
+        CancellationToken cancellationToken);
+
     Task<TeachingPointGoToResult> GoToAsync(
         TeachingPointGoToRequest request,
         CancellationToken cancellationToken);
