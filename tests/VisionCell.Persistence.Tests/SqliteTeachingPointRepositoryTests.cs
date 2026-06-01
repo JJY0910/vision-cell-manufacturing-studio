@@ -47,6 +47,40 @@ public sealed class SqliteTeachingPointRepositoryTests
     }
 
     [Fact]
+    public async Task ListAsync_Should_Return_Recently_Updated_Points_First_And_Respect_Limit()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateTeachingRepository();
+        var older = CreatePoint(
+            "Older",
+            Guid.Parse("50be255d-e26d-4529-bf3c-d04909638519"),
+            DateTimeOffset.Parse("2026-06-01T07:00:00Z"));
+        var newer = CreatePoint(
+            "Newer",
+            Guid.Parse("2aa24cfd-d1e9-41a2-980c-2292a0f013d5"),
+            DateTimeOffset.Parse("2026-06-01T07:05:00Z"));
+
+        await repository.SaveAsync(older, CancellationToken.None);
+        await repository.SaveAsync(newer, CancellationToken.None);
+        var points = await repository.ListAsync(1, CancellationToken.None);
+
+        points.Should().ContainSingle();
+        points[0].Id.Should().Be(newer.Id);
+        points[0].Name.Should().Be("Newer");
+    }
+
+    [Fact]
+    public async Task ListAsync_Should_Reject_NonPositive_Limit()
+    {
+        using var database = TemporaryDatabase.Create();
+        var repository = database.CreateTeachingRepository();
+
+        var act = async () => await repository.ListAsync(0, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
     public async Task SaveAsync_Should_Update_Existing_Teaching_Point_By_Id()
     {
         using var database = TemporaryDatabase.Create();
@@ -86,14 +120,22 @@ public sealed class SqliteTeachingPointRepositoryTests
 
     private static TeachingPoint CreatePoint(string name)
     {
+        return CreatePoint(
+            name,
+            Guid.Parse("f37d1760-ef8e-4a82-84a5-91bf1248a615"),
+            DateTimeOffset.Parse("2026-06-01T07:00:00Z"));
+    }
+
+    private static TeachingPoint CreatePoint(string name, Guid id, DateTimeOffset timestamp)
+    {
         return TeachingPointFactory.Create(
             name,
             TeachingRole.Camera,
             new Position4D(10.0, 11.0, 12.0, 13.0),
             new PositionTolerance(0.01, 0.02, 0.03, 0.04),
             "first pass",
-            Guid.Parse("f37d1760-ef8e-4a82-84a5-91bf1248a615"),
-            DateTimeOffset.Parse("2026-06-01T07:00:00Z")).Point!;
+            id,
+            timestamp).Point!;
     }
 
     private sealed class TemporaryDatabase : IDisposable
