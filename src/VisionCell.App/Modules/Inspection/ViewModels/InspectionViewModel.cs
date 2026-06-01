@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Recipes;
+using VisionCell.Equipment.Cameras;
 
 namespace VisionCell.App.Modules.Inspection.ViewModels;
 
@@ -10,7 +13,10 @@ public sealed partial class InspectionViewModel : ObservableObject
 {
     private static readonly InspectionRunRequest DefaultRunRequest = new(
         SnapshotTimeout: TimeSpan.FromSeconds(2),
-        CommandTimeout: TimeSpan.FromSeconds(5));
+        CommandTimeout: TimeSpan.FromSeconds(5))
+    {
+        GrabTimeout = TimeSpan.FromSeconds(2)
+    };
 
     private readonly IActiveRecipeContext _activeRecipeContext;
     private readonly IInspectionRunUseCase _inspectionRunUseCase;
@@ -46,6 +52,12 @@ public sealed partial class InspectionViewModel : ObservableObject
 
     [ObservableProperty]
     private string _lastRunCorrelationId = "-";
+
+    [ObservableProperty]
+    private string _lastGrabText = "No image grabbed";
+
+    [ObservableProperty]
+    private ImageSource? _lastGrabImageSource;
 
     [ObservableProperty]
     private bool _isBusy;
@@ -155,6 +167,7 @@ public sealed partial class InspectionViewModel : ObservableObject
 
         LastRunCorrelationId = result.Request?.CorrelationId.ToString() ?? "-";
         LastCheckText = result.CompletedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        ApplyCameraGrabResult(result.CameraGrabResult);
         StatusText = result.Status switch
         {
             InspectionRunStatus.Accepted => result.Message,
@@ -178,6 +191,39 @@ public sealed partial class InspectionViewModel : ObservableObject
         }
 
         existing.Apply(step);
+    }
+
+    private void ApplyCameraGrabResult(CameraGrabResult? result)
+    {
+        if (result?.Frame is not null)
+        {
+            LastGrabText = $"{result.Frame.Width} x {result.Frame.Height} {result.Frame.PixelFormat} | {result.Frame.CameraName}";
+            LastGrabImageSource = CreateImageSource(result.Frame);
+            return;
+        }
+
+        LastGrabText = result?.Message ?? "No camera frame grabbed";
+        LastGrabImageSource = null;
+    }
+
+    private static ImageSource CreateImageSource(CameraFrame frame)
+    {
+        if (frame.PixelFormat != CameraPixelFormat.Gray8)
+        {
+            throw new NotSupportedException($"Unsupported camera pixel format: {frame.PixelFormat}.");
+        }
+
+        var bitmap = BitmapSource.Create(
+            frame.Width,
+            frame.Height,
+            96,
+            96,
+            PixelFormats.Gray8,
+            palette: null,
+            frame.Pixels,
+            frame.Stride);
+        bitmap.Freeze();
+        return bitmap;
     }
 
     private sealed class InspectionStepProgress : IProgress<InspectionSequenceStepRecord>

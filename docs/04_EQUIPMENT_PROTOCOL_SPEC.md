@@ -60,6 +60,7 @@ public sealed record EquipmentSnapshot(
 | MOT-004 | Error | Soft limit exceeded | Change target |
 | CAM-001 | Error | Camera grab timeout | Retry grab |
 | CAM-002 | Error | Camera not ready | Check camera status |
+| CAM-003 | Error | Camera grab failed | Check simulator injection / retry grab |
 | VIS-001 | Warning | Recipe validation failed | Fix recipe |
 | VIS-002 | Error | Inspection failed | Review image/params |
 | DB-001 | Error | Persistence failed | Check database path |

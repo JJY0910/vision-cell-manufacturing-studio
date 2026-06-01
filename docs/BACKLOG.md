@@ -297,7 +297,7 @@ Problem: InspectionView can precheck active Recipe context, but Run Inspection s
 Proposed improvement: Add `IInspectionRunUseCase`, ordered sequence step records, ViewModel timeline binding, and Stop Inspection cancellation of the active run token.
 Requirement impact: FR-122, FR-180, FR-181, FR-182, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-181-inspection-run-use-case`.
+Status: Addressed by `IInspectionRunUseCase`; camera grab was split into a follow-up slice.
 
 Date: 2026-06-01
 Source: FR-180 Simulator Auto mode transition
@@ -305,4 +305,12 @@ Problem: InspectionRunUseCase enforces Auto mode, but the simulator previously r
 Proposed improvement: Add explicit Enter Manual/Enter Auto commands with interlock coverage and Dashboard bindings.
 Requirement impact: FR-004, FR-040, FR-041, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-180-simulator-auto-mode`.
+Status: Addressed by simulator Manual/Auto commands and Dashboard bindings.
+
+Date: 2026-06-01
+Source: FR-140/FR-141 Camera grab simulator
+Problem: InspectionRunUseCase can start the sequence but needs a tested camera acquisition boundary before vision/judge/persist slices.
+Proposed improvement: Add `ICameraDevice`, camera grab request/result/frame contracts, a `VirtualCameraDevice`, InspectionRunUseCase Grab Image execution, and Last Grab UI binding.
+Requirement impact: FR-140, FR-141, FR-180, FR-181, FR-182, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-141-camera-grab-simulator`.

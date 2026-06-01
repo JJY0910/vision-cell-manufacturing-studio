@@ -11,5 +11,6 @@ public enum InspectionRunStatus
     CommandTimeout,
     CommandCancelled,
     CommandFailed,
+    CameraGrabFailed,
     Failed
 }
