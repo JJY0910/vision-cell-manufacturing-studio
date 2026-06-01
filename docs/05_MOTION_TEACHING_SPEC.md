@@ -129,7 +129,8 @@ Implementation status:
 - Teaching point creation rejects empty names, unsupported roles, non-finite coordinates, coordinates outside the default axis soft limits, and non-positive tolerances.
 - Save Current Position reads the current equipment snapshot with timeout/cancellation, validates duplicate names through the repository port, and saves only validated points.
 - Go To Teaching Point loads a saved point and dispatches a traceable Move Absolute request through `IMotionCommandUseCase`.
-- SQLite persistence, WPF TeachingView binding, and edit history remain App/Persistence follow-up work.
+- SQLite persistence supports save, ID lookup, duplicate-name lookup, and updated-time ordered list queries.
+- WPF TeachingView binding and edit history remain follow-up work.
 
 ## Teaching Workflow
 

@@ -149,3 +149,14 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: SQLite persistence and WPF TeachingView binding remained open.
 - Next selected work: `codex/feature/fr-100-teaching-sqlite-repository` for concrete Teaching Point persistence.
+
+## 2026-06-01 16:08 - PR #14
+- Branch: `codex/feature/fr-100-teaching-sqlite-repository`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/14
+- Squash/Merge commit: `b43c89815ec7f8bb3b2d13d057d89b2db38117e8`
+- Scope: Added `teaching_points` SQLite schema bootstrap, `SqliteTeachingPointRepository`, and persistence coverage for ID lookup, case-insensitive name lookup, save/upsert, and schema migration count.
+- Files changed: 7 files, including SQLite schema initializer, teaching repository, persistence tests, DB spec, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 79 tests. GitHub Actions `build-test` passed in 1m58s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: WPF TeachingView binding, App DI registration, edit history wiring, and recipe-level teaching ownership remain open.
+- Next selected work: `codex/feature/fr-101-teaching-list-query` for list query support before WPF binding.

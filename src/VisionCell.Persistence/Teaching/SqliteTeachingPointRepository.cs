@@ -19,6 +19,49 @@ public sealed class SqliteTeachingPointRepository : ITeachingPointRepository
         _schemaInitializer = schemaInitializer ?? throw new ArgumentNullException(nameof(schemaInitializer));
     }
 
+    public async Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
+    {
+        if (limit <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "Limit must be greater than zero.");
+        }
+
+        await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+              id,
+              name,
+              role,
+              x,
+              y,
+              z,
+              theta,
+              tolerance_x,
+              tolerance_y,
+              tolerance_z,
+              tolerance_theta,
+              memo,
+              created_at,
+              updated_at
+            FROM teaching_points
+            ORDER BY updated_at DESC, name ASC
+            LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$limit", limit);
+
+        var points = new List<TeachingPoint>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            points.Add(ReadPoint(reader));
+        }
+
+        return points;
+    }
+
     public async Task<TeachingPoint?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);

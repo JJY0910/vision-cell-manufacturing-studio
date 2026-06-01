@@ -44,6 +44,36 @@ public sealed class TeachingPointUseCaseTests
     }
 
     [Fact]
+    public async Task ListAsync_Should_Delegate_To_Repository_With_Limit()
+    {
+        var repository = new InMemoryTeachingPointRepository();
+        var point = TeachingPointFactory.Create(
+            "Camera",
+            TeachingRole.Camera,
+            new Position4D(0.0, 0.0, 0.0, 0.0),
+            PositionTolerance.Default).Point!;
+        repository.Points[point.Id] = point;
+        var useCase = CreateUseCase(new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)), repository);
+
+        var points = await useCase.ListAsync(5, CancellationToken.None);
+
+        points.Should().ContainSingle().Which.Should().Be(point);
+        repository.LastListLimit.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task ListAsync_Should_Reject_NonPositive_Limit()
+    {
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            new InMemoryTeachingPointRepository());
+
+        var act = async () => await useCase.ListAsync(0, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
     public async Task SaveCurrentPositionAsync_Should_Reject_Duplicate_Name_Before_Save()
     {
         var controller = new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0));
@@ -223,7 +253,14 @@ public sealed class TeachingPointUseCaseTests
     {
         public Dictionary<Guid, TeachingPoint> Points { get; } = new();
         public List<TeachingPoint> SavedPoints { get; } = new();
+        public int? LastListLimit { get; private set; }
         public Func<TeachingPoint, CancellationToken, Task>? SaveHandler { get; init; }
+
+        public Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
+        {
+            LastListLimit = limit;
+            return Task.FromResult<IReadOnlyList<TeachingPoint>>(Points.Values.Take(limit).ToArray());
+        }
 
         public Task<TeachingPoint?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
         {

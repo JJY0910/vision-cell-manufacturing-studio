@@ -26,6 +26,16 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
+    public async Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
+    {
+        if (limit <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "Teaching point list limit must be greater than zero.");
+        }
+
+        return await _repository.ListAsync(limit, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<TeachingPointSaveResult> SaveCurrentPositionAsync(
         TeachingPointSaveRequest request,
         CancellationToken cancellationToken)
