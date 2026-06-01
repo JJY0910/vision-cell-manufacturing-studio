@@ -186,6 +186,39 @@ public sealed class RecipeLibraryUseCaseTests
                 string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase)));
         }
 
+        public Task<RecipeIndexEntry?> FindActiveAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(SavedEntries
+                .OrderByDescending(entry => entry.UpdatedAt)
+                .FirstOrDefault(entry => entry.IsActive));
+        }
+
+        public Task<bool> SetActiveAsync(
+            string recipeId,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            var hasTarget = SavedEntries.Any(entry =>
+                string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasTarget)
+            {
+                return Task.FromResult(false);
+            }
+
+            for (var index = 0; index < SavedEntries.Count; index++)
+            {
+                var entry = SavedEntries[index];
+                var isTarget =
+                    string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase);
+                SavedEntries[index] = entry with { IsActive = isTarget };
+            }
+
+            return Task.FromResult(true);
+        }
+
         public Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(
             int limit,
             CancellationToken cancellationToken)

@@ -76,7 +76,8 @@ Implementation status:
 - `RecipeLibraryUseCase` validates a Recipe, saves its JSON document, computes a checksum, and upserts the SQLite Recipe index through Application-layer ports.
 - WPF App composition registers the JSON document store under `local-data/recipes` and the Recipe library save use case for RecipeView save and future import commands.
 - RecipeView can save a valid single-camera-position Recipe from operator-entered metadata, camera, Teaching, and ROI fields, then refresh/select the indexed row.
-- Active recipe settings and RecipeView editing remain follow-up work.
+- `SqliteRecipeIndexRepository` can query the active Recipe row and atomically switch active state to one existing indexed Recipe without clearing the previous active row on a missing target.
+- RecipeView activation, active Recipe app startup restore, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 
@@ -103,3 +104,4 @@ Implementation status:
 - Current RecipeView browser is read-only and depends on rows already present in the SQLite Recipe index.
 - Current Application Recipe save workflow reports document/index failures explicitly but does not make file-system and SQLite updates atomic.
 - Current RecipeView save surface creates one Camera Teaching point and one ROI row; multi-row editors remain follow-up work.
+- Current active Recipe state is stored in the SQLite Recipe index; a separate app settings pointer has not been added.

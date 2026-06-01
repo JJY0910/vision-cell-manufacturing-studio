@@ -109,6 +109,101 @@ public sealed class SqliteRecipeIndexRepository : IRecipeIndexRepository
             : null;
     }
 
+    public async Task<RecipeIndexEntry?> FindActiveAsync(CancellationToken cancellationToken)
+    {
+        await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+              id,
+              recipe_id,
+              version,
+              product_name,
+              file_path,
+              checksum,
+              is_active,
+              is_valid,
+              validation_summary,
+              created_at,
+              updated_at
+            FROM recipes
+            WHERE is_active = 1
+            ORDER BY updated_at DESC, recipe_id ASC, version DESC
+            LIMIT 1;
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? ReadEntry(reader)
+            : null;
+    }
+
+    public async Task<bool> SetActiveAsync(
+        string recipeId,
+        string version,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(recipeId) || string.IsNullOrWhiteSpace(version))
+        {
+            return false;
+        }
+
+        await _schemaInitializer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        var normalizedRecipeId = recipeId.Trim();
+        var normalizedVersion = version.Trim();
+        var updatedAt = DateTimeOffset.UtcNow.ToString("O");
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (var existsCommand = connection.CreateCommand())
+        {
+            existsCommand.Transaction = transaction;
+            existsCommand.CommandText = """
+                SELECT COUNT(*)
+                FROM recipes
+                WHERE recipe_id = $recipe_id COLLATE NOCASE
+                  AND version = $version;
+                """;
+            existsCommand.Parameters.AddWithValue("$recipe_id", normalizedRecipeId);
+            existsCommand.Parameters.AddWithValue("$version", normalizedVersion);
+
+            var result = await existsCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+            if (Convert.ToInt32(result) == 0)
+            {
+                return false;
+            }
+        }
+
+        await using (var updateCommand = connection.CreateCommand())
+        {
+            updateCommand.Transaction = transaction;
+            updateCommand.CommandText = """
+                UPDATE recipes
+                SET
+                  is_active = CASE
+                    WHEN recipe_id = $recipe_id COLLATE NOCASE AND version = $version THEN 1
+                    ELSE 0
+                  END,
+                  updated_at = CASE
+                    WHEN recipe_id = $recipe_id COLLATE NOCASE AND version = $version THEN $updated_at
+                    ELSE updated_at
+                  END;
+                """;
+            updateCommand.Parameters.AddWithValue("$recipe_id", normalizedRecipeId);
+            updateCommand.Parameters.AddWithValue("$version", normalizedVersion);
+            updateCommand.Parameters.AddWithValue("$updated_at", updatedAt);
+
+            await updateCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
     public async Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(
         int limit,
         CancellationToken cancellationToken)

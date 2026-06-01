@@ -50,6 +50,7 @@ Implementation note:
 
 - `VisionCell.Persistence` initializes `recipes` through migration id `004_recipes`.
 - `SqliteRecipeIndexRepository` upserts Recipe index rows by `(recipe_id, version)` and lists newest Recipe metadata first.
+- `SqliteRecipeIndexRepository` uses the existing `is_active` column for local active Recipe selection. The active switch verifies the target row exists before clearing any previous active row and sets at most one indexed Recipe active.
 
 ### teaching_history
 

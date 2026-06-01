@@ -249,4 +249,12 @@ Problem: RecipeView can list indexed metadata and the App can resolve Recipe lib
 Proposed improvement: Add a RecipeView metadata/camera/Teaching/ROI editor and bind Save Recipe to `IRecipeLibraryUseCase`, refreshing the index after a successful save.
 Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-006, NFR-008, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-120-recipe-view-save`.
+Status: Addressed for single-camera-position Recipe save; active Recipe activation and multi-row editors remain open.
+
+Date: 2026-06-01
+Source: FR-122 Active Recipe index selection
+Problem: RecipeView can save and list Recipe rows, but there is not yet a repository contract to mark one existing Recipe as active without risking stale UI clearing all active state.
+Proposed improvement: Add active Recipe query/switch methods to the Recipe index port and SQLite repository, then bind RecipeView activation in a follow-up UI slice.
+Requirement impact: FR-120, FR-122, FR-123, FR-124, NFR-004, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-122-active-recipe-index`.
