@@ -265,3 +265,10 @@
 - Validation target: Application targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 49 tests; Debug/Release solution build and test passed with 128 tests; WPF hidden launch smoke passed.
 - Risks: File-system document save and SQLite index update are coordinated but not atomic; active Recipe selection remains follow-up work.
+
+## 2026-06-01 19:12 - In progress
+- Branch: `codex/feature/fr-120-recipe-app-composition`
+- Scope: Extract WPF App service registration and register Recipe document store plus Recipe library save use case with local app-data paths.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 22 tests; Debug/Release solution build and test passed with 129 tests; WPF hidden launch smoke passed.
+- Risks: RecipeView save/import buttons remain follow-up work; this slice only wires composition.

@@ -103,6 +103,7 @@ VisionCell.Telemetry implements logging/event sinks.
 - Design system
 - Command binding
 - User feedback
+- App service composition for simulator, Application use cases, SQLite repositories, and Recipe document storage
 
 ## Command Model
 
