@@ -15,8 +15,19 @@ namespace VisionCell.Simulator;
 public sealed class VirtualEquipmentController : IEquipmentController
 {
     private static readonly TimeSpan SnapshotLatency = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan ServoLatency = TimeSpan.FromMilliseconds(75);
+    private static readonly TimeSpan HomeLatency = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan JogLatency = TimeSpan.FromMilliseconds(125);
+    private static readonly TimeSpan MoveLatency = TimeSpan.FromMilliseconds(175);
+    private static readonly TimeSpan StopLatency = TimeSpan.FromMilliseconds(25);
+
+    private readonly object _gate = new();
     private bool _connected;
+    private bool _servoEnabled;
+    private bool _axisBusy;
     private AlarmSnapshot? _alarm;
+    private IReadOnlyList<AxisSnapshot> _axes = AxisDefaults.CreatePowerOffAxes();
+    private CancellationTokenSource? _activeMotionCancellation;
 
     public async Task<EquipmentSnapshot> GetSnapshotAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
@@ -36,8 +47,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
             cancellationToken,
             () =>
             {
-                _connected = true;
-                _alarm = null;
+                lock (_gate)
+                {
+                    _connected = true;
+                    _alarm = null;
+                }
+
                 return "Virtual controller connected.";
             });
     }
@@ -51,7 +66,16 @@ public sealed class VirtualEquipmentController : IEquipmentController
             cancellationToken,
             () =>
             {
-                _connected = false;
+                lock (_gate)
+                {
+                    _connected = false;
+                    _servoEnabled = false;
+                    _axisBusy = false;
+                    _activeMotionCancellation?.Cancel();
+                    _activeMotionCancellation = null;
+                    _axes = AxisDefaults.CreatePowerOffAxes();
+                }
+
                 return "Virtual controller disconnected.";
             });
     }
@@ -63,27 +87,101 @@ public sealed class VirtualEquipmentController : IEquipmentController
 
     public Task<MachineCommandResult> ExecuteCommandAsync(CommandKind command, InterlockContext context, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        var availability = GetCommandAvailability(command, context);
+        var availability = GetCommandAvailability(command, CreateEffectiveContext(context));
         if (!availability.IsEnabled)
         {
-            return Task.FromResult(new MachineCommandResult(
-                CommandStatus.Rejected,
-                ErrorCode.CommandRejected,
-                availability.DisabledReason,
-                TimeSpan.Zero,
-                CorrelationId.New()));
+            return Task.FromResult(CreateRejectedResult(availability));
         }
 
         return command switch
         {
             CommandKind.Connect => ConnectAsync(timeout, cancellationToken),
             CommandKind.Disconnect => DisconnectAsync(timeout, cancellationToken),
-            _ => Task.FromResult(new MachineCommandResult(
-                CommandStatus.Success,
-                null,
-                $"{command} interlock accepted. Hardware execution is deferred beyond Phase 1.",
+            CommandKind.ServoOn => RunControllerCommandAsync(
+                FormatCommand(command),
+                ServoLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _servoEnabled = true;
+                        _axes = _axes.Select(axis => axis with { ServoOn = true }).ToArray();
+                    }
+
+                    return "Servo On completed.";
+                }),
+            CommandKind.ServoOff => RunControllerCommandAsync(
+                FormatCommand(command),
+                ServoLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _servoEnabled = false;
+                        _axes = _axes.Select(axis => axis with { ServoOn = false, IsMoving = false }).ToArray();
+                    }
+
+                    return "Servo Off completed.";
+                }),
+            CommandKind.Home => RunMotionCommandAsync(
+                FormatCommand(command),
+                HomeLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _axes = _axes.Select(axis => axis with
+                        {
+                            Position = 0.0,
+                            Target = 0.0,
+                            IsHomed = true,
+                            ServoOn = _servoEnabled,
+                            IsMoving = false,
+                            Alarm = null
+                        }).ToArray();
+                    }
+
+                    return "Home completed for all simulator axes.";
+                }),
+            CommandKind.Jog => RunMotionCommandAsync(
+                FormatCommand(command),
+                JogLatency,
+                timeout,
+                cancellationToken,
+                ApplyJogStep),
+            CommandKind.MoveAbsolute => RunMotionCommandAsync(
+                FormatCommand(command),
+                MoveLatency,
+                timeout,
+                cancellationToken,
+                ApplyMoveAbsolute),
+            CommandKind.Stop => RunStopCommandAsync(timeout, cancellationToken),
+            CommandKind.ResetAlarm => RunControllerCommandAsync(
+                FormatCommand(command),
+                ServoLatency,
+                timeout,
+                cancellationToken,
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _alarm = null;
+                        _axes = _axes.Select(axis => axis with { Alarm = null, IsMoving = false }).ToArray();
+                    }
+
+                    return "Alarm reset completed.";
+                }),
+            CommandKind.RunInspection => Task.FromResult(MachineCommandResult.Success(
+                "Run Inspection interlock accepted. Inspection execution remains a later use case.",
                 TimeSpan.Zero,
-                CorrelationId.New()))
+                CorrelationId.New())),
+            _ => throw new ArgumentOutOfRangeException(nameof(command), command, "Unsupported command kind.")
         };
     }
 
@@ -103,12 +201,11 @@ public sealed class VirtualEquipmentController : IEquipmentController
         {
             await Task.Delay(latency, cts.Token).ConfigureAwait(false);
             var message = applyState();
-            return new MachineCommandResult(CommandStatus.Success, null, message, sw.Elapsed, correlationId);
+            return MachineCommandResult.Success(message, sw.Elapsed, correlationId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return new MachineCommandResult(
-                CommandStatus.Cancelled,
+            return MachineCommandResult.Cancelled(
                 ErrorCode.CommandCancelled,
                 $"{commandName} was cancelled.",
                 sw.Elapsed,
@@ -116,9 +213,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
         }
         catch (OperationCanceledException)
         {
-            _alarm = new AlarmSnapshot(ErrorCode.CommandTimeout, $"{commandName} exceeded {timeout.TotalMilliseconds:0} ms.", DateTimeOffset.UtcNow);
-            return new MachineCommandResult(
-                CommandStatus.Timeout,
+            lock (_gate)
+            {
+                _alarm = new AlarmSnapshot(ErrorCode.CommandTimeout, $"{commandName} exceeded {timeout.TotalMilliseconds:0} ms.", DateTimeOffset.UtcNow);
+            }
+
+            return MachineCommandResult.Timeout(
                 ErrorCode.CommandTimeout,
                 $"{commandName} timed out after {timeout.TotalMilliseconds:0} ms.",
                 sw.Elapsed,
@@ -126,27 +226,295 @@ public sealed class VirtualEquipmentController : IEquipmentController
         }
     }
 
+    private async Task<MachineCommandResult> RunMotionCommandAsync(
+        string commandName,
+        TimeSpan latency,
+        TimeSpan timeout,
+        CancellationToken cancellationToken,
+        Func<string> applyState)
+    {
+        var sw = Stopwatch.StartNew();
+        var correlationId = CorrelationId.New();
+        using var commandTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var motionCancellation = new CancellationTokenSource();
+        using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(commandTimeout.Token, motionCancellation.Token);
+        commandTimeout.CancelAfter(timeout);
+
+        lock (_gate)
+        {
+            if (_axisBusy)
+            {
+                return MachineCommandResult.Rejected(
+                    ErrorCode.CommandRejected,
+                    $"{commandName} rejected because an axis is already busy.",
+                    sw.Elapsed,
+                    correlationId);
+            }
+
+            _axisBusy = true;
+            _activeMotionCancellation = motionCancellation;
+            _axes = _axes.Select(axis => axis with { IsMoving = true, ServoOn = _servoEnabled }).ToArray();
+        }
+
+        try
+        {
+            await Task.Delay(latency, linkedCancellation.Token).ConfigureAwait(false);
+            var message = applyState();
+            return MachineCommandResult.Success(message, sw.Elapsed, correlationId);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return MachineCommandResult.Cancelled(
+                ErrorCode.CommandCancelled,
+                $"{commandName} was cancelled.",
+                sw.Elapsed,
+                correlationId);
+        }
+        catch (OperationCanceledException) when (motionCancellation.IsCancellationRequested)
+        {
+            return MachineCommandResult.Cancelled(
+                ErrorCode.CommandCancelled,
+                $"{commandName} was stopped before completion.",
+                sw.Elapsed,
+                correlationId);
+        }
+        catch (OperationCanceledException)
+        {
+            var message = $"{commandName} timed out after {timeout.TotalMilliseconds:0} ms.";
+            lock (_gate)
+            {
+                _alarm = new AlarmSnapshot(ErrorCode.MotionTimeout, message, DateTimeOffset.UtcNow);
+                _axes = _axes.Select(axis => axis with
+                {
+                    Alarm = new AxisAlarm(ErrorCode.MotionTimeout, message, DateTimeOffset.UtcNow)
+                }).ToArray();
+            }
+
+            return MachineCommandResult.Timeout(ErrorCode.MotionTimeout, message, sw.Elapsed, correlationId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return MachineCommandResult.Rejected(
+                ErrorCode.SoftLimitExceeded,
+                ex.Message,
+                sw.Elapsed,
+                correlationId);
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                if (ReferenceEquals(_activeMotionCancellation, motionCancellation))
+                {
+                    _activeMotionCancellation = null;
+                }
+
+                _axisBusy = false;
+                _axes = _axes.Select(axis => axis with { IsMoving = false }).ToArray();
+            }
+        }
+    }
+
+    private async Task<MachineCommandResult> RunStopCommandAsync(TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        var sw = Stopwatch.StartNew();
+        var correlationId = CorrelationId.New();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(timeout);
+
+        try
+        {
+            await Task.Delay(StopLatency, cts.Token).ConfigureAwait(false);
+
+            CancellationTokenSource? activeMotion;
+            lock (_gate)
+            {
+                activeMotion = _activeMotionCancellation;
+                activeMotion?.Cancel();
+                _axisBusy = false;
+                _axes = _axes.Select(axis => axis with { IsMoving = false }).ToArray();
+            }
+
+            var message = activeMotion is null
+                ? "Stop accepted; no active simulator motion was running."
+                : "Stop accepted; active simulator motion cancellation requested.";
+
+            return MachineCommandResult.Success(message, sw.Elapsed, correlationId);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return MachineCommandResult.Cancelled(
+                ErrorCode.CommandCancelled,
+                "Stop was cancelled.",
+                sw.Elapsed,
+                correlationId);
+        }
+        catch (OperationCanceledException)
+        {
+            return MachineCommandResult.Timeout(
+                ErrorCode.CommandTimeout,
+                $"Stop timed out after {timeout.TotalMilliseconds:0} ms.",
+                sw.Elapsed,
+                correlationId);
+        }
+    }
+
+    private InterlockContext CreateEffectiveContext(InterlockContext context)
+    {
+        lock (_gate)
+        {
+            return context with
+            {
+                AxisBusy = context.AxisBusy || _axisBusy,
+                AlarmActive = context.AlarmActive || _alarm is not null
+            };
+        }
+    }
+
+    private static MachineCommandResult CreateRejectedResult(CommandAvailability availability)
+    {
+        var errorCode = MapAvailabilityError(availability);
+        return MachineCommandResult.Rejected(errorCode, availability.DisabledReason, TimeSpan.Zero, CorrelationId.New());
+    }
+
+    private static ErrorCode MapAvailabilityError(CommandAvailability availability)
+    {
+        var codes = availability.Violations.Select(violation => violation.Code).ToHashSet(StringComparer.Ordinal);
+
+        if (codes.Contains("ILK-SAFETY-002"))
+        {
+            return ErrorCode.EmergencyStopActive;
+        }
+
+        if (codes.Contains("ILK-SAFETY-003"))
+        {
+            return ErrorCode.DoorOpen;
+        }
+
+        if (codes.Contains("ILK-MOTION-003"))
+        {
+            return ErrorCode.ServoOff;
+        }
+
+        if (codes.Contains("ILK-MOTION-004"))
+        {
+            return ErrorCode.SoftLimitExceeded;
+        }
+
+        if (codes.Contains("ILK-MOTION-005") || codes.Contains("ILK-MOTION-006"))
+        {
+            return ErrorCode.AxisNotHomed;
+        }
+
+        return ErrorCode.CommandRejected;
+    }
+
+    private static string FormatCommand(CommandKind command)
+    {
+        return command switch
+        {
+            CommandKind.ServoOn => "Servo On",
+            CommandKind.ServoOff => "Servo Off",
+            CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.ResetAlarm => "Reset Alarm",
+            CommandKind.RunInspection => "Run Inspection",
+            _ => command.ToString()
+        };
+    }
+
+    private string ApplyJogStep()
+    {
+        lock (_gate)
+        {
+            var axes = _axes.ToArray();
+            var xAxis = axes.Single(axis => axis.AxisId == AxisId.X);
+            var target = xAxis.Position + 1.0;
+            if (!xAxis.SoftLimit.Contains(target))
+            {
+                throw new InvalidOperationException("Jog target exceeded the X axis soft limit.");
+            }
+
+            _axes = axes.Select(axis => axis.AxisId == AxisId.X
+                ? axis with
+                {
+                    Position = target,
+                    Target = target,
+                    ServoOn = _servoEnabled,
+                    IsMoving = false,
+                    Alarm = null
+                }
+                : axis with { IsMoving = false, ServoOn = _servoEnabled }).ToArray();
+        }
+
+        return "Jog completed: X +1.000 mm.";
+    }
+
+    private string ApplyMoveAbsolute()
+    {
+        var targets = new Dictionary<AxisId, double>
+        {
+            [AxisId.X] = 10.0,
+            [AxisId.Y] = 20.0,
+            [AxisId.Z] = 5.0,
+            [AxisId.Theta] = 0.0
+        };
+
+        lock (_gate)
+        {
+            foreach (var axis in _axes)
+            {
+                if (!axis.SoftLimit.Contains(targets[axis.AxisId]))
+                {
+                    throw new InvalidOperationException($"{axis.AxisId} target exceeded soft limit.");
+                }
+            }
+
+            _axes = _axes.Select(axis => axis with
+            {
+                Position = targets[axis.AxisId],
+                Target = targets[axis.AxisId],
+                ServoOn = _servoEnabled,
+                IsMoving = false,
+                Alarm = null
+            }).ToArray();
+        }
+
+        return "Move Absolute completed for simulator target X=10.000, Y=20.000, Z=5.000, Theta=0.000.";
+    }
+
     private EquipmentSnapshot CreateSnapshot(DateTimeOffset timestamp)
     {
+        bool connected;
+        bool servoEnabled;
+        AlarmSnapshot? alarm;
+        IReadOnlyList<AxisSnapshot> axes;
+        lock (_gate)
+        {
+            connected = _connected;
+            servoEnabled = _servoEnabled;
+            alarm = _alarm;
+            axes = _axes;
+        }
+
         var safety = new SafetySnapshot(
             DoorClosed: true,
             EmergencyStopActive: false,
             AirPressureOk: true,
             VacuumOn: false,
-            ServoEnabled: false);
+            ServoEnabled: servoEnabled);
 
         return new EquipmentSnapshot(
-            _connected,
-            _connected ? MachineMode.Manual : MachineMode.Offline,
+            connected,
+            connected ? MachineMode.Manual : MachineMode.Offline,
             safety,
-            AxisDefaults.CreatePowerOffAxes(),
-            CreateIoSnapshot(timestamp),
-            new CameraSnapshot(_connected, "Virtual 3D camera", timestamp),
-            _alarm,
+            axes,
+            CreateIoSnapshot(timestamp, servoEnabled),
+            new CameraSnapshot(connected, "Virtual 3D camera", timestamp),
+            alarm,
             timestamp);
     }
 
-    private static IoSnapshot CreateIoSnapshot(DateTimeOffset timestamp)
+    private static IoSnapshot CreateIoSnapshot(DateTimeOffset timestamp, bool servoEnabled)
     {
         return new IoSnapshot(
             new[]
@@ -156,7 +524,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 new IoBitSnapshot("DI_AIR_PRESSURE_OK", "X002", IoBitDirection.Input, true, false),
                 new IoBitSnapshot("DI_PRODUCT_PRESENT", "X003", IoBitDirection.Input, true, false),
                 new IoBitSnapshot("DI_CAMERA_READY", "X004", IoBitDirection.Input, true, false),
-                new IoBitSnapshot("DO_SERVO_ENABLE", "Y000", IoBitDirection.Output, false, false),
+                new IoBitSnapshot("DO_SERVO_ENABLE", "Y000", IoBitDirection.Output, servoEnabled, false),
                 new IoBitSnapshot("DO_VACUUM_ON", "Y001", IoBitDirection.Output, false, false),
                 new IoBitSnapshot("DO_RING_LIGHT_ON", "Y002", IoBitDirection.Output, false, false),
                 new IoBitSnapshot("DO_BUZZER_ON", "Y003", IoBitDirection.Output, false, false),
@@ -166,4 +534,5 @@ public sealed class VirtualEquipmentController : IEquipmentController
             },
             timestamp);
     }
+
 }

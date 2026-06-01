@@ -27,7 +27,7 @@
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
-- [ ] Motion command timeout/cancellation hardening
+- [ ] Motion command history persistence and UI log binding after simulator command results are persisted
 - [ ] Offline Debug Station remains out of Phase 1 implementation scope
 
 ## Codex-discovered Improvements
@@ -56,3 +56,10 @@ Problem: Shell exposes a formatted clock value, but no UI timer has been introdu
 Proposed improvement: Add an injectable clock/status ticker service so Shell time and heartbeat age update without blocking the UI thread.
 Requirement impact: FR-003, FR-021
 Priority: P2
+
+Date: 2026-06-01
+Source: FR-060 motion command hardening
+Problem: Simulator motion commands now return explicit success/rejected/timeout/cancelled results, but there is still no persisted motion command history table writer or MotionView log binding.
+Proposed improvement: Add an application use case that records `motion_command_history` entries and exposes the latest command results in MotionView without placing business logic in WPF code-behind.
+Requirement impact: FR-063, FR-064, FR-067, FR-069, FR-200, NFR-004
+Priority: P1

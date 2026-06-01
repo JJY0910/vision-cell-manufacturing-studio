@@ -35,6 +35,14 @@ public sealed record AxisSnapshot(
 
 ## Motion Commands
 
+All motion-like commands return `MachineCommandResult` with one of:
+
+- `Success`: command finished and state changed.
+- `Rejected`: backend interlock or soft-limit validation blocked execution.
+- `Timeout`: command exceeded the caller-supplied timeout.
+- `Cancelled`: caller cancellation or Stop interrupted the command.
+- `Failed`: unexpected adapter/runtime failure.
+
 ### Servo On/Off
 
 - Servo Off 중 motion command 금지
@@ -71,6 +79,12 @@ Acceptance:
 
 - all axes arrive within tolerance
 - final position stored in command log
+
+### Stop
+
+- Stop is allowed when an axis is moving or sequence execution is active.
+- Stop must request cancellation for the active motion command and return its own command result.
+- The interrupted motion command returns `Cancelled` rather than `Success`.
 
 ## Teaching Point
 

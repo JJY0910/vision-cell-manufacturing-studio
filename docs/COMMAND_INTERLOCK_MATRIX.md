@@ -32,15 +32,16 @@ This is the Phase 1 implementation baseline for HMI command enablement and backe
 | Disconnect | `connected && !sequenceRunning && !controllerBusy` | `!connected`, `sequenceRunning`, `controllerBusy` | Should move to safe state when later hardware drivers exist. |
 | Servo On | `connected && safetyOk && !emergencyStop && doorClosed && !axisAlarm && !axisBusy` | `!connected`, `!safetyOk`, `emergencyStop`, `!doorClosed`, `axisAlarm`, `axisBusy` | Backend emits explicit interlock failure. |
 | Servo Off | `connected && servoOn && !axisBusy && !sequenceRunning` | `!connected`, `!servoOn`, `axisBusy`, `sequenceRunning` | Emergency stop may force Servo Off in future hardware adapter. |
-| Home | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning` | Per-axis and Home All both need cancellation in the motion PR. |
+| Home | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning` | Simulator baseline returns success, timeout, cancellation, and stopped-before-completion results. |
 | Jog | `connected && manualMode && servoOn && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Jog does not require homing for setup/teaching movement. |
-| Move Absolute | `connected && manualMode && servoOn && axisHomed && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!axisHomed`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Must log target and elapsed time in the motion PR. |
+| Move Absolute | `connected && manualMode && servoOn && axisHomed && safetyOk && !axisBusy && !sequenceRunning && withinSoftLimit` | `!connected`, `autoMode`, `!servoOn`, `!axisHomed`, `!safetyOk`, `axisBusy`, `sequenceRunning`, `!withinSoftLimit` | Simulator baseline maps soft-limit rejects to `MOT-004` and timeout alarms to `MOT-003`; persisted motion history remains follow-up work. |
 | Stop | `connected && (axisBusy || sequenceRunning)` | `!connected`, `!axisBusy && !sequenceRunning` | Stop must be cancellable-safe and produce a command result. |
 | Reset Alarm | `connected && alarmActive && !emergencyStop && doorClosed` | `!connected`, `!alarmActive`, `emergencyStop`, `!doorClosed` | Must validate current root cause before clearing. |
 | Run Inspection | `connected && autoMode && recipeLoaded && cameraConnected && ioReady && safetyOk && !sequenceRunning && allRequiredAxesHomed && !axisBusy && !axisAlarm` | `!connected`, `manualMode`, `!recipeLoaded`, `!cameraConnected`, `!ioReady`, `!safetyOk`, `sequenceRunning`, `!allRequiredAxesHomed`, `axisBusy`, `axisAlarm` | Phase 1 implements interlock baseline only; inspection execution remains later scope. |
 
 ## Follow-Up
 
-- Extend command state objects from Dashboard to Motion and Inspection views when those commands get real execution handlers.
+- Extend command state objects from Dashboard to Motion and Inspection views when those commands get full user-facing handlers.
+- Persist motion command request/result records into `motion_command_history`.
 - Add hardware adapter validation tests when real controller, motion, camera, and I/O adapters exist.
-- Add structured `SystemEvent` entries for every rejected command.
+- Add structured `SystemEvent` entries for every persisted command result.
