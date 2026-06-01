@@ -300,3 +300,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 53 tests; App targeted tests passed with 29 tests; Debug/Release solution build and test passed with 144 tests; WPF hidden launch smoke passed.
 - Risks: This slice exposes active context but does not yet inject it into Teaching mutation requests or inspection sequence startup.
+
+## 2026-06-01 20:25 - In progress
+- Branch: `codex/feature/fr-122-teaching-active-context`
+- Scope: Inject active Recipe context into TeachingViewModel so Save/Update/Delete Teaching history uses the selected active Recipe automatically.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 30 tests; Debug/Release solution build and test passed with 145 tests; WPF hidden launch smoke passed.
+- Risks: Manual Recipe ID fallback remains for no-active situations; inspection startup still does not consume active context.

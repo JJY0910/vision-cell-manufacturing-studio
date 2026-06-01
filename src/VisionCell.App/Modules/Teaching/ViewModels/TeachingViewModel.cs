@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Interlocks;
+using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
 using VisionCell.App.Interaction;
 using VisionCell.Equipment.Controllers;
@@ -20,18 +21,22 @@ public sealed partial class TeachingViewModel : ObservableObject
     private readonly ITeachingHistoryRepository _historyRepository;
     private readonly IEquipmentController _equipmentController;
     private readonly IUserConfirmationService _confirmationService;
+    private readonly IActiveRecipeContext _activeRecipeContext;
     private int _historyRefreshVersion;
+    private string? _lastResolvedRecipeId;
 
     public TeachingViewModel(
         ITeachingPointUseCase teachingPointUseCase,
         ITeachingHistoryRepository historyRepository,
         IEquipmentController equipmentController,
-        IUserConfirmationService confirmationService)
+        IUserConfirmationService confirmationService,
+        IActiveRecipeContext activeRecipeContext)
     {
         _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
         _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
+        _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         RefreshSelectedPointHistoryCommand = new AsyncRelayCommand(RefreshSelectedPointHistoryAsync);
         SaveCurrentPositionCommand = new AsyncRelayCommand(SaveCurrentPositionAsync, () => !IsBusy);
@@ -74,6 +79,9 @@ public sealed partial class TeachingViewModel : ObservableObject
 
     [ObservableProperty]
     private string _activeRecipeIdText = string.Empty;
+
+    [ObservableProperty]
+    private string _activeRecipeContextText = "Active recipe context not loaded";
 
     [ObservableProperty]
     private string _toleranceXText = "0.010";
@@ -122,6 +130,7 @@ public sealed partial class TeachingViewModel : ObservableObject
                 ? Points.FirstOrDefault()
                 : Points.FirstOrDefault(point => point.Id == selectedId.Value) ?? Points.FirstOrDefault();
             StatusText = HasPoints ? $"{Points.Count} teaching points loaded" : "No teaching points saved";
+            await RefreshActiveRecipeContextAsync(cancellationToken).ConfigureAwait(true);
             await RefreshSelectedPointHistoryAsync(cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -144,8 +153,9 @@ public sealed partial class TeachingViewModel : ObservableObject
 
         await RunBusyAsync(async () =>
         {
+            var recipeId = await ResolveCurrentRecipeIdAsync(cancellationToken).ConfigureAwait(true);
             var result = await _teachingPointUseCase.SaveCurrentPositionAsync(
-                new TeachingPointSaveRequest(NameText, SelectedRole, tolerance, MemoText, SnapshotTimeout, CurrentRecipeId),
+                new TeachingPointSaveRequest(NameText, SelectedRole, tolerance, MemoText, SnapshotTimeout, recipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess || result.Point is null)
@@ -180,6 +190,7 @@ public sealed partial class TeachingViewModel : ObservableObject
         await RunBusyAsync(async () =>
         {
             var selected = SelectedPoint.Point;
+            var recipeId = await ResolveCurrentRecipeIdAsync(cancellationToken).ConfigureAwait(true);
             var result = await _teachingPointUseCase.UpdateAsync(
                 new TeachingPointUpdateRequest(
                     selected.Id,
@@ -188,7 +199,7 @@ public sealed partial class TeachingViewModel : ObservableObject
                     selected.Position,
                     tolerance,
                     MemoText,
-                    CurrentRecipeId),
+                    recipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess || result.Point is null)
@@ -228,8 +239,9 @@ public sealed partial class TeachingViewModel : ObservableObject
         {
             var selectedId = SelectedPoint.Id;
             var selectedName = SelectedPoint.Name;
+            var recipeId = await ResolveCurrentRecipeIdAsync(cancellationToken).ConfigureAwait(true);
             var result = await _teachingPointUseCase.DeleteAsync(
-                new TeachingPointDeleteRequest(selectedId, CurrentRecipeId),
+                new TeachingPointDeleteRequest(selectedId, recipeId),
                 cancellationToken).ConfigureAwait(true);
 
             if (!result.IsSuccess)
@@ -404,7 +416,53 @@ public sealed partial class TeachingViewModel : ObservableObject
         ToleranceThetaText = FormatNumber(point.Tolerance.Theta);
     }
 
-    private string? CurrentRecipeId => string.IsNullOrWhiteSpace(ActiveRecipeIdText) ? null : ActiveRecipeIdText.Trim();
+    private async Task<string?> ResolveCurrentRecipeIdAsync(CancellationToken cancellationToken)
+    {
+        var result = await _activeRecipeContext.GetActiveAsync(cancellationToken).ConfigureAwait(true);
+        UpdateActiveRecipeContextState(result);
+        return result.IsSuccess && !string.IsNullOrWhiteSpace(result.RecipeId)
+            ? result.RecipeId
+            : ManualRecipeId;
+    }
+
+    private async Task RefreshActiveRecipeContextAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _activeRecipeContext.GetActiveAsync(cancellationToken).ConfigureAwait(true);
+            UpdateActiveRecipeContextState(result);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            ActiveRecipeContextText = "Active recipe context refresh cancelled";
+        }
+        catch (Exception ex)
+        {
+            ActiveRecipeContextText = $"Active recipe context refresh failed: {ex.Message}";
+        }
+    }
+
+    private void UpdateActiveRecipeContextState(ActiveRecipeContextResult result)
+    {
+        if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.RecipeId))
+        {
+            ActiveRecipeIdText = result.RecipeId;
+            _lastResolvedRecipeId = result.RecipeId;
+            ActiveRecipeContextText = $"{result.RecipeId} v{result.Version}";
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_lastResolvedRecipeId) &&
+            string.Equals(ManualRecipeId, _lastResolvedRecipeId, StringComparison.OrdinalIgnoreCase))
+        {
+            ActiveRecipeIdText = string.Empty;
+            _lastResolvedRecipeId = null;
+        }
+
+        ActiveRecipeContextText = result.Message;
+    }
+
+    private string? ManualRecipeId => string.IsNullOrWhiteSpace(ActiveRecipeIdText) ? null : ActiveRecipeIdText.Trim();
 
     private static string FormatNumber(double value)
     {

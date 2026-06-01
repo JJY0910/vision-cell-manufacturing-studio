@@ -273,4 +273,12 @@ Problem: RecipeView can select an active Recipe, but Teaching and inspection wor
 Proposed improvement: Add an active Recipe context provider that maps active metadata to Success/NotSelected/InvalidRecipe/RepositoryUnavailable statuses.
 Requirement impact: FR-120, FR-122, FR-180, FR-200, NFR-004, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-122-active-recipe-context`.
+Status: Addressed by `IActiveRecipeContext`; Teaching consumption is in progress on `codex/feature/fr-122-teaching-active-context`.
+
+Date: 2026-06-01
+Source: FR-122 Teaching active Recipe context
+Problem: TeachingView still relies on manual Recipe ID entry when writing Recipe context into save/update/delete history rows.
+Proposed improvement: Inject `IActiveRecipeContext` into TeachingViewModel, resolve active Recipe before Teaching mutations, and keep manual Recipe ID entry only as fallback when no active Recipe is selected.
+Requirement impact: FR-100, FR-104, FR-120, FR-122, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-122-teaching-active-context`.
