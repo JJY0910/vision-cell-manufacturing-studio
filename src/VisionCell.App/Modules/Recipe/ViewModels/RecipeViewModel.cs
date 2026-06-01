@@ -22,11 +22,13 @@ public sealed partial class RecipeViewModel : ObservableObject
         _recipeLibraryUseCase = recipeLibraryUseCase ?? throw new ArgumentNullException(nameof(recipeLibraryUseCase));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsBusy);
         SaveRecipeCommand = new AsyncRelayCommand(SaveRecipeAsync, () => !IsBusy);
+        ActivateRecipeCommand = new AsyncRelayCommand(ActivateRecipeAsync, CanActivateRecipe);
     }
 
     public ObservableCollection<RecipeIndexItemViewModel> Recipes { get; } = new();
     public IAsyncRelayCommand RefreshCommand { get; }
     public IAsyncRelayCommand SaveRecipeCommand { get; }
+    public IAsyncRelayCommand ActivateRecipeCommand { get; }
 
     [ObservableProperty]
     private string _statusText = "Recipe index not loaded";
@@ -187,10 +189,74 @@ public sealed partial class RecipeViewModel : ObservableObject
         }
     }
 
+    public async Task ActivateRecipeAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedRecipe is null)
+        {
+            StatusText = "Select a recipe to activate";
+            return;
+        }
+
+        var recipeId = SelectedRecipe.RecipeId;
+        var version = SelectedRecipe.Version;
+
+        IsBusy = true;
+        try
+        {
+            var activated = await _recipeIndexRepository.SetActiveAsync(
+                recipeId,
+                version,
+                cancellationToken).ConfigureAwait(true);
+
+            if (!activated)
+            {
+                StatusText = $"Recipe activation rejected: '{recipeId}' v{version} was not found";
+                return;
+            }
+
+            try
+            {
+                await LoadIndexAsync(recipeId, version, cancellationToken).ConfigureAwait(true);
+                StatusText = $"Activated recipe '{recipeId}' v{version}";
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                StatusText = "Recipe activation completed, but index refresh was cancelled";
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"Recipe activated, but index refresh failed: {ex.Message}";
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = "Recipe activation cancelled";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Recipe activation failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     partial void OnIsBusyChanged(bool value)
     {
         RefreshCommand.NotifyCanExecuteChanged();
         SaveRecipeCommand.NotifyCanExecuteChanged();
+        ActivateRecipeCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedRecipeChanged(RecipeIndexItemViewModel? value)
+    {
+        ActivateRecipeCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanActivateRecipe()
+    {
+        return !IsBusy && SelectedRecipe is not null;
     }
 
     private async Task LoadIndexAsync(

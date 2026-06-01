@@ -12,11 +12,17 @@
       </Grid.RowDefinitions>
 
       <DockPanel>
-        <Button DockPanel.Dock="Right"
-                Content="Refresh Index"
-                Command="{Binding RefreshCommand}"
-                Height="36"
-                MinWidth="132" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Set Active"
+                  Command="{Binding ActivateRecipeCommand}"
+                  Height="36"
+                  MinWidth="112"
+                  Margin="0,0,8,0" />
+          <Button Content="Refresh Index"
+                  Command="{Binding RefreshCommand}"
+                  Height="36"
+                  MinWidth="132" />
+        </StackPanel>
         <StackPanel>
           <TextBlock Text="Recipe" Style="{DynamicResource Text.PageTitle}" />
           <TextBlock Text="{Binding StatusText}"

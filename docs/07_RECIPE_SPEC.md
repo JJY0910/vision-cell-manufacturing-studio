@@ -77,7 +77,8 @@ Implementation status:
 - WPF App composition registers the JSON document store under `local-data/recipes` and the Recipe library save use case for RecipeView save and future import commands.
 - RecipeView can save a valid single-camera-position Recipe from operator-entered metadata, camera, Teaching, and ROI fields, then refresh/select the indexed row.
 - `SqliteRecipeIndexRepository` can query the active Recipe row and atomically switch active state to one existing indexed Recipe without clearing the previous active row on a missing target.
-- RecipeView activation, active Recipe app startup restore, and multi-row Recipe editing remain follow-up work.
+- RecipeView can set the selected indexed Recipe active through the Application-layer index port and refresh the active-state summary.
+- Active Recipe app startup restore and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 

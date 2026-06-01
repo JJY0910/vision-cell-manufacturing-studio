@@ -597,6 +597,101 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Recipe_ActivateRecipeAsync_Should_Set_Selected_Recipe_Active_And_Refresh_Index()
+    {
+        var previous = CreateRecipeIndexEntry(
+            "PKG-A",
+            "1.0.0",
+            "Package A",
+            isActive: true,
+            isValid: true);
+        var next = CreateRecipeIndexEntry(
+            "PKG-B",
+            "2.0.0",
+            "Package B",
+            isActive: false,
+            isValid: true);
+        var recipe = CreateRecipeViewModel(new FakeRecipeIndexRepository(previous, next));
+
+        await recipe.RefreshAsync(CancellationToken.None);
+        recipe.SelectedRecipe = recipe.Recipes.Single(entry => entry.RecipeId == "PKG-B");
+
+        await recipe.ActivateRecipeAsync(CancellationToken.None);
+
+        recipe.ActiveRecipeText.Should().Be("PKG-B v2.0.0");
+        recipe.ActiveRecipeCount.Should().Be(1);
+        recipe.SelectedRecipe.Should().NotBeNull();
+        recipe.SelectedRecipe!.RecipeId.Should().Be("PKG-B");
+        recipe.Recipes.Single(entry => entry.RecipeId == "PKG-A").IsActive.Should().BeFalse();
+        recipe.StatusText.Should().Be("Activated recipe 'PKG-B' v2.0.0");
+    }
+
+    [Fact]
+    public async Task Recipe_ActivateRecipeAsync_Should_Require_Selected_Recipe()
+    {
+        var recipe = CreateRecipeViewModel();
+
+        recipe.ActivateRecipeCommand.CanExecute(null).Should().BeFalse();
+        await recipe.ActivateRecipeAsync(CancellationToken.None);
+
+        recipe.StatusText.Should().Be("Select a recipe to activate");
+    }
+
+    [Fact]
+    public async Task Recipe_ActivateRecipeAsync_Should_Surface_Missing_Target()
+    {
+        var entry = CreateRecipeIndexEntry(
+            "PKG-A",
+            "1.0.0",
+            "Package A",
+            isActive: false,
+            isValid: true);
+        var repository = new FakeRecipeIndexRepository(entry)
+        {
+            SetActiveHandler = (_, _, _) => Task.FromResult(false)
+        };
+        var recipe = CreateRecipeViewModel(repository);
+
+        await recipe.RefreshAsync(CancellationToken.None);
+        await recipe.ActivateRecipeAsync(CancellationToken.None);
+
+        recipe.StatusText.Should().Contain("activation rejected");
+        recipe.ActiveRecipeText.Should().Be("-");
+    }
+
+    [Fact]
+    public async Task Recipe_ActivateRecipeAsync_Should_Surface_Refresh_Failure_After_Activation()
+    {
+        var entry = CreateRecipeIndexEntry(
+            "PKG-A",
+            "1.0.0",
+            "Package A",
+            isActive: false,
+            isValid: true);
+        var calls = 0;
+        var repository = new FakeRecipeIndexRepository(entry)
+        {
+            ListHandler = (_, _) =>
+            {
+                calls++;
+                if (calls > 1)
+                {
+                    throw new InvalidOperationException("recipe index unavailable");
+                }
+
+                return Task.FromResult<IReadOnlyList<RecipeIndexEntry>>(new[] { entry });
+            }
+        };
+        var recipe = CreateRecipeViewModel(repository);
+
+        await recipe.RefreshAsync(CancellationToken.None);
+        await recipe.ActivateRecipeAsync(CancellationToken.None);
+
+        recipe.StatusText.Should().Contain("index refresh failed");
+        recipe.StatusText.Should().Contain("recipe index unavailable");
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -708,6 +803,7 @@ public sealed class DashboardAndShellViewModelTests
         }
 
         public Func<int, CancellationToken, Task<IReadOnlyList<RecipeIndexEntry>>>? ListHandler { get; init; }
+        public Func<string, string, CancellationToken, Task<bool>>? SetActiveHandler { get; init; }
 
         public Task SaveAsync(RecipeIndexEntry entry, CancellationToken cancellationToken)
         {
@@ -740,6 +836,11 @@ public sealed class DashboardAndShellViewModelTests
             string version,
             CancellationToken cancellationToken)
         {
+            if (SetActiveHandler is not null)
+            {
+                return SetActiveHandler(recipeId, version, cancellationToken);
+            }
+
             var hasTarget = _entries.Any(entry =>
                 string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase));
