@@ -202,3 +202,11 @@ Proposed improvement: Add Application-layer Recipe definition records and valida
 Requirement impact: FR-120, FR-121, FR-124, NFR-TEST-001
 Priority: P0
 Status: In progress on `codex/feature/fr-120-recipe-domain-contract`.
+
+Date: 2026-06-01
+Source: FR-120 Recipe JSON document store
+Problem: Recipe definitions can be validated, but there is no safe JSON file round-trip or path traversal guard for Recipe persistence.
+Proposed improvement: Add an Application document-store port and a Persistence JSON implementation that validates before save and generates safe `{RecipeId}.v{Version}.recipe.json` file names under a configured root.
+Requirement impact: FR-120, FR-121, FR-124, NFR-008, NFR-TEST-001
+Priority: P0
+Status: In progress on `codex/feature/fr-120-recipe-json-store`.

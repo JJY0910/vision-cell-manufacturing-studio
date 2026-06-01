@@ -237,3 +237,10 @@
 - Validation target: Application targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 45 tests; Debug/Release solution build and test passed with 111 tests; WPF hidden launch smoke passed.
 - Risks: JSON persistence, SQLite indexing, active recipe settings, and RecipeView editing remain follow-up work.
+
+## 2026-06-01 18:30 - In progress
+- Branch: `codex/feature/fr-120-recipe-json-store`
+- Scope: Add ADR-backed Recipe JSON document store port and Persistence implementation with validation-before-save and safe file-name generation.
+- Validation target: Persistence targeted tests, full Debug/Release build/test, GitHub Actions after PR creation.
+- Local validation: Persistence targeted tests passed with 20 tests; Debug/Release solution build and test passed with 116 tests; WPF hidden launch smoke passed.
+- Risks: SQLite Recipe indexing, active recipe app settings, and RecipeView editing remain follow-up work.
