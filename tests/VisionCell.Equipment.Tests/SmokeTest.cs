@@ -2,6 +2,7 @@ using FluentAssertions;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
+using VisionCell.Equipment.Cameras;
 using VisionCell.Motion.Commands;
 using VisionCell.Simulator;
 using Xunit;
@@ -317,6 +318,40 @@ public sealed class VirtualEquipmentControllerTests
         result.ErrorCode?.Code.Should().Be("EQP-003");
     }
 
+    [Fact]
+    public async Task VirtualCameraDevice_GrabAsync_Should_Return_Synthetic_Gray8_Frame_With_Metadata()
+    {
+        var camera = new VirtualCameraDevice(() => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
+        var request = CreateCameraRequest(TimeSpan.FromSeconds(1));
+
+        var result = await camera.GrabAsync(request, CancellationToken.None);
+
+        result.Status.Should().Be(CameraGrabStatus.Success);
+        result.ErrorCode.Should().BeNull();
+        result.Frame.Should().NotBeNull();
+        result.Frame!.Width.Should().Be(320);
+        result.Frame.Height.Should().Be(240);
+        result.Frame.PixelFormat.Should().Be(CameraPixelFormat.Gray8);
+        result.Frame.Pixels.Should().HaveCount(result.Frame.Stride * result.Frame.Height);
+        result.Frame.Metadata.Should().Contain("RecipeId", "RCP-CAM");
+    }
+
+    [Fact]
+    public async Task VirtualCameraDevice_GrabAsync_Should_Return_Timeout_When_Injected()
+    {
+        var camera = new VirtualCameraDevice
+        {
+            InjectGrabTimeout = true
+        };
+        var request = CreateCameraRequest(TimeSpan.FromMilliseconds(5));
+
+        var result = await camera.GrabAsync(request, CancellationToken.None);
+
+        result.Status.Should().Be(CameraGrabStatus.Timeout);
+        result.ErrorCode?.Code.Should().Be("CAM-001");
+        result.Frame.Should().BeNull();
+    }
+
     private static InterlockContext ReadyManualContext()
     {
         return new InterlockContext(
@@ -351,5 +386,18 @@ public sealed class VirtualEquipmentControllerTests
             timeout,
             DateTimeOffset.UtcNow,
             parameters);
+    }
+
+    private static CameraGrabRequest CreateCameraRequest(TimeSpan timeout)
+    {
+        return new CameraGrabRequest(
+            CorrelationId.New(),
+            timeout,
+            DateTimeOffset.UtcNow,
+            "RCP-CAM",
+            "1.0.0",
+            exposureMilliseconds: 5.0,
+            gain: 1.0,
+            lightIntensity: 80);
     }
 }

@@ -2,6 +2,7 @@ using FluentAssertions;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Recipes;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
@@ -37,6 +38,9 @@ public sealed class InspectionRunUseCaseTests
         result.Request.Parameters.Should().Contain("RecipeId", "RCP-AUTO");
         result.CommandResult.Should().NotBeNull();
         result.CommandResult!.CorrelationId.Should().Be(result.Request.CorrelationId);
+        result.CameraGrabResult.Should().NotBeNull();
+        result.CameraGrabResult!.IsSuccess.Should().BeTrue();
+        result.CameraGrabResult.Frame!.Metadata.Should().Contain("RecipeId", "RCP-AUTO");
         controller.ExecuteCount.Should().Be(1);
         controller.LastCommand.Should().Be(CommandKind.RunInspection);
         controller.LastContext!.RecipeLoaded.Should().BeTrue();
@@ -44,8 +48,36 @@ public sealed class InspectionRunUseCaseTests
         result.Steps.Should().Contain(step => step.Name == "Load Recipe" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Safety Interlock" && step.Status == InspectionSequenceStepStatus.Success);
         result.Steps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == InspectionSequenceStepStatus.Success);
-        result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Skipped);
+        result.Steps.Should().Contain(step => step.Name == "Move To Camera" && step.Status == InspectionSequenceStepStatus.Skipped);
+        result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Success);
         progress.Updates.Should().Contain(update => update.Status == InspectionSequenceStepStatus.Running);
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Fail_Grab_Image_When_Camera_Timeouts()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-CAM-TIMEOUT", "1.0.0");
+        var controller = new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true));
+        var camera = new FakeCameraDevice
+        {
+            GrabHandler = request => Task.FromResult(CameraGrabResult.Timeout(
+                "Virtual camera grab timed out after 10 ms.",
+                TimeSpan.FromMilliseconds(10),
+                request.CorrelationId))
+        };
+        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, camera);
+
+        var result = await useCase.RunAsync(CreateRequest() with { GrabTimeout = TimeSpan.FromMilliseconds(10) }, progress: null, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionRunStatus.CameraGrabFailed);
+        result.Message.Should().Contain("timed out");
+        result.CameraGrabResult.Should().NotBeNull();
+        result.CameraGrabResult!.ErrorCode.Should().Be(ErrorCode.CameraGrabTimeout);
+        controller.ExecuteCount.Should().Be(1);
+        camera.Requests.Should().ContainSingle();
+        camera.Requests[0].CorrelationId.Should().Be(result.Request!.CorrelationId);
+        result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Failed);
+        result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Skipped);
     }
 
     [Fact]
@@ -96,11 +128,13 @@ public sealed class InspectionRunUseCaseTests
 
     private static InspectionRunUseCase CreateUseCase(
         IActiveRecipeContext activeRecipeContext,
-        IEquipmentController controller)
+        IEquipmentController controller,
+        ICameraDevice? cameraDevice = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
             controller,
+            cameraDevice ?? new FakeCameraDevice(),
             () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
 
@@ -245,6 +279,42 @@ public sealed class InspectionRunUseCaseTests
             LastCommand = command;
             LastContext = context;
             return ExecuteHandler(command, context, request, cancellationToken);
+        }
+    }
+
+    private sealed class FakeCameraDevice : ICameraDevice
+    {
+        public List<CameraGrabRequest> Requests { get; } = new();
+
+        public Func<CameraGrabRequest, Task<CameraGrabResult>> GrabHandler { get; init; } =
+            request => Task.FromResult(CameraGrabResult.Success(
+                CreateCameraFrame(request),
+                "Grabbed 16x12 Gray8 frame from Fake camera.",
+                TimeSpan.FromMilliseconds(3),
+                request.CorrelationId));
+
+        public Task<CameraGrabResult> GrabAsync(CameraGrabRequest request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            cancellationToken.ThrowIfCancellationRequested();
+            return GrabHandler(request);
+        }
+
+        private static CameraFrame CreateCameraFrame(CameraGrabRequest request)
+        {
+            return new CameraFrame(
+                "Fake camera",
+                width: 16,
+                height: 12,
+                stride: 16,
+                CameraPixelFormat.Gray8,
+                Enumerable.Range(0, 16 * 12).Select(index => (byte)(index % 255)).ToArray(),
+                request.RequestedAt,
+                new Dictionary<string, string>
+                {
+                    ["RecipeId"] = request.RecipeId,
+                    ["RecipeVersion"] = request.RecipeVersion
+                });
         }
     }
 }

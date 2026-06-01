@@ -64,8 +64,9 @@ tests/VisionCell.App.Tests
 - Inspection run rejects missing/invalid active Recipe before controller execution.
 - Inspection run rejects failed Run Inspection interlocks before controller execution.
 - Stop/cancel path returns explicit cancelled result and cancelled/skipped step state.
-- Future full inspection success path with camera, vision, judge, and persistence remains open.
-- Camera timeout failure path remains open until camera grab execution is implemented.
+- Camera grab success path returns a correlated synthetic frame and updates the Inspection timeline.
+- Camera timeout failure path returns CAM-001 and skips downstream vision/judge/persist steps.
+- Future full inspection success path with vision, judge, and persistence remains open.
 - Persist result after judge remains open until FR-200 persistence is implemented.
 
 ### Persistence

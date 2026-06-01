@@ -521,7 +521,12 @@ public sealed class DashboardAndShellViewModelTests
         var runUseCase = new FakeInspectionRunUseCase(CreateInspectionRunResult(
             InspectionRunStatus.Accepted,
             "Inspection sequence accepted for recipe 'RCP-INSPECT' v1.0.0.",
-            activeRecipe));
+            activeRecipe,
+            CameraGrabResult.Success(
+                CreateCameraFrame("RCP-INSPECT", "1.0.0"),
+                "Grabbed 16x12 Gray8 frame from Fake camera.",
+                TimeSpan.FromMilliseconds(3),
+                CorrelationId.New())));
         var inspection = CreateInspectionViewModel(inspectionRunUseCase: runUseCase);
 
         await inspection.RunInspectionAsync(CancellationToken.None);
@@ -531,6 +536,9 @@ public sealed class DashboardAndShellViewModelTests
         inspection.StatusText.Should().Contain("Inspection sequence accepted");
         inspection.StatusText.Should().Contain("RCP-INSPECT");
         inspection.SequenceSteps.Should().Contain(step => step.Name == "Start Sequence" && step.Status == "Success");
+        inspection.LastGrabText.Should().Contain("16 x 12");
+        inspection.LastGrabText.Should().Contain("Fake camera");
+        inspection.LastGrabImageSource.Should().NotBeNull();
         inspection.LastRunCorrelationId.Should().NotBe("-");
         inspection.LastCheckText.Should().NotBe("-");
     }
@@ -945,7 +953,8 @@ public sealed class DashboardAndShellViewModelTests
     private static InspectionRunResult CreateInspectionRunResult(
         InspectionRunStatus status,
         string message,
-        RecipeIndexEntry? recipe = null)
+        RecipeIndexEntry? recipe = null,
+        CameraGrabResult? cameraGrabResult = null)
     {
         var timestamp = DateTimeOffset.UtcNow;
         var request = recipe is null
@@ -970,14 +979,33 @@ public sealed class DashboardAndShellViewModelTests
             recipe,
             request,
             commandResult,
+            cameraGrabResult,
             new[]
             {
                 new InspectionSequenceStepRecord("Load Recipe", recipe is null ? InspectionSequenceStepStatus.Failed : InspectionSequenceStepStatus.Success, message, TimeSpan.FromMilliseconds(1)),
                 new InspectionSequenceStepRecord("Safety Interlock", recipe is null ? InspectionSequenceStepStatus.Skipped : InspectionSequenceStepStatus.Success, recipe is null ? "Skipped" : "Inspection interlocks passed.", TimeSpan.FromMilliseconds(1)),
-                new InspectionSequenceStepRecord("Start Sequence", status == InspectionRunStatus.Accepted ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, message, TimeSpan.FromMilliseconds(1))
+                new InspectionSequenceStepRecord("Start Sequence", status == InspectionRunStatus.Accepted ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, message, TimeSpan.FromMilliseconds(1)),
+                new InspectionSequenceStepRecord("Grab Image", cameraGrabResult?.IsSuccess == true ? InspectionSequenceStepStatus.Success : InspectionSequenceStepStatus.Skipped, cameraGrabResult?.Message ?? "Skipped", TimeSpan.FromMilliseconds(1))
             },
             timestamp,
             timestamp.AddMilliseconds(12));
+    }
+
+    private static CameraFrame CreateCameraFrame(string recipeId, string version)
+    {
+        return new CameraFrame(
+            "Fake camera",
+            width: 16,
+            height: 12,
+            stride: 16,
+            CameraPixelFormat.Gray8,
+            Enumerable.Range(0, 16 * 12).Select(index => (byte)(index % 255)).ToArray(),
+            DateTimeOffset.UtcNow,
+            new Dictionary<string, string>
+            {
+                ["RecipeId"] = recipeId,
+                ["RecipeVersion"] = version
+            });
     }
 
     private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository

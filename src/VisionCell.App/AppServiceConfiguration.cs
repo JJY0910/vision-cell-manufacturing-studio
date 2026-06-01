@@ -16,6 +16,7 @@ using VisionCell.App.Modules.Settings.ViewModels;
 using VisionCell.App.Modules.Teaching.ViewModels;
 using VisionCell.App.Navigation;
 using VisionCell.App.Shell;
+using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Persistence.Motion;
 using VisionCell.Persistence.Recipes;
@@ -44,6 +45,7 @@ public static class AppServiceConfiguration
         }
 
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
+        services.AddSingleton<ICameraDevice, VirtualCameraDevice>();
         services.AddSingleton<ICommandInterlockService, CommandInterlockService>();
         services.AddSingleton<RecipeValidator>();
         services.AddSingleton(_ => new SqliteConnectionFactory(databasePath));

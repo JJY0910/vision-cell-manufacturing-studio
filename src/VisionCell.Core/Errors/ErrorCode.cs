@@ -13,6 +13,8 @@ public readonly record struct ErrorCode(string Code, string Message)
     public static readonly ErrorCode AxisNotHomed = new("MOT-002", "Axis is not homed.");
     public static readonly ErrorCode MotionTimeout = new("MOT-003", "Motion command timed out.");
     public static readonly ErrorCode SoftLimitExceeded = new("MOT-004", "Target exceeds soft limit.");
+    public static readonly ErrorCode CameraGrabTimeout = new("CAM-001", "Camera grab timed out.");
     public static readonly ErrorCode CameraNotReady = new("CAM-002", "Camera is not ready.");
+    public static readonly ErrorCode CameraGrabFailed = new("CAM-003", "Camera grab failed.");
     public static readonly ErrorCode PersistenceFailed = new("DB-001", "Persistence failed.");
 }

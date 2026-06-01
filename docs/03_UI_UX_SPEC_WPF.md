@@ -155,6 +155,7 @@ Implementation status:
 - Start/Stop/Pause/Reset
 - Sequence timeline
 - Image viewer original/overlay
+- Last Grab viewer displays the latest simulator camera frame after a successful Grab Image step.
 - Current result and defect table
 - Cycle time breakdown
 - Lot summary

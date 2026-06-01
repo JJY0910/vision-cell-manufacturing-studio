@@ -82,7 +82,8 @@ Implementation status:
 - TeachingView resolves active Recipe context before Save/Update/Delete mutations and passes the active Recipe ID into Teaching history requests, with manual Recipe ID entry retained as a fallback.
 - InspectionView uses active Recipe context as a precheck before Run Inspection can proceed to future sequence execution.
 - `InspectionRunUseCase` consumes active Recipe context when creating the Run Inspection command request.
-- Active Recipe app startup restore, full camera/vision/result inspection sequence execution, and multi-row Recipe editing remain follow-up work.
+- `InspectionRunUseCase` now carries active Recipe metadata into the camera grab request so the synthetic frame is traceable to Recipe ID/version.
+- Active Recipe app startup restore, vision/result inspection sequence execution, and multi-row Recipe editing remain follow-up work.
 
 ## Versioning Policy
 

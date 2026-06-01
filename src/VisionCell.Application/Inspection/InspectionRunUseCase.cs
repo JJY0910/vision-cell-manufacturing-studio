@@ -3,6 +3,7 @@ using VisionCell.Application.Interlocks;
 using VisionCell.Application.Recipes;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Primitives;
+using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
 
 namespace VisionCell.Application.Inspection;
@@ -12,14 +13,16 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private const string LoadRecipeStep = "Load Recipe";
     private const string SafetyStep = "Safety Interlock";
     private const string StartSequenceStep = "Start Sequence";
+    private const string MoveToCameraStep = "Move To Camera";
+    private const string GrabImageStep = "Grab Image";
 
     private static readonly string[] StepNames =
     {
         LoadRecipeStep,
         SafetyStep,
         StartSequenceStep,
-        "Move To Camera",
-        "Grab Image",
+        MoveToCameraStep,
+        GrabImageStep,
         "Inspect 2D",
         "Inspect 3D",
         "Judge",
@@ -28,15 +31,18 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
 
     private readonly IActiveRecipeContext _activeRecipeContext;
     private readonly IEquipmentController _controller;
+    private readonly ICameraDevice _cameraDevice;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
         IActiveRecipeContext activeRecipeContext,
         IEquipmentController controller,
+        ICameraDevice cameraDevice,
         Func<DateTimeOffset>? clock = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
+        _cameraDevice = cameraDevice ?? throw new ArgumentNullException(nameof(cameraDevice));
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -48,12 +54,14 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         ArgumentNullException.ThrowIfNull(request);
         EnsurePositiveTimeout(request.SnapshotTimeout, nameof(request.SnapshotTimeout));
         EnsurePositiveTimeout(request.CommandTimeout, nameof(request.CommandTimeout));
+        EnsurePositiveTimeout(request.GrabTimeout, nameof(request.GrabTimeout));
 
         var startedAt = _clock();
         var recorder = new StepRecorder(progress);
         RecipeIndexEntry? recipe = null;
         MachineCommandRequest? commandRequest = null;
         MachineCommandResult? commandResult = null;
+        CameraGrabResult? cameraGrabResult = null;
 
         try
         {
@@ -108,11 +116,28 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             }
 
             recorder.Update(StartSequenceStep, InspectionSequenceStepStatus.Success, commandResult.Message, commandStopwatch.Elapsed);
-            recorder.SkipPending("Pending implementation in camera, vision, judge, and persistence slices.");
+            recorder.Update(MoveToCameraStep, InspectionSequenceStepStatus.Skipped, "Camera-position move awaits Recipe document teaching execution.", TimeSpan.Zero);
+
+            var grabStopwatch = Stopwatch.StartNew();
+            recorder.Update(GrabImageStep, InspectionSequenceStepStatus.Running, "Grabbing camera frame.", null);
+            cameraGrabResult = await _cameraDevice.GrabAsync(
+                CreateCameraGrabRequest(recipe, commandRequest.CorrelationId, request.GrabTimeout),
+                cancellationToken).ConfigureAwait(false);
+            grabStopwatch.Stop();
+
+            if (!cameraGrabResult.IsSuccess)
+            {
+                recorder.Update(GrabImageStep, MapCameraStepStatus(cameraGrabResult.Status), cameraGrabResult.Message, grabStopwatch.Elapsed);
+                recorder.SkipPending("Skipped because camera grab did not produce a frame.");
+                return Finish(MapCameraStatus(cameraGrabResult.Status), cameraGrabResult.Message);
+            }
+
+            recorder.Update(GrabImageStep, InspectionSequenceStepStatus.Success, cameraGrabResult.Message, grabStopwatch.Elapsed);
+            recorder.SkipPending("Pending implementation in vision, judge, and persistence slices.");
 
             return Finish(
                 InspectionRunStatus.Accepted,
-                $"Inspection sequence accepted for recipe '{recipe.RecipeId}' v{recipe.Version}.");
+                $"Inspection sequence accepted and image grabbed for recipe '{recipe.RecipeId}' v{recipe.Version}.");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -135,10 +160,27 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 recipe,
                 commandRequest,
                 commandResult,
+                cameraGrabResult,
                 recorder.Snapshot(),
                 startedAt,
                 _clock());
         }
+    }
+
+    private CameraGrabRequest CreateCameraGrabRequest(
+        RecipeIndexEntry recipe,
+        CorrelationId correlationId,
+        TimeSpan timeout)
+    {
+        return new CameraGrabRequest(
+            correlationId,
+            timeout,
+            _clock(),
+            recipe.RecipeId,
+            recipe.Version,
+            exposureMilliseconds: 5.0,
+            gain: 1.0,
+            lightIntensity: 80);
     }
 
     private MachineCommandRequest CreateCommandRequest(RecipeIndexEntry recipe, TimeSpan timeout)
@@ -179,11 +221,29 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         };
     }
 
+    private static InspectionRunStatus MapCameraStatus(CameraGrabStatus status)
+    {
+        return status switch
+        {
+            CameraGrabStatus.Cancelled => InspectionRunStatus.CommandCancelled,
+            _ => InspectionRunStatus.CameraGrabFailed
+        };
+    }
+
     private static InspectionSequenceStepStatus MapStepStatus(CommandStatus status)
     {
         return status switch
         {
             CommandStatus.Cancelled => InspectionSequenceStepStatus.Cancelled,
+            _ => InspectionSequenceStepStatus.Failed
+        };
+    }
+
+    private static InspectionSequenceStepStatus MapCameraStepStatus(CameraGrabStatus status)
+    {
+        return status switch
+        {
+            CameraGrabStatus.Cancelled => InspectionSequenceStepStatus.Cancelled,
             _ => InspectionSequenceStepStatus.Failed
         };
     }

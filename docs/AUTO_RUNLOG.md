@@ -328,3 +328,10 @@
 - Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 59 tests; Equipment targeted tests passed with 18 tests; App targeted tests passed with 35 tests after rerunning App alone because the first parallel targeted run hit a build DLL file lock. Debug/Release solution build and test passed with 158 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: Enter Auto does not require active Recipe by design; Run Inspection still enforces active Recipe separately. Camera/vision/result persistence remains follow-up.
+
+## 2026-06-01 22:05 - In progress
+- Branch: `codex/feature/fr-141-camera-grab-simulator`
+- Scope: Add ADR-backed camera grab contracts, `VirtualCameraDevice`, InspectionRunUseCase Grab Image execution, and InspectionView Last Grab rendering.
+- Validation target: Application/Equipment/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 60 tests; Equipment targeted tests passed with 20 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 161 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`. Initial parallel targeted test run hit a shared Debug DLL file lock and was rerun serially.
+- Risks: Synthetic frame is Gray8 only; Move To Camera, 2D/3D algorithms, judge, overlay, and result persistence remain follow-up work.
