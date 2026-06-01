@@ -182,6 +182,11 @@ public sealed class DashboardAndShellViewModelTests
         motion.MoveTargetYText = "-4.000";
         motion.MoveTargetZText = "6.000";
         motion.MoveTargetThetaText = "15.000";
+        motion.MoveVelocityText = "125.000";
+        motion.MoveAccelerationText = "300.000";
+        motion.MoveDecelerationText = "250.000";
+        motion.MoveJerkText = "1500.000";
+        motion.MoveArrivalToleranceText = "0.020";
 
         await motion.RefreshSnapshotAsync(CancellationToken.None);
         await motion.ExecuteMoveAbsoluteAsync(CancellationToken.None);
@@ -193,6 +198,27 @@ public sealed class DashboardAndShellViewModelTests
         parameters.Should().Contain("Y", "-4");
         parameters.Should().Contain("Z", "6");
         parameters.Should().Contain("Theta", "15");
+        parameters.Should().Contain("Velocity", "125");
+        parameters.Should().Contain("Acceleration", "300");
+        parameters.Should().Contain("Deceleration", "250");
+        parameters.Should().Contain("Jerk", "1500");
+        parameters.Should().Contain("ArrivalTolerance", "0.02");
+    }
+
+    [Fact]
+    public async Task Motion_ExecuteMoveAbsoluteAsync_Should_Reject_Invalid_Profile_Input()
+    {
+        var useCase = new FakeMotionCommandUseCase();
+        var motion = CreateMotionViewModel(
+            commandUseCase: useCase,
+            equipmentController: new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+        motion.MoveVelocityText = "0";
+
+        await motion.RefreshSnapshotAsync(CancellationToken.None);
+        await motion.ExecuteMoveAbsoluteAsync(CancellationToken.None);
+
+        useCase.Requests.Should().BeEmpty();
+        motion.CommandStatus.Should().Contain("Velocity must be greater than zero");
     }
 
     [Fact]

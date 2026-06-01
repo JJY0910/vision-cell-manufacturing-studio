@@ -515,13 +515,19 @@ public sealed class VirtualEquipmentController : IEquipmentController
             {
                 Position = targets[axis.AxisId],
                 Target = targets[axis.AxisId],
+                Profile = new MotionProfile(
+                    moveTarget.Velocity,
+                    moveTarget.Acceleration,
+                    moveTarget.Deceleration,
+                    moveTarget.Jerk,
+                    axis.Profile.Unit),
                 ServoOn = _servoEnabled,
                 IsMoving = false,
                 Alarm = null
             }).ToArray();
         }
 
-        return $"Move Absolute completed for simulator target X={moveTarget.X:0.000}, Y={moveTarget.Y:0.000}, Z={moveTarget.Z:0.000}, Theta={moveTarget.Theta:0.000}.";
+        return $"Move Absolute completed for simulator target X={moveTarget.X:0.000}, Y={moveTarget.Y:0.000}, Z={moveTarget.Z:0.000}, Theta={moveTarget.Theta:0.000}, velocity={moveTarget.Velocity:0.000}, tolerance={moveTarget.ArrivalTolerance:0.000}.";
     }
 
     private EquipmentSnapshot CreateSnapshot(DateTimeOffset timestamp)

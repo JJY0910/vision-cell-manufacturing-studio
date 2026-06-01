@@ -57,12 +57,26 @@ public static class MotionCommandParameterParser
         if (!TryReadOptionalDouble(parameters, MotionCommandParameterKeys.X, fallback.X, out var x, out error) ||
             !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Y, fallback.Y, out var y, out error) ||
             !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Z, fallback.Z, out var z, out error) ||
-            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Theta, fallback.Theta, out var theta, out error))
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Theta, fallback.Theta, out var theta, out error) ||
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Velocity, fallback.Velocity, out var velocity, out error) ||
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Acceleration, fallback.Acceleration, out var acceleration, out error) ||
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Deceleration, fallback.Deceleration, out var deceleration, out error) ||
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.Jerk, fallback.Jerk, out var jerk, out error) ||
+            !TryReadOptionalDouble(parameters, MotionCommandParameterKeys.ArrivalTolerance, fallback.ArrivalTolerance, out var arrivalTolerance, out error))
         {
             return false;
         }
 
-        target = new AbsoluteMoveTarget(x, y, z, theta);
+        if (!IsGreaterThanZero(velocity, MotionCommandParameterKeys.Velocity, out error) ||
+            !IsGreaterThanZero(acceleration, MotionCommandParameterKeys.Acceleration, out error) ||
+            !IsGreaterThanZero(deceleration, MotionCommandParameterKeys.Deceleration, out error) ||
+            !IsGreaterThanZero(jerk, MotionCommandParameterKeys.Jerk, out error) ||
+            !IsGreaterThanZero(arrivalTolerance, MotionCommandParameterKeys.ArrivalTolerance, out error))
+        {
+            return false;
+        }
+
+        target = new AbsoluteMoveTarget(x, y, z, theta, velocity, acceleration, deceleration, jerk, arrivalTolerance);
         return true;
     }
 
@@ -171,6 +185,19 @@ public static class MotionCommandParameterParser
         }
 
         return true;
+    }
+
+    private static bool IsGreaterThanZero(double value, string key, out string error)
+    {
+        error = string.Empty;
+
+        if (value > 0.0)
+        {
+            return true;
+        }
+
+        error = $"{key} must be greater than zero.";
+        return false;
     }
 
     private static bool TryGet(IReadOnlyDictionary<string, string> parameters, string key, out string value)

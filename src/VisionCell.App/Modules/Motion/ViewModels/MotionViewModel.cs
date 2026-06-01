@@ -111,6 +111,21 @@ public sealed partial class MotionViewModel : ObservableObject
     [ObservableProperty]
     private string _moveTargetThetaText = "0.000";
 
+    [ObservableProperty]
+    private string _moveVelocityText = "50.000";
+
+    [ObservableProperty]
+    private string _moveAccelerationText = "200.000";
+
+    [ObservableProperty]
+    private string _moveDecelerationText = "200.000";
+
+    [ObservableProperty]
+    private string _moveJerkText = "1000.000";
+
+    [ObservableProperty]
+    private string _moveArrivalToleranceText = "0.010";
+
     public async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
     {
         try
@@ -398,12 +413,17 @@ public sealed partial class MotionViewModel : ObservableObject
         if (!TryParseFiniteNumber(MoveTargetXText, "X target", out var x, out error) ||
             !TryParseFiniteNumber(MoveTargetYText, "Y target", out var y, out error) ||
             !TryParseFiniteNumber(MoveTargetZText, "Z target", out var z, out error) ||
-            !TryParseFiniteNumber(MoveTargetThetaText, "Theta target", out var theta, out error))
+            !TryParseFiniteNumber(MoveTargetThetaText, "Theta target", out var theta, out error) ||
+            !TryParsePositiveNumber(MoveVelocityText, "Velocity", out var velocity, out error) ||
+            !TryParsePositiveNumber(MoveAccelerationText, "Acceleration", out var acceleration, out error) ||
+            !TryParsePositiveNumber(MoveDecelerationText, "Deceleration", out var deceleration, out error) ||
+            !TryParsePositiveNumber(MoveJerkText, "Jerk", out var jerk, out error) ||
+            !TryParsePositiveNumber(MoveArrivalToleranceText, "Arrival tolerance", out var arrivalTolerance, out error))
         {
             return false;
         }
 
-        target = new AbsoluteMoveTarget(x, y, z, theta);
+        target = new AbsoluteMoveTarget(x, y, z, theta, velocity, acceleration, deceleration, jerk, arrivalTolerance);
         return true;
     }
 
@@ -475,6 +495,22 @@ public sealed partial class MotionViewModel : ObservableObject
         }
 
         error = $"{label} must be a finite number.";
+        return false;
+    }
+
+    private static bool TryParsePositiveNumber(string text, string label, out double value, out string error)
+    {
+        if (!TryParseFiniteNumber(text, label, out value, out error))
+        {
+            return false;
+        }
+
+        if (value > 0.0)
+        {
+            return true;
+        }
+
+        error = $"{label} must be greater than zero.";
         return false;
     }
 }
