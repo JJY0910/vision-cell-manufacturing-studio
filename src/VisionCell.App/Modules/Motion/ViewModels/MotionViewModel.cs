@@ -8,6 +8,7 @@ using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Motion.Axes;
+using VisionCell.Motion.Commands;
 
 namespace VisionCell.App.Modules.Motion.ViewModels;
 
@@ -34,11 +35,13 @@ public sealed partial class MotionViewModel : ObservableObject
         ServoOnCommand = new AsyncRelayCommand(ExecuteServoOnAsync, () => CanExecuteMotionCommand(CommandKind.ServoOn));
         ServoOffCommand = new AsyncRelayCommand(ExecuteServoOffAsync, () => CanExecuteMotionCommand(CommandKind.ServoOff));
         HomeCommand = new AsyncRelayCommand(ExecuteHomeAsync, () => CanExecuteMotionCommand(CommandKind.Home));
-        JogXPositiveCommand = new AsyncRelayCommand(ExecuteJogXPositiveAsync, () => CanExecuteMotionCommand(CommandKind.Jog));
+        JogPositiveCommand = new AsyncRelayCommand(ExecuteJogPositiveAsync, () => CanExecuteMotionCommand(CommandKind.Jog));
+        JogNegativeCommand = new AsyncRelayCommand(ExecuteJogNegativeAsync, () => CanExecuteMotionCommand(CommandKind.Jog));
         MoveAbsoluteCommand = new AsyncRelayCommand(ExecuteMoveAbsoluteAsync, () => CanExecuteMotionCommand(CommandKind.MoveAbsolute));
         StopCommand = new AsyncRelayCommand(ExecuteStopAsync, () => CanExecuteMotionCommand(CommandKind.Stop));
     }
 
+    public IReadOnlyList<string> JogAxisOptions { get; } = new[] { "X", "Y", "Z", "Theta" };
     public ObservableCollection<MotionAxisStatusViewModel> Axes { get; } = new();
     public ObservableCollection<MotionCommandHistoryItemViewModel> RecentCommands { get; } = new();
 
@@ -47,7 +50,9 @@ public sealed partial class MotionViewModel : ObservableObject
     public IAsyncRelayCommand ServoOnCommand { get; }
     public IAsyncRelayCommand ServoOffCommand { get; }
     public IAsyncRelayCommand HomeCommand { get; }
-    public IAsyncRelayCommand JogXPositiveCommand { get; }
+    public IAsyncRelayCommand JogPositiveCommand { get; }
+    public IAsyncRelayCommand JogNegativeCommand { get; }
+    public IAsyncRelayCommand JogXPositiveCommand => JogPositiveCommand;
     public IAsyncRelayCommand MoveAbsoluteCommand { get; }
     public IAsyncRelayCommand StopCommand { get; }
 
@@ -87,6 +92,24 @@ public sealed partial class MotionViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isCommandExecuting;
+
+    [ObservableProperty]
+    private string _selectedJogAxis = "X";
+
+    [ObservableProperty]
+    private string _jogStepText = "1.000";
+
+    [ObservableProperty]
+    private string _moveTargetXText = "10.000";
+
+    [ObservableProperty]
+    private string _moveTargetYText = "20.000";
+
+    [ObservableProperty]
+    private string _moveTargetZText = "5.000";
+
+    [ObservableProperty]
+    private string _moveTargetThetaText = "0.000";
 
     public async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -156,26 +179,43 @@ public sealed partial class MotionViewModel : ObservableObject
         }, cancellationToken);
     }
 
+    public Task ExecuteJogPositiveAsync(CancellationToken cancellationToken)
+    {
+        if (!TryCreateJogTarget(MotionDirection.Positive, out var jogTarget, out var error))
+        {
+            CommandStatus = $"Jog input rejected: {error}";
+            return Task.CompletedTask;
+        }
+
+        return ExecuteMotionCommandAsync(CommandKind.Jog, jogTarget.ToParameters(), cancellationToken);
+    }
+
+    public Task ExecuteJogNegativeAsync(CancellationToken cancellationToken)
+    {
+        if (!TryCreateJogTarget(MotionDirection.Negative, out var jogTarget, out var error))
+        {
+            CommandStatus = $"Jog input rejected: {error}";
+            return Task.CompletedTask;
+        }
+
+        return ExecuteMotionCommandAsync(CommandKind.Jog, jogTarget.ToParameters(), cancellationToken);
+    }
+
     public Task ExecuteJogXPositiveAsync(CancellationToken cancellationToken)
     {
-        return ExecuteMotionCommandAsync(CommandKind.Jog, new Dictionary<string, string>
-        {
-            ["Axis"] = "X",
-            ["Direction"] = "+",
-            ["StepMm"] = "1.000"
-        }, cancellationToken);
+        SelectedJogAxis = "X";
+        return ExecuteJogPositiveAsync(cancellationToken);
     }
 
     public Task ExecuteMoveAbsoluteAsync(CancellationToken cancellationToken)
     {
-        return ExecuteMotionCommandAsync(CommandKind.MoveAbsolute, new Dictionary<string, string>
+        if (!TryCreateMoveTarget(out var moveTarget, out var error))
         {
-            ["Axis"] = "XYZT",
-            ["X"] = "10.000",
-            ["Y"] = "20.000",
-            ["Z"] = "5.000",
-            ["Theta"] = "0.000"
-        }, cancellationToken);
+            CommandStatus = $"Move input rejected: {error}";
+            return Task.CompletedTask;
+        }
+
+        return ExecuteMotionCommandAsync(CommandKind.MoveAbsolute, moveTarget.ToParameters(), cancellationToken);
     }
 
     public Task ExecuteStopAsync(CancellationToken cancellationToken)
@@ -286,7 +326,8 @@ public sealed partial class MotionViewModel : ObservableObject
         ServoOnCommand.NotifyCanExecuteChanged();
         ServoOffCommand.NotifyCanExecuteChanged();
         HomeCommand.NotifyCanExecuteChanged();
-        JogXPositiveCommand.NotifyCanExecuteChanged();
+        JogPositiveCommand.NotifyCanExecuteChanged();
+        JogNegativeCommand.NotifyCanExecuteChanged();
         MoveAbsoluteCommand.NotifyCanExecuteChanged();
         StopCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ServoOnDisabledReason));
@@ -326,6 +367,46 @@ public sealed partial class MotionViewModel : ObservableObject
             axis.Alarm?.Message ?? "None");
     }
 
+    private bool TryCreateJogTarget(MotionDirection direction, out JogMotionTarget target, out string error)
+    {
+        target = new JogMotionTarget(AxisId.X, direction, 1.0);
+
+        if (!TryParseAxis(SelectedJogAxis, out var axisId, out error))
+        {
+            return false;
+        }
+
+        if (!TryParseFiniteNumber(JogStepText, "Jog step", out var step, out error))
+        {
+            return false;
+        }
+
+        if (step <= 0.0)
+        {
+            error = "Jog step must be greater than zero.";
+            return false;
+        }
+
+        target = new JogMotionTarget(axisId, direction, step);
+        return true;
+    }
+
+    private bool TryCreateMoveTarget(out AbsoluteMoveTarget target, out string error)
+    {
+        target = new AbsoluteMoveTarget(10.0, 20.0, 5.0, 0.0);
+
+        if (!TryParseFiniteNumber(MoveTargetXText, "X target", out var x, out error) ||
+            !TryParseFiniteNumber(MoveTargetYText, "Y target", out var y, out error) ||
+            !TryParseFiniteNumber(MoveTargetZText, "Z target", out var z, out error) ||
+            !TryParseFiniteNumber(MoveTargetThetaText, "Theta target", out var theta, out error))
+        {
+            return false;
+        }
+
+        target = new AbsoluteMoveTarget(x, y, z, theta);
+        return true;
+    }
+
     private static IReadOnlyDictionary<string, string> CreateServoParameters(string state)
     {
         return new Dictionary<string, string>
@@ -361,5 +442,39 @@ public sealed partial class MotionViewModel : ObservableObject
     private static string FormatAxis(AxisId axisId)
     {
         return axisId == AxisId.Theta ? "T" : axisId.ToString();
+    }
+
+    private static bool TryParseAxis(string text, out AxisId axisId, out string error)
+    {
+        axisId = AxisId.X;
+        error = string.Empty;
+
+        if (string.Equals(text, "T", StringComparison.OrdinalIgnoreCase))
+        {
+            axisId = AxisId.Theta;
+            return true;
+        }
+
+        if (Enum.TryParse<AxisId>(text, ignoreCase: true, out axisId))
+        {
+            return true;
+        }
+
+        error = $"Unsupported axis '{text}'.";
+        return false;
+    }
+
+    private static bool TryParseFiniteNumber(string text, string label, out double value, out string error)
+    {
+        error = string.Empty;
+
+        if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value) &&
+            double.IsFinite(value))
+        {
+            return true;
+        }
+
+        error = $"{label} must be a finite number.";
+        return false;
     }
 }

@@ -172,12 +172,16 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
-    public async Task Motion_ExecuteMoveAbsoluteAsync_Should_Send_Preset_Target_Parameters()
+    public async Task Motion_ExecuteMoveAbsoluteAsync_Should_Send_Typed_Target_Parameters()
     {
         var useCase = new FakeMotionCommandUseCase();
         var motion = CreateMotionViewModel(
             commandUseCase: useCase,
             equipmentController: new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+        motion.MoveTargetXText = "12.500";
+        motion.MoveTargetYText = "-4.000";
+        motion.MoveTargetZText = "6.000";
+        motion.MoveTargetThetaText = "15.000";
 
         await motion.RefreshSnapshotAsync(CancellationToken.None);
         await motion.ExecuteMoveAbsoluteAsync(CancellationToken.None);
@@ -185,11 +189,31 @@ public sealed class DashboardAndShellViewModelTests
         useCase.Requests.Should().ContainSingle();
         var parameters = useCase.Requests[0].GetParameters();
         useCase.Requests[0].Command.Should().Be(CommandKind.MoveAbsolute);
-        parameters.Should().Contain("Axis", "XYZT");
-        parameters.Should().Contain("X", "10.000");
-        parameters.Should().Contain("Y", "20.000");
-        parameters.Should().Contain("Z", "5.000");
-        parameters.Should().Contain("Theta", "0.000");
+        parameters.Should().Contain("X", "12.5");
+        parameters.Should().Contain("Y", "-4");
+        parameters.Should().Contain("Z", "6");
+        parameters.Should().Contain("Theta", "15");
+    }
+
+    [Fact]
+    public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
+    {
+        var useCase = new FakeMotionCommandUseCase();
+        var motion = CreateMotionViewModel(
+            commandUseCase: useCase,
+            equipmentController: new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+        motion.SelectedJogAxis = "Y";
+        motion.JogStepText = "2.500";
+
+        await motion.RefreshSnapshotAsync(CancellationToken.None);
+        await motion.ExecuteJogNegativeAsync(CancellationToken.None);
+
+        useCase.Requests.Should().ContainSingle();
+        var parameters = useCase.Requests[0].GetParameters();
+        useCase.Requests[0].Command.Should().Be(CommandKind.Jog);
+        parameters.Should().Contain("Axis", "Y");
+        parameters.Should().Contain("Direction", "-");
+        parameters.Should().Contain("Step", "2.5");
     }
 
     private static MotionViewModel CreateMotionViewModel(

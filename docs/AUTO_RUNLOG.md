@@ -72,3 +72,14 @@
 - Evidence: CodeIntegrity events 3033/3077 reported that Debug test DLLs did not meet Enterprise signing level requirements.
 - Mitigation: Added `tests/Directory.Build.props` to optimize Debug test assemblies only; product project Debug builds remain unchanged.
 - Requirement impact: FR-260 validation reliability; no runtime product behavior change.
+
+## 2026-06-01 14:54 - PR #7
+- Branch: `codex/feature/fr-060-motion-axis-grid`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/7
+- Squash/Merge commit: `bf37c788d4e15f1141e2ff8be3eb635223947ebb`
+- Scope: Added MotionView axis snapshot cards for position, target, moving/homed/servo state, alarm, and soft-limit range from the latest controller snapshot.
+- Files changed: 7 files, including Motion axis status view-model, MotionView axis card UI, app tests, UI/motion docs, backlog, runlog, and Debug test validation props.
+- Validation: Local Debug/Release restore, build, and test passed with 55 tests. GitHub Actions `build-test` passed in 1m27s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: MotionView still needed typed operator-entered jog and absolute move payloads instead of simulator presets.
+- Next selected work: `codex/feature/fr-063-typed-motion-targets` for typed MotionView command payloads through the Application/controller boundary.

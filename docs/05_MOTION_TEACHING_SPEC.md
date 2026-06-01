@@ -46,10 +46,11 @@ All motion-like commands return `MachineCommandResult` with one of:
 Application orchestration:
 
 - UI and feature view-models call `IMotionCommandUseCase`, not the simulator/controller directly.
-- The use case creates `MachineCommandRequest` with command name, timeout, timestamp, parameters, and correlation ID.
+- The use case creates `MachineCommandRequest` with command name, timeout, timestamp, typed parameters, and correlation ID.
+- The same `MachineCommandRequest` is passed to the controller boundary so the recorded payload matches the executed payload.
 - The controller result is recorded with the same request correlation ID.
 - Command history is written through `IMotionCommandHistoryRepository`; `SqliteMotionCommandHistoryRepository` persists and reads recent command rows for MotionView.
-- MotionView operator controls dispatch Servo On/Off, Home All, Jog X +1, Move preset, and Stop through `IMotionCommandUseCase`; typed operator-entered axis/target DTOs are tracked as follow-up work.
+- MotionView operator controls dispatch Servo On/Off, Home All, Jog +/- with operator-selected axis/step, Move Absolute with operator-entered X/Y/Z/Theta targets, and Stop through `IMotionCommandUseCase`.
 
 ### Servo On/Off
 
@@ -143,7 +144,7 @@ Roles:
 | Case | Expected |
 |---|---|
 | Home X success | IsHomed true, position origin |
-| Jog X +1 within limit | position increments |
+| Jog selected axis within limit | position increments/decrements by requested step |
 | Jog beyond soft limit | command rejected |
 | Move while servo off | rejected with MOT-001 |
 | Move while EStop | rejected with EQP-003 |

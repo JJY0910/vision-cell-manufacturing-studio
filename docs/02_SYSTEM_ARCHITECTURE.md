@@ -116,6 +116,8 @@ public sealed record MachineCommandRequest(
     IReadOnlyDictionary<string, string> Parameters);
 ```
 
+Motion command parameters use typed payload helpers in `VisionCell.Motion.Commands` so Application history, simulator execution, and future hardware adapters consume the same axis/target values.
+
 Every command returns:
 
 ```csharp

@@ -9,6 +9,7 @@ using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
+using VisionCell.Motion.Commands;
 
 namespace VisionCell.Simulator;
 
@@ -87,6 +88,25 @@ public sealed class VirtualEquipmentController : IEquipmentController
 
     public Task<MachineCommandResult> ExecuteCommandAsync(CommandKind command, InterlockContext context, TimeSpan timeout, CancellationToken cancellationToken)
     {
+        var request = new MachineCommandRequest(
+            FormatCommand(command),
+            CorrelationId.New(),
+            timeout,
+            DateTimeOffset.UtcNow,
+            EmptyParameters.Value);
+
+        return ExecuteCommandAsync(command, context, request, cancellationToken);
+    }
+
+    public Task<MachineCommandResult> ExecuteCommandAsync(
+        CommandKind command,
+        InterlockContext context,
+        MachineCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var timeout = request.Timeout;
+
         var availability = GetCommandAvailability(command, CreateEffectiveContext(context));
         if (!availability.IsEnabled)
         {
@@ -154,13 +174,13 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 JogLatency,
                 timeout,
                 cancellationToken,
-                ApplyJogStep),
+                () => ApplyJogStep(request.Parameters)),
             CommandKind.MoveAbsolute => RunMotionCommandAsync(
                 FormatCommand(command),
                 MoveLatency,
                 timeout,
                 cancellationToken,
-                ApplyMoveAbsolute),
+                () => ApplyMoveAbsolute(request.Parameters)),
             CommandKind.Stop => RunStopCommandAsync(timeout, cancellationToken),
             CommandKind.ResetAlarm => RunControllerCommandAsync(
                 FormatCommand(command),
@@ -300,6 +320,14 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 sw.Elapsed,
                 correlationId);
         }
+        catch (ArgumentException ex)
+        {
+            return MachineCommandResult.Rejected(
+                ErrorCode.CommandRejected,
+                ex.Message,
+                sw.Elapsed,
+                correlationId);
+        }
         finally
         {
             lock (_gate)
@@ -422,19 +450,26 @@ public sealed class VirtualEquipmentController : IEquipmentController
         };
     }
 
-    private string ApplyJogStep()
+    private string ApplyJogStep(IReadOnlyDictionary<string, string> parameters)
     {
+        var fallback = new JogMotionTarget(AxisId.X, MotionDirection.Positive, 1.0);
+        if (!MotionCommandParameterParser.TryReadJogTarget(parameters, fallback, out var jogTarget, out var error))
+        {
+            throw new ArgumentException(error, nameof(parameters));
+        }
+
         lock (_gate)
         {
             var axes = _axes.ToArray();
-            var xAxis = axes.Single(axis => axis.AxisId == AxisId.X);
-            var target = xAxis.Position + 1.0;
-            if (!xAxis.SoftLimit.Contains(target))
+            var selectedAxis = axes.Single(axis => axis.AxisId == jogTarget.AxisId);
+            var signedStep = (int)jogTarget.Direction * jogTarget.Step;
+            var target = selectedAxis.Position + signedStep;
+            if (!selectedAxis.SoftLimit.Contains(target))
             {
-                throw new InvalidOperationException("Jog target exceeded the X axis soft limit.");
+                throw new InvalidOperationException($"Jog target exceeded the {FormatAxis(jogTarget.AxisId)} axis soft limit.");
             }
 
-            _axes = axes.Select(axis => axis.AxisId == AxisId.X
+            _axes = axes.Select(axis => axis.AxisId == jogTarget.AxisId
                 ? axis with
                 {
                     Position = target,
@@ -446,17 +481,24 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 : axis with { IsMoving = false, ServoOn = _servoEnabled }).ToArray();
         }
 
-        return "Jog completed: X +1.000 mm.";
+        var direction = jogTarget.Direction == MotionDirection.Positive ? "+" : "-";
+        return $"Jog completed: {FormatAxis(jogTarget.AxisId)} {direction}{jogTarget.Step:0.000}.";
     }
 
-    private string ApplyMoveAbsolute()
+    private string ApplyMoveAbsolute(IReadOnlyDictionary<string, string> parameters)
     {
+        var fallback = new AbsoluteMoveTarget(10.0, 20.0, 5.0, 0.0);
+        if (!MotionCommandParameterParser.TryReadAbsoluteMoveTarget(parameters, fallback, out var moveTarget, out var error))
+        {
+            throw new ArgumentException(error, nameof(parameters));
+        }
+
         var targets = new Dictionary<AxisId, double>
         {
-            [AxisId.X] = 10.0,
-            [AxisId.Y] = 20.0,
-            [AxisId.Z] = 5.0,
-            [AxisId.Theta] = 0.0
+            [AxisId.X] = moveTarget.X,
+            [AxisId.Y] = moveTarget.Y,
+            [AxisId.Z] = moveTarget.Z,
+            [AxisId.Theta] = moveTarget.Theta
         };
 
         lock (_gate)
@@ -479,7 +521,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
             }).ToArray();
         }
 
-        return "Move Absolute completed for simulator target X=10.000, Y=20.000, Z=5.000, Theta=0.000.";
+        return $"Move Absolute completed for simulator target X={moveTarget.X:0.000}, Y={moveTarget.Y:0.000}, Z={moveTarget.Z:0.000}, Theta={moveTarget.Theta:0.000}.";
     }
 
     private EquipmentSnapshot CreateSnapshot(DateTimeOffset timestamp)
@@ -533,6 +575,16 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 new IoBitSnapshot("DO_TOWER_RED", "Y006", IoBitDirection.Output, false, false)
             },
             timestamp);
+    }
+
+    private static string FormatAxis(AxisId axisId)
+    {
+        return axisId == AxisId.Theta ? "T" : axisId.ToString();
+    }
+
+    private static class EmptyParameters
+    {
+        internal static readonly IReadOnlyDictionary<string, string> Value = new Dictionary<string, string>();
     }
 
 }

@@ -2,6 +2,7 @@ using FluentAssertions;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
+using VisionCell.Motion.Commands;
 using VisionCell.Simulator;
 using Xunit;
 
@@ -75,6 +76,67 @@ public sealed class VirtualEquipmentControllerTests
         snapshot.Safety.ServoEnabled.Should().BeTrue();
         snapshot.Axes.Should().OnlyContain(axis => axis.ServoOn);
         snapshot.Io.Bits.Should().Contain(bit => bit.Name == "DO_SERVO_ENABLE" && bit.Value);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Apply_Typed_Jog_Target()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Jog",
+            TimeSpan.FromSeconds(1),
+            new JogMotionTarget(AxisId.Y, MotionDirection.Negative, 2.5).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.Jog, ReadyManualContext(), request, CancellationToken.None);
+        var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Success);
+        result.Message.Should().Contain("Y -2.500");
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.Y).Position.Should().Be(-2.5);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Apply_Typed_Absolute_Move_Target()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Move Absolute",
+            TimeSpan.FromSeconds(1),
+            new AbsoluteMoveTarget(12.5, -4.0, 6.0, 15.0).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
+        var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Success);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.X).Position.Should().Be(12.5);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.Y).Position.Should().Be(-4.0);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.Z).Position.Should().Be(6.0);
+        snapshot.Axes.Single(axis => axis.AxisId == AxisId.Theta).Position.Should().Be(15.0);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Reject_Typed_Target_Outside_Soft_Limit()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Move Absolute",
+            TimeSpan.FromSeconds(1),
+            new AbsoluteMoveTarget(12.5, -4.0, 999.0, 15.0).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.ErrorCode?.Code.Should().Be("MOT-004");
+        result.Message.Should().Contain("soft limit");
     }
 
     [Fact]
@@ -190,5 +252,18 @@ public sealed class VirtualEquipmentControllerTests
             CameraConnected: true,
             IoReady: true,
             AlarmActive: false);
+    }
+
+    private static MachineCommandRequest CreateRequest(
+        string commandName,
+        TimeSpan timeout,
+        IReadOnlyDictionary<string, string> parameters)
+    {
+        return new MachineCommandRequest(
+            commandName,
+            CorrelationId.New(),
+            timeout,
+            DateTimeOffset.UtcNow,
+            parameters);
     }
 }

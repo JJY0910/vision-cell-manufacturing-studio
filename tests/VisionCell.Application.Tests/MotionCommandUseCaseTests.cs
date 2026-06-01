@@ -34,6 +34,7 @@ public sealed class MotionCommandUseCaseTests
         controller.ExecuteCount.Should().Be(1);
         controller.LastCommand.Should().Be(CommandKind.MoveAbsolute);
         controller.LastTimeout.Should().Be(TimeSpan.FromSeconds(2));
+        controller.LastRequest.Should().Be(execution.Request);
         execution.Request.CommandName.Should().Be("Move Absolute");
         execution.Request.Parameters.Should().Contain("axis", "X");
         execution.CommandResult.Status.Should().Be(CommandStatus.Success);
@@ -191,6 +192,7 @@ public sealed class MotionCommandUseCaseTests
         public int ExecuteCount { get; private set; }
         public CommandKind? LastCommand { get; private set; }
         public TimeSpan? LastTimeout { get; private set; }
+        public MachineCommandRequest? LastRequest { get; private set; }
 
         public Func<CommandKind, InterlockContext, TimeSpan, CancellationToken, Task<MachineCommandResult>> ExecuteHandler { get; init; } =
             (_, _, _, _) => Task.FromResult(
@@ -222,10 +224,21 @@ public sealed class MotionCommandUseCaseTests
             TimeSpan timeout,
             CancellationToken cancellationToken)
         {
+            var request = new MachineCommandRequest(command.ToString(), CorrelationId.New(), timeout, DateTimeOffset.UtcNow, new Dictionary<string, string>());
+            return ExecuteCommandAsync(command, context, request, cancellationToken);
+        }
+
+        public Task<MachineCommandResult> ExecuteCommandAsync(
+            CommandKind command,
+            InterlockContext context,
+            MachineCommandRequest request,
+            CancellationToken cancellationToken)
+        {
             ExecuteCount++;
             LastCommand = command;
-            LastTimeout = timeout;
-            return ExecuteHandler(command, context, timeout, cancellationToken);
+            LastTimeout = request.Timeout;
+            LastRequest = request;
+            return ExecuteHandler(command, context, request.Timeout, cancellationToken);
         }
     }
 }
