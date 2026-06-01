@@ -2,6 +2,57 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Grid>
-    <TextBlock Text="Inspection" Style="{DynamicResource Text.PageTitle}" />
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Content="Refresh Recipe"
+                Command="{Binding RefreshActiveRecipeCommand}"
+                Height="36"
+                MinWidth="124"
+                Margin="0,0,8,0" />
+        <Button Content="Run Inspection"
+                Command="{Binding RunInspectionCommand}"
+                Height="36"
+                MinWidth="132" />
+      </StackPanel>
+      <StackPanel>
+        <TextBlock Text="Inspection" Style="{DynamicResource Text.PageTitle}" />
+        <TextBlock Text="{Binding StatusText}"
+                   Style="{DynamicResource Text.Status}"
+                   Margin="0,4,0,0" />
+      </StackPanel>
+    </DockPanel>
+
+    <UniformGrid Grid.Row="1" Columns="3" Margin="-8,12,-8,0">
+      <Border Style="{DynamicResource Card.Panel}">
+        <StackPanel>
+          <TextBlock Text="Active Recipe" Style="{DynamicResource Text.CardTitle}" />
+          <TextBlock Text="{Binding ActiveRecipeText}"
+                     Style="{DynamicResource Text.MetricValue}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <Border Style="{DynamicResource Card.Panel}">
+        <StackPanel>
+          <TextBlock Text="Precheck" Style="{DynamicResource Text.CardTitle}" />
+          <TextBlock Text="{Binding PrecheckStatusText}"
+                     Style="{DynamicResource Text.StatusStrong}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <Border Style="{DynamicResource Card.Panel}">
+        <StackPanel>
+          <TextBlock Text="Last Check" Style="{DynamicResource Text.CardTitle}" />
+          <TextBlock Text="{Binding LastCheckText}"
+                     Style="{DynamicResource Text.MetricValue}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </UniformGrid>
   </Grid>
 </UserControl>

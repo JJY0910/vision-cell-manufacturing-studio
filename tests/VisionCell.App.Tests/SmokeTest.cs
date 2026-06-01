@@ -61,7 +61,7 @@ public sealed class DashboardAndShellViewModelTests
             CreateMotionViewModel(),
             CreateTeachingViewModel(),
             CreateRecipeViewModel(),
-            new InspectionViewModel(),
+            CreateInspectionViewModel(),
             new OfflineDebugViewModel(),
             new ReportsViewModel(),
             new SettingsViewModel());
@@ -483,6 +483,66 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Inspection_RunInspectionAsync_Should_Report_Ready_For_Valid_Active_Recipe()
+    {
+        var activeRecipe = new FakeActiveRecipeContext(CreateActiveRecipeContextResult("RCP-INSPECT", "1.0.0"));
+        var inspection = CreateInspectionViewModel(activeRecipe);
+
+        await inspection.RunInspectionAsync(CancellationToken.None);
+
+        activeRecipe.RequestCount.Should().Be(1);
+        inspection.ActiveRecipeText.Should().Be("RCP-INSPECT v1.0.0");
+        inspection.StatusText.Should().Contain("Inspection ready");
+        inspection.StatusText.Should().Contain("RCP-INSPECT");
+        inspection.LastCheckText.Should().NotBe("-");
+    }
+
+    [Fact]
+    public async Task Inspection_RunInspectionAsync_Should_Reject_When_Active_Recipe_Is_Not_Selected()
+    {
+        var inspection = CreateInspectionViewModel();
+
+        await inspection.RunInspectionAsync(CancellationToken.None);
+
+        inspection.ActiveRecipeText.Should().Be("-");
+        inspection.StatusText.Should().Contain("Run inspection rejected");
+        inspection.StatusText.Should().Contain("No active recipe");
+    }
+
+    [Fact]
+    public async Task Inspection_RunInspectionAsync_Should_Reject_Invalid_Active_Recipe()
+    {
+        var activeRecipe = new FakeActiveRecipeContext(ActiveRecipeContextResult.InvalidRecipe(CreateRecipeIndexEntry(
+            "RCP-BAD",
+            "0.1.0",
+            "Invalid Recipe",
+            isActive: true,
+            isValid: false,
+            validationSummary: "Missing ROI")));
+        var inspection = CreateInspectionViewModel(activeRecipe);
+
+        await inspection.RunInspectionAsync(CancellationToken.None);
+
+        inspection.ActiveRecipeText.Should().Be("-");
+        inspection.PrecheckStatusText.Should().Contain("Missing ROI");
+        inspection.StatusText.Should().Contain("Run inspection rejected");
+    }
+
+    [Fact]
+    public async Task Inspection_RefreshActiveRecipeAsync_Should_Surface_RepositoryUnavailable()
+    {
+        var activeRecipe = new FakeActiveRecipeContext(
+            ActiveRecipeContextResult.RepositoryUnavailable("recipe index unavailable"));
+        var inspection = CreateInspectionViewModel(activeRecipe);
+
+        await inspection.RefreshActiveRecipeAsync(CancellationToken.None);
+
+        inspection.ActiveRecipeText.Should().Be("-");
+        inspection.PrecheckStatusText.Should().Contain("recipe index unavailable");
+        inspection.StatusText.Should().Contain("Inspection precheck blocked");
+    }
+
+    [Fact]
     public async Task Recipe_RefreshAsync_Should_Load_Index_State_And_Select_Active_Recipe()
     {
         var activeEntry = CreateRecipeIndexEntry(
@@ -766,6 +826,11 @@ public sealed class DashboardAndShellViewModelTests
             equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
             confirmationService ?? new FakeUserConfirmationService(true),
             activeRecipeContext ?? new FakeActiveRecipeContext());
+    }
+
+    private static InspectionViewModel CreateInspectionViewModel(FakeActiveRecipeContext? activeRecipeContext = null)
+    {
+        return new InspectionViewModel(activeRecipeContext ?? new FakeActiveRecipeContext());
     }
 
     private static RecipeViewModel CreateRecipeViewModel(

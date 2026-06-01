@@ -307,3 +307,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 30 tests; Debug/Release solution build and test passed with 145 tests; WPF hidden launch smoke passed.
 - Risks: Manual Recipe ID fallback remains for no-active situations; inspection startup still does not consume active context.
+
+## 2026-06-01 20:40 - In progress
+- Branch: `codex/feature/fr-180-inspection-active-precheck`
+- Scope: Add InspectionView active Recipe precheck states and Run Inspection rejection for missing, invalid, or unavailable active Recipe context.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 34 tests; Debug/Release solution build and test passed with 149 tests. Windows application control temporarily blocked freshly built Debug Motion and Release Equipment test DLLs until those projects were rebuilt with `-p:Deterministic=false`; apphost exe launch was also blocked, so WPF smoke passed by launching `VisionCell.App.dll` directly through `dotnet` for 6 seconds.
+- Risks: This slice does not execute camera grab, vision algorithms, or inspection result persistence yet.
