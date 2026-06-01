@@ -363,3 +363,10 @@
 - Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 67 tests; Persistence targeted tests passed with 31 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 180 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: Overlay and height-map artifact file generation remain follow-up work; persisted overlay/height-map paths are nullable in this slice.
+
+## 2026-06-02 00:15 - In progress
+- Branch: `codex/feature/fr-200-inspection-artifacts`
+- Scope: Add ADR-backed inspection artifact writer contract and file-system BMP writer for overlay and height-map evidence during Persist Result.
+- Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 68 tests; Persistence targeted tests passed with 33 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 183 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
+- Risks: BMP artifacts are deterministic evidence files and not final rich viewport rendering; PNG/export packaging remains future polish.

@@ -117,7 +117,8 @@ Implementation note:
 - `VisionCell.Persistence` initializes `inspection_results` and `defects` through migration id `005_inspection_results`.
 - `SqliteInspectionResultRepository` implements `IInspectionResultRepository` and `IInspectionResultReader` for FR-200 result logging.
 - The repository stores Recipe ID/version, lot ID, final Judge, defect summary, source image URI, optional overlay/height-map artifact paths, cycle time, step timings JSON, parameters JSON, and per-defect bounding boxes.
-- Overlay and height-map artifact file generation is intentionally left nullable until the overlay rendering/export slice is implemented.
+- `FileSystemInspectionArtifactWriter` creates overlay and height-map BMP files before result save. Current sequence rows populate `overlay_image_path` and `height_map_path` with relative paths under `inspection-artifacts/yyyyMMdd/`.
+- The columns remain nullable so failed or legacy partial records can still be represented without a destructive migration.
 
 ### teaching_points
 

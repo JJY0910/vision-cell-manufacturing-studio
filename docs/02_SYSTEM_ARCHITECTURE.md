@@ -157,7 +157,8 @@ Current implementation status:
 - 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.
 - 3D inspection now flows through `SyntheticHeightMapFactory`, `IHeightMapInspectionEngine`, and `DeterministicHeightMapInspectionEngine`, using Recipe ROI and height parameters before Judge.
 - Result persistence now flows through Application `IInspectionResultRepository` and Persistence `SqliteInspectionResultRepository`, storing Judge, defect, timing, Recipe, and correlation metadata after Judge.
-- UI overlay rendering and image/height-map artifact generation remain separate follow-up slices.
+- Artifact generation now flows through Application `IInspectionArtifactWriter` and Persistence `FileSystemInspectionArtifactWriter`, creating deterministic overlay and height-map BMP files during Persist Result.
+- Rich live UI overlay rendering remains a separate follow-up slice.
 
 ## Error Handling Policy
 
@@ -196,4 +197,5 @@ User Button
 | Real camera | ICameraDevice | GigE/USB camera SDK |
 | Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
 | Native height-map vision | IHeightMapInspectionEngine | 3D sensor SDK/OpenCV DLL |
+| Inspection artifact storage | IInspectionArtifactWriter | PNG/export package writer |
 | AI classifier | IDefectClassifier | ONNX Runtime |

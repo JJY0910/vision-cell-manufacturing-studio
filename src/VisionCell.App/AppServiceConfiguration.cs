@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Inspection;
@@ -33,7 +34,8 @@ public static class AppServiceConfiguration
     public static IServiceCollection AddVisionCellAppServices(
         this IServiceCollection services,
         string databasePath,
-        string recipeRootPath)
+        string recipeRootPath,
+        string? artifactRootPath = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         if (string.IsNullOrWhiteSpace(databasePath))
@@ -46,6 +48,10 @@ public static class AppServiceConfiguration
             throw new ArgumentException("Recipe root path is required.", nameof(recipeRootPath));
         }
 
+        var resolvedArtifactRootPath = string.IsNullOrWhiteSpace(artifactRootPath)
+            ? Path.Combine(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory, "inspection-artifacts")
+            : artifactRootPath;
+
         services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
         services.AddSingleton<ICameraDevice, VirtualCameraDevice>();
         services.AddSingleton<IVisionInspectionEngine, Deterministic2DInspectionEngine>();
@@ -57,11 +63,13 @@ public static class AppServiceConfiguration
         services.AddSingleton<SqliteSchemaInitializer>();
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
         services.AddSingleton<SqliteInspectionResultRepository>();
+        services.AddSingleton(_ => new FileSystemInspectionArtifactWriter(resolvedArtifactRootPath));
         services.AddSingleton<SqliteRecipeIndexRepository>();
         services.AddSingleton<SqliteTeachingPointRepository>();
         services.AddSingleton<SqliteTeachingHistoryRepository>();
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
+        services.AddSingleton<IInspectionArtifactWriter>(provider => provider.GetRequiredService<FileSystemInspectionArtifactWriter>());
         services.AddSingleton<IInspectionResultRepository>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IInspectionResultReader>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IRecipeIndexRepository>(provider => provider.GetRequiredService<SqliteRecipeIndexRepository>());

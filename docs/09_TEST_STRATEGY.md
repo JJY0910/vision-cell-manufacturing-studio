@@ -78,7 +78,8 @@ tests/VisionCell.App.Tests
 - 3D inspection success path creates a synthetic height map, runs the height-map engine, records Inspect 3D, and aggregates final Judge from 2D and 3D results.
 - Invalid height-map result returns an explicit `HeightMapInspectionFailed` status and skips Judge/Persist.
 - Persist result success path saves Judge, defect, timing, Recipe, and correlation metadata after Judge.
-- Persist result failure path returns explicit `ResultPersistenceFailed` status and failed Persist Result timeline state.
+- Persist result success path writes overlay and height-map artifact paths before SQLite save.
+- Persist result failure path returns explicit `ResultPersistenceFailed` status and failed Persist Result timeline state for artifact or repository failures.
 
 ### Persistence
 
@@ -87,6 +88,7 @@ tests/VisionCell.App.Tests
 - Insert/query inspection result
 - Insert/query inspection defects
 - Recent inspection result ordering and limit
+- Inspection artifact writer creates overlay and height-map BMP files with relative paths
 - Repository handles relative path
 
 ### WPF ViewModels

@@ -126,6 +126,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionResultRepository>()
                 .Should()
                 .BeOfType<SqliteInspectionResultRepository>();
+            provider.GetRequiredService<IInspectionArtifactWriter>()
+                .Should()
+                .BeOfType<FileSystemInspectionArtifactWriter>();
         }
         finally
         {

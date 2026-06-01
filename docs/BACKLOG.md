@@ -13,7 +13,7 @@
 - [x] FR-140 Camera simulator grab (synthetic Gray8 frame and Last Grab UI binding)
 - [x] FR-160 2D inspection baseline
 - [ ] FR-180 Inspection sequence
-- [x] FR-200 SQLite result logging (Judge, defect, timing, and Recipe metadata persisted; overlay artifact generation pending)
+- [x] FR-200 SQLite result logging (Judge, defect, timing, Recipe metadata, and generated artifact paths persisted)
 
 ## P1 Quality Backlog
 
@@ -345,7 +345,7 @@ Problem: 2D/3D inspection and Judge can now run, but overlay rendering and SQLit
 Proposed improvement: Add image overlay artifact generation and `InspectionResult` persistence with Recipe/Lot/Judge/Defect/timing records.
 Requirement impact: FR-180, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-200-inspection-result-persistence` for SQLite metadata/defect/timing persistence; overlay artifact generation remains open.
+Status: Addressed by ADR-0020 and PR #43 for SQLite metadata/defect/timing persistence; overlay artifact generation is addressed by ADR-0021.
 
 Date: 2026-06-01
 Source: FR-200 Inspection result persistence
@@ -353,4 +353,4 @@ Problem: SQLite result rows can now store nullable overlay and height-map artifa
 Proposed improvement: Add deterministic overlay rendering and artifact path policy that writes generated overlays/height-map snapshots under a safe local-data subdirectory and records those paths in `inspection_results`.
 Requirement impact: FR-160, FR-162, FR-180, FR-200, NFR-004, NFR-008, NFR-TEST-001
 Priority: P0
-Status: Open.
+Status: In progress on `codex/feature/fr-200-inspection-artifacts`.
