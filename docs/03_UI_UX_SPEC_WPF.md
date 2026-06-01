@@ -143,6 +143,12 @@ Implementation status:
 - Validation result
 - Version/history
 
+Implementation status:
+
+- RecipeView binds to `RecipeViewModel` for SQLite Recipe index refresh.
+- The view shows indexed recipe id, version, product name, active state, validation state, updated time, checksum, document path, and validation summary.
+- Recipe create/edit/save/clone/export controls remain follow-up work.
+
 ### InspectionView
 
 - Start/Stop/Pause/Reset

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
+using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
 using VisionCell.App.Interaction;
 using VisionCell.Core.Commands;
@@ -57,7 +58,7 @@ public sealed class DashboardAndShellViewModelTests
             new EquipmentViewModel(),
             CreateMotionViewModel(),
             CreateTeachingViewModel(),
-            new RecipeViewModel(),
+            CreateRecipeViewModel(),
             new InspectionViewModel(),
             new OfflineDebugViewModel(),
             new ReportsViewModel(),
@@ -414,6 +415,74 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Recipe_RefreshAsync_Should_Load_Index_State_And_Select_Active_Recipe()
+    {
+        var activeEntry = CreateRecipeIndexEntry(
+            "PKG-MEMORY",
+            "1.0.1",
+            "Memory Module",
+            isActive: true,
+            isValid: true,
+            updatedAt: new DateTimeOffset(2026, 6, 1, 9, 30, 0, TimeSpan.Zero));
+        var invalidEntry = CreateRecipeIndexEntry(
+            "PKG-POWER",
+            "0.9.0",
+            "Power Module",
+            isActive: false,
+            isValid: false,
+            validationSummary: "Missing inspection teaching point");
+        var recipe = CreateRecipeViewModel(new FakeRecipeIndexRepository(activeEntry, invalidEntry));
+
+        await recipe.RefreshAsync(CancellationToken.None);
+
+        recipe.HasRecipes.Should().BeTrue();
+        recipe.Recipes.Should().HaveCount(2);
+        recipe.ValidRecipeCount.Should().Be(1);
+        recipe.InvalidRecipeCount.Should().Be(1);
+        recipe.ActiveRecipeCount.Should().Be(1);
+        recipe.ActiveRecipeText.Should().Be("PKG-MEMORY v1.0.1");
+        recipe.SelectedRecipe.Should().NotBeNull();
+        recipe.SelectedRecipe!.RecipeId.Should().Be("PKG-MEMORY");
+        recipe.SelectedRecipe.ValidationStateText.Should().Be("Valid");
+        recipe.Recipes.Single(entry => entry.RecipeId == "PKG-POWER")
+            .ValidationSummaryText.Should().Contain("Missing inspection");
+        recipe.StatusText.Should().Be("2 recipe index records loaded");
+        recipe.LastRefreshText.Should().NotBe("-");
+    }
+
+    [Fact]
+    public async Task Recipe_RefreshAsync_Should_Surface_Empty_State()
+    {
+        var recipe = CreateRecipeViewModel(new FakeRecipeIndexRepository());
+
+        await recipe.RefreshAsync(CancellationToken.None);
+
+        recipe.HasRecipes.Should().BeFalse();
+        recipe.Recipes.Should().BeEmpty();
+        recipe.ValidRecipeCount.Should().Be(0);
+        recipe.InvalidRecipeCount.Should().Be(0);
+        recipe.ActiveRecipeText.Should().Be("-");
+        recipe.SelectedRecipe.Should().BeNull();
+        recipe.StatusText.Should().Be("No recipe index records");
+    }
+
+    [Fact]
+    public async Task Recipe_RefreshAsync_Should_Surface_Load_Failure()
+    {
+        var repository = new FakeRecipeIndexRepository
+        {
+            ListHandler = (_, _) => throw new InvalidOperationException("recipe index unavailable")
+        };
+        var recipe = CreateRecipeViewModel(repository);
+
+        await recipe.RefreshAsync(CancellationToken.None);
+
+        recipe.Recipes.Should().BeEmpty();
+        recipe.StatusText.Should().Contain("recipe index unavailable");
+        recipe.RefreshCommand.CanExecute(null).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Motion_ExecuteJogNegativeAsync_Should_Send_Selected_Axis_And_Step()
     {
         var useCase = new FakeMotionCommandUseCase();
@@ -456,6 +525,80 @@ public sealed class DashboardAndShellViewModelTests
             historyRepository ?? new FakeTeachingHistoryRepository(),
             equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
             confirmationService ?? new FakeUserConfirmationService(true));
+    }
+
+    private static RecipeViewModel CreateRecipeViewModel(FakeRecipeIndexRepository? repository = null)
+    {
+        return new RecipeViewModel(repository ?? new FakeRecipeIndexRepository());
+    }
+
+    private static RecipeIndexEntry CreateRecipeIndexEntry(
+        string recipeId,
+        string version,
+        string productName,
+        bool isActive,
+        bool isValid,
+        string? validationSummary = null,
+        DateTimeOffset? updatedAt = null)
+    {
+        var timestamp = updatedAt ?? DateTimeOffset.UtcNow;
+        return new RecipeIndexEntry(
+            Guid.NewGuid(),
+            recipeId,
+            version,
+            productName,
+            $@"assets\recipes\{recipeId}.v{version}.recipe.json",
+            "0123456789abcdef",
+            isActive,
+            isValid,
+            validationSummary,
+            timestamp.AddMinutes(-5),
+            timestamp);
+    }
+
+    private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository
+    {
+        private readonly List<RecipeIndexEntry> _entries = new();
+
+        public FakeRecipeIndexRepository(params RecipeIndexEntry[] entries)
+        {
+            _entries.AddRange(entries);
+        }
+
+        public Func<int, CancellationToken, Task<IReadOnlyList<RecipeIndexEntry>>>? ListHandler { get; init; }
+
+        public Task SaveAsync(RecipeIndexEntry entry, CancellationToken cancellationToken)
+        {
+            _entries.RemoveAll(candidate =>
+                string.Equals(candidate.RecipeId, entry.RecipeId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+            _entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<RecipeIndexEntry?> FindAsync(
+            string recipeId,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_entries.FirstOrDefault(entry =>
+                string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        public Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(int limit, CancellationToken cancellationToken)
+        {
+            if (ListHandler is not null)
+            {
+                return ListHandler(limit, cancellationToken);
+            }
+
+            return Task.FromResult<IReadOnlyList<RecipeIndexEntry>>(
+                _entries
+                    .OrderByDescending(entry => entry.UpdatedAt)
+                    .Take(limit)
+                    .ToArray());
+        }
     }
 
     private sealed class FakeUserConfirmationService : IUserConfirmationService
