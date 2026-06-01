@@ -5,7 +5,9 @@ using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Interlocks;
+using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Motion.Axes;
 
 namespace VisionCell.App.Modules.Motion.ViewModels;
 
@@ -37,6 +39,7 @@ public sealed partial class MotionViewModel : ObservableObject
         StopCommand = new AsyncRelayCommand(ExecuteStopAsync, () => CanExecuteMotionCommand(CommandKind.Stop));
     }
 
+    public ObservableCollection<MotionAxisStatusViewModel> Axes { get; } = new();
     public ObservableCollection<MotionCommandHistoryItemViewModel> RecentCommands { get; } = new();
 
     public IAsyncRelayCommand RefreshSnapshotCommand { get; }
@@ -252,6 +255,12 @@ public sealed partial class MotionViewModel : ObservableObject
         LastSnapshotAt = snapshot.Timestamp;
         ControllerStatus = snapshot.IsConnected ? "Controller: Connected" : "Controller: Disconnected";
         ServoStatus = _interlockContext.ServoOn ? "Servo: On" : "Servo: Off";
+        Axes.Clear();
+        foreach (var axis in snapshot.Axes)
+        {
+            Axes.Add(CreateAxisItem(axis));
+        }
+
         AxisStatus = FormatAxisSummary(snapshot);
         NotifyCommandStateChanged();
     }
@@ -301,6 +310,22 @@ public sealed partial class MotionViewModel : ObservableObject
             record.CorrelationId);
     }
 
+    private static MotionAxisStatusViewModel CreateAxisItem(AxisSnapshot axis)
+    {
+        return new MotionAxisStatusViewModel(
+            axis.AxisId,
+            FormatAxis(axis.AxisId),
+            axis.Position,
+            axis.Target,
+            axis.SoftLimit.Unit,
+            axis.SoftLimit.Minimum,
+            axis.SoftLimit.Maximum,
+            axis.IsHomed,
+            axis.ServoOn,
+            axis.IsMoving,
+            axis.Alarm?.Message ?? "None");
+    }
+
     private static IReadOnlyDictionary<string, string> CreateServoParameters(string state)
     {
         return new Dictionary<string, string>
@@ -331,5 +356,10 @@ public sealed partial class MotionViewModel : ObservableObject
             CommandKind.MoveAbsolute => "Move Absolute",
             _ => command.ToString()
         };
+    }
+
+    private static string FormatAxis(AxisId axisId)
+    {
+        return axisId == AxisId.Theta ? "T" : axisId.ToString();
     }
 }

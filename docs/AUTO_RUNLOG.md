@@ -54,3 +54,21 @@
 - GitHub checks: `build-test` success; optional `codex-review` skipped.
 - Risks: MotionView could display persisted command history but still needed operator controls to execute Servo/Home/Jog/Move/Stop through the Application use case.
 - Next selected work: `codex/feature/fr-063-motion-command-controls` for MotionView operator command controls.
+
+## 2026-06-01 14:31 - PR #6
+- Branch: `codex/feature/fr-063-motion-command-controls`
+- PR: https://github.com/JJY0910/vision-cell-manufacturing-studio/pull/6
+- Squash/Merge commit: `ba8714661b174d835dac620bd7f6021cbdd1d9d6`
+- Scope: Added MotionView operator controls for Servo On/Off, Home All, Jog X +1, Move preset, Stop, snapshot refresh, and command correlation/status feedback through `IMotionCommandUseCase`.
+- Files changed: 10 files, including the shared snapshot interlock context factory, MotionView/MotionViewModel command controls, App DI, app tests, UI/motion docs, backlog, and runlog.
+- Validation: Local Debug/Release restore, build, and test passed with 52 tests. GitHub Actions `build-test` passed in 1m48s.
+- GitHub checks: `build-test` success; optional `codex-review` skipped.
+- Risks: Jog and Move Absolute still dispatch simulator-backed fixed parameters; typed operator-entered axis/target DTOs remain pending.
+- Next selected work: `codex/feature/fr-060-motion-axis-grid` for MotionView axis position and soft-limit state display.
+
+## 2026-06-01 14:45 - Local validation note
+- Branch: `codex/feature/fr-060-motion-axis-grid`
+- Scope: Local Windows Smart App Control blocked freshly generated Debug test assemblies for `VisionCell.Core.Tests` and `VisionCell.Persistence.Tests` with `0x800711C7`.
+- Evidence: CodeIntegrity events 3033/3077 reported that Debug test DLLs did not meet Enterprise signing level requirements.
+- Mitigation: Added `tests/Directory.Build.props` to optimize Debug test assemblies only; product project Debug builds remain unchanged.
+- Requirement impact: FR-260 validation reliability; no runtime product behavior change.
