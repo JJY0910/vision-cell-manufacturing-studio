@@ -71,7 +71,8 @@ Implementation status:
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
 - `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces.
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
-- `RoiOverlayCanvas` and `CommandBar` remain follow-up reusable control extractions.
+- `CommandBar` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe screen command headers.
+- `RoiOverlayCanvas` remains a follow-up reusable control extraction.
 
 ## Screens
 

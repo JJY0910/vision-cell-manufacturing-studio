@@ -506,3 +506,10 @@
 - Validation target: App targeted tests with alert-state assertions, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App Debug build passed; App targeted tests passed with 44 tests including alert-state assertions. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed with only expected existing docs/test artifact references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice changes WPF alert presentation and ViewModel display properties only; no command execution, alarm persistence, inspection replay, recipe save behavior, or real HMI panel validation is included.
+
+## 2026-06-02 17:21 - Local validation passed
+- Branch: `feature/fr-006-command-bar-control`
+- Scope: Add reusable `CommandBar` and apply it to Alarm, Inspection, Offline Debug, and Recipe screen command headers.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; blocking wait scan passed; WPF code-behind scan output was limited to the new `CommandBar.xaml.cs` dependency-property wrapper and reviewed as no business logic; artifact scan found only expected existing docs/test references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice changes WPF header layout composition only; existing command bindings remain unchanged and no equipment, recipe, alarm, or inspection behavior is altered.

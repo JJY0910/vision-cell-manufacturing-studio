@@ -10,36 +10,32 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <DockPanel>
-      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-        <Button Content="Refresh Recipe"
-                Command="{Binding RefreshActiveRecipeCommand}"
-                ToolTip="Refresh the active recipe precheck before starting inspection."
-                Height="36"
-                MinWidth="124"
-                Margin="0,0,8,0" />
-        <Button Content="Run Inspection"
-                Command="{Binding RunInspectionCommand}"
-                ToolTip="Run the simulator-backed inspection sequence through the Application use case."
-                Height="36"
-                MinWidth="132"
-                Margin="0,0,8,0" />
-        <Button Content="Stop"
-                Command="{Binding StopInspectionCommand}"
-                ToolTip="Request cancellation for the active inspection run."
-                Height="36"
-                MinWidth="76" />
-      </StackPanel>
-      <StackPanel>
-        <TextBlock Text="Inspection" Style="{DynamicResource Text.PageTitle}" />
-        <TextBlock Text="{Binding StatusText}"
-                   Style="{DynamicResource Text.Status}"
-                   Margin="0,4,0,0" />
-        <controls:ErrorBanner Message="{Binding AlertMessage}"
-                              IsOpen="{Binding HasAlert}"
-                              Margin="0,8,0,0" />
-      </StackPanel>
-    </DockPanel>
+    <controls:CommandBar Title="Inspection"
+                         StatusText="{Binding StatusText}"
+                         AlertMessage="{Binding AlertMessage}"
+                         HasAlert="{Binding HasAlert}">
+      <controls:CommandBar.CommandContent>
+        <StackPanel Orientation="Horizontal">
+          <Button Content="Refresh Recipe"
+                  Command="{Binding RefreshActiveRecipeCommand}"
+                  ToolTip="Refresh the active recipe precheck before starting inspection."
+                  Height="36"
+                  MinWidth="124"
+                  Margin="0,0,8,0" />
+          <Button Content="Run Inspection"
+                  Command="{Binding RunInspectionCommand}"
+                  ToolTip="Run the simulator-backed inspection sequence through the Application use case."
+                  Height="36"
+                  MinWidth="132"
+                  Margin="0,0,8,0" />
+          <Button Content="Stop"
+                  Command="{Binding StopInspectionCommand}"
+                  ToolTip="Request cancellation for the active inspection run."
+                  Height="36"
+                  MinWidth="76" />
+        </StackPanel>
+      </controls:CommandBar.CommandContent>
+    </controls:CommandBar>
 
     <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,0">
       <Border Style="{DynamicResource Card.Panel}">
