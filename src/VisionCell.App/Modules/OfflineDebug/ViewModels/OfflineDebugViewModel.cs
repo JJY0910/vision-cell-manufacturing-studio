@@ -95,6 +95,21 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private InspectionReinspectPreparation? _preparedReinspect;
 
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
+    public string DefectListStatusText
+    {
+        get
+        {
+            var selected = SelectedResult;
+            if (selected is null)
+            {
+                return "Select an inspection result to review defect rows.";
+            }
+
+            return selected.HasDefects
+                ? $"{selected.DefectCount} defect rows recorded for {selected.LotId}."
+                : $"No defects recorded for {selected.LotId} / {selected.RecipeId}.";
+        }
+    }
 
     public async Task RefreshResultsAsync(CancellationToken cancellationToken)
     {
@@ -149,6 +164,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OpenOverlayArtifactCommand.NotifyCanExecuteChanged();
         OpenHeightMapArtifactCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(DefectListStatusText));
     }
 
     partial void OnStatusTextChanged(string value)
@@ -437,6 +453,7 @@ public sealed class OfflineInspectionResultItemViewModel
     public string CycleTimeText { get; }
     public string CreatedAtText { get; }
     public int DefectCount { get; }
+    public bool HasDefects => DefectCount > 0;
     public IReadOnlyList<OfflineInspectionDefectItemViewModel> Defects { get; }
     public IReadOnlyList<RoiOverlayItemViewModel> OverlayItems { get; }
 

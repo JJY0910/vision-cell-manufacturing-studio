@@ -225,6 +225,7 @@ Implementation status:
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
 - Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
 - Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard commands in a wrapping command row below the page title.
+- HMI theme polish keeps DataGrid and GridView headers on the dark HMI palette, enables tooltips on disabled command buttons, strengthens navigation hover/focus/selected contrast, and adds reusable empty-state panels for Motion, Teaching, Recipe, Equipment, Alarm, Offline Debug, Reports, and Settings surfaces.
 - Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.
 - This pass is a local WPF layout quality slice. It does not claim final shop-floor monitor, touch-panel, or real equipment HMI acceptance.
 
@@ -235,6 +236,11 @@ Implementation status:
 - Cycle time table
 - CSV export
 
+Implementation status:
+
+- `ReportsView` currently shows an operator-readable scope state instead of a blank page.
+- Inspection result summary and CSV export remain the dedicated FR-240 Reports MVP follow-up.
+
 ### SettingsView
 
 - Paths
@@ -242,6 +248,11 @@ Implementation status:
 - DB/log retention
 - Theme
 - Error code catalog
+
+Implementation status:
+
+- `SettingsView` currently shows read-only runtime scope for simulator-only equipment and virtual-camera mode instead of a blank page.
+- Persisted path/profile/retention settings remain the dedicated FR-240 Settings MVP follow-up.
 
 ## UX Rules
 

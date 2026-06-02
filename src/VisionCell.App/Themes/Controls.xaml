@@ -46,6 +46,18 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
+  <Style x:Key="Text.EmptyStateTitle" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style x:Key="Text.EmptyStateDetail" TargetType="TextBlock" BasedOn="{StaticResource Text.Status}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0,4,0,0" />
+  </Style>
+
   <Style x:Key="Text.PillLabel" TargetType="TextBlock">
     <Setter Property="Foreground" Value="White" />
     <Setter Property="FontSize" Value="11" />
@@ -73,10 +85,17 @@
     <Setter Property="MinWidth" Value="88" />
   </Style>
 
+  <Style TargetType="Button">
+    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
+  </Style>
+
   <Style x:Key="Button.HmiCommand" TargetType="Button">
     <Setter Property="Height" Value="36" />
     <Setter Property="MinWidth" Value="96" />
     <Setter Property="Margin" Value="0,0,8,8" />
+    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
   </Style>
 
   <Style x:Key="Button.HmiCommand.Compact" TargetType="Button" BasedOn="{StaticResource Button.HmiCommand}">
@@ -86,7 +105,8 @@
 
   <Style x:Key="ListView.HmiGrid" TargetType="ListView">
     <Setter Property="Background" Value="{DynamicResource Brush.PanelAlt}" />
-    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
     <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
@@ -121,6 +141,17 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PanelAlt}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,1,1" />
+  </Style>
+
+  <Style TargetType="GridViewColumnHeader">
+    <Setter Property="Background" Value="{DynamicResource Brush.PanelAlt}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Padding" Value="8,6" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
     <Setter Property="BorderThickness" Value="0,0,1,1" />
@@ -169,11 +200,22 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
     <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
     <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.NavHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+      </Trigger>
+      <Trigger Property="IsKeyboardFocusWithin" Value="True">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.NavFocus}" />
+      </Trigger>
       <DataTrigger Binding="{Binding IsSelected}" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.NavSelected}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.NavFocus}" />
       </DataTrigger>
     </Style.Triggers>
   </Style>

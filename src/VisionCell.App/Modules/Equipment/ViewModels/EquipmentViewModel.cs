@@ -85,6 +85,9 @@ public sealed partial class EquipmentViewModel : ObservableObject
     [ObservableProperty]
     private string _lastSnapshotText = "Last snapshot: -";
 
+    public bool HasIoBits => IoBits.Count > 0;
+    public bool HasEvents => Events.Count > 0;
+
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
         var result = await _dashboardUseCase.RefreshAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
@@ -146,6 +149,8 @@ public sealed partial class EquipmentViewModel : ObservableObject
             IoBits.Add(new IoBitStatusViewModel(bit.Name, bit.Address, bit.Direction, bit.Value, bit.IsForced));
         }
 
+        OnPropertyChanged(nameof(HasIoBits));
+
         Faults.Clear();
         Faults.Add(new EquipmentFaultStatusViewModel("EStop", snapshot.Safety.EmergencyStopActive ? "Active" : "Released", snapshot.Safety.EmergencyStopActive));
         Faults.Add(new EquipmentFaultStatusViewModel("Door", snapshot.Safety.DoorClosed ? "Closed" : "Open", !snapshot.Safety.DoorClosed));
@@ -193,6 +198,8 @@ public sealed partial class EquipmentViewModel : ObservableObject
         {
             Events.RemoveAt(Events.Count - 1);
         }
+
+        OnPropertyChanged(nameof(HasEvents));
     }
 
     private void NotifyFaultCommands()

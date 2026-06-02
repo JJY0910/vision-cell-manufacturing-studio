@@ -43,6 +43,7 @@ public sealed partial class AlarmViewModel : ObservableObject
     public int ActiveCount => Alarms.Count(alarm => !alarm.Alarm.IsAcknowledged);
     public int AcknowledgedCount => Alarms.Count(alarm => alarm.Alarm.IsAcknowledged);
     public int CriticalCount => Alarms.Count(alarm => alarm.Alarm.Severity == EquipmentAlarmSeverity.Critical);
+    public bool HasAlarms => Alarms.Count > 0;
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -163,5 +164,6 @@ public sealed partial class AlarmViewModel : ObservableObject
         OnPropertyChanged(nameof(ActiveCount));
         OnPropertyChanged(nameof(AcknowledgedCount));
         OnPropertyChanged(nameof(CriticalCount));
+        OnPropertyChanged(nameof(HasAlarms));
     }
 }
