@@ -398,3 +398,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 75 tests; App targeted tests passed with 40 tests; Debug/Release solution build and test passed with 198 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: Motion input parsing remains in WPF by design for this slice; Teaching, Recipe, and Inspection view-model cleanup remain follow-up work.
+
+## 2026-06-02 10:46 - In progress
+- Branch: `feature/fr-100-teaching-goto-application-boundary`
+- Scope: Move Teaching Go To snapshot retrieval and interlock context creation into Application `ITeachingPointUseCase`, removing direct equipment snapshot access from TeachingViewModel.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 76 tests; App targeted tests passed with 40 tests; Debug/Release solution build and test passed with 199 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This changes the `TeachingPointGoToRequest` contract; Teaching history query cleanup remains follow-up work.

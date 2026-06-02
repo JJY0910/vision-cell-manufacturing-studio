@@ -24,6 +24,10 @@
 - [x] Motion snapshot refresh and command availability flow through an Application use case.
 - [x] Motion command execution remains traceable through Application command history.
 
+## Teaching
+
+- [x] Teaching Go To snapshot/interlock orchestration flows through an Application use case.
+
 ## Simulator
 
 - [x] Simulator supports Connect.

@@ -2,11 +2,9 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using VisionCell.Application.Interlocks;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
 using VisionCell.App.Interaction;
-using VisionCell.Equipment.Controllers;
 using VisionCell.Motion.Teaching;
 
 namespace VisionCell.App.Modules.Teaching.ViewModels;
@@ -19,7 +17,6 @@ public sealed partial class TeachingViewModel : ObservableObject
     private const int TeachingHistoryLimit = 12;
     private readonly ITeachingPointUseCase _teachingPointUseCase;
     private readonly ITeachingHistoryRepository _historyRepository;
-    private readonly IEquipmentController _equipmentController;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IActiveRecipeContext _activeRecipeContext;
     private int _historyRefreshVersion;
@@ -28,13 +25,11 @@ public sealed partial class TeachingViewModel : ObservableObject
     public TeachingViewModel(
         ITeachingPointUseCase teachingPointUseCase,
         ITeachingHistoryRepository historyRepository,
-        IEquipmentController equipmentController,
         IUserConfirmationService confirmationService,
         IActiveRecipeContext activeRecipeContext)
     {
         _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
         _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
-        _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
@@ -267,11 +262,10 @@ public sealed partial class TeachingViewModel : ObservableObject
 
         await RunBusyAsync(async () =>
         {
-            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
             var result = await _teachingPointUseCase.GoToAsync(
                 new TeachingPointGoToRequest(
                     SelectedPoint.Id,
-                    EquipmentSnapshotInterlockContextFactory.Create(snapshot),
+                    SnapshotTimeout,
                     CommandTimeout),
                 cancellationToken).ConfigureAwait(true);
 
