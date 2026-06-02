@@ -76,6 +76,11 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
+    public Task<ActiveRecipeContextResult> PrecheckActiveRecipeAsync(CancellationToken cancellationToken)
+    {
+        return _activeRecipeContext.GetActiveAsync(cancellationToken);
+    }
+
     public async Task<InspectionRunResult> RunAsync(
         InspectionRunRequest request,
         IProgress<InspectionSequenceStepRecord>? progress,

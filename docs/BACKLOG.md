@@ -57,7 +57,7 @@ Problem: Dashboard connect/disconnect/refresh/mode commands now use an Applicati
 Proposed improvement: Continue view-model cleanup in small slices, starting with the highest-risk hardware-like command surfaces that need timeout, cancellation, structured events, and backend validation.
 Requirement impact: FR-020, FR-021, FR-022, FR-061, FR-062, FR-100, FR-120, FR-180, NFR-001, NFR-002, NFR-004
 Priority: P1
-Status: MotionView snapshot refresh and command availability now flow through `IMotionPanelUseCase`; Teaching Go To snapshot/interlock orchestration and selected history reads now flow through `ITeachingPointUseCase`; Recipe list/save/activate now flows through `IRecipeLibraryUseCase`; Inspection cleanup remains open.
+Status: MotionView snapshot refresh and command availability now flow through `IMotionPanelUseCase`; Teaching Go To snapshot/interlock orchestration and selected history reads now flow through `ITeachingPointUseCase`; Recipe list/save/activate now flows through `IRecipeLibraryUseCase`; Inspection active Recipe precheck and run orchestration now flow through `IInspectionRunUseCase`.
 
 Date: 2026-06-01
 Source: Phase 1 Shell status bar
@@ -298,7 +298,7 @@ Problem: InspectionView is still a placeholder and does not reject missing or in
 Proposed improvement: Add an InspectionViewModel precheck command backed by `IActiveRecipeContext`, with operator-visible blocked states for no active Recipe, invalid active Recipe, and repository unavailable.
 Requirement impact: FR-122, FR-180, FR-181, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: Addressed by InspectionView active Recipe precheck; Application run use case is in progress on `codex/feature/fr-181-inspection-run-use-case`.
+Status: Addressed by InspectionView active Recipe precheck, now routed through `IInspectionRunUseCase`; Application run use case is addressed.
 
 Date: 2026-06-01
 Source: FR-181/FR-182 Inspection run use case
@@ -306,7 +306,7 @@ Problem: InspectionView can precheck active Recipe context, but Run Inspection s
 Proposed improvement: Add `IInspectionRunUseCase`, ordered sequence step records, ViewModel timeline binding, and Stop Inspection cancellation of the active run token.
 Requirement impact: FR-122, FR-180, FR-181, FR-182, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: Addressed by `IInspectionRunUseCase`; camera grab was split into a follow-up slice.
+Status: Addressed by `IInspectionRunUseCase`; active Recipe precheck now shares this same Application boundary.
 
 Date: 2026-06-01
 Source: FR-180 Simulator Auto mode transition
