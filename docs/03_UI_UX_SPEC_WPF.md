@@ -69,7 +69,8 @@ Implementation status:
 - `AxisCard` is implemented and reused by Dashboard and Motion axis snapshots.
 - `IoBitIndicator` is implemented and reused by Dashboard and Equipment I/O monitor rows.
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
-- `ImageViewport`, `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
+- `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces.
+- `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
 
 ## Screens
 
