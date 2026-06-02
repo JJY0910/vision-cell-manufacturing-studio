@@ -118,7 +118,8 @@ Implementation note:
 - `SqliteInspectionResultRepository` implements `IInspectionResultRepository` and `IInspectionResultReader` for FR-200 result logging.
 - The repository stores Recipe ID/version, lot ID, final Judge, defect summary, source image URI, optional overlay/height-map artifact paths, cycle time, step timings JSON, parameters JSON, and per-defect bounding boxes.
 - `FileSystemInspectionArtifactWriter` creates overlay and height-map BMP files before result save. Current sequence rows populate `overlay_image_path` and `height_map_path` with relative paths under `inspection-artifacts/yyyyMMdd/`.
-- `FileSystemInspectionArtifactWriter` also implements `IInspectionArtifactReader` so Offline Debug can read live artifact existence, size, modified-time metadata, and deterministic BMP preview pixels without direct WPF file I/O.
+- `FileSystemInspectionArtifactWriter` also implements `IInspectionArtifactReader` so Offline Debug can read live artifact existence, size, modified-time metadata, deterministic BMP preview pixels, and safe external-open preparation without direct WPF file I/O.
+- Safe external-open preparation resolves only supported overlay/height-map BMP artifact paths under the configured artifact root; rooted paths, traversal, missing files, not-recorded paths, and unsupported artifact types return operator-visible statuses instead of launching a viewer.
 - The columns remain nullable so failed or legacy partial records can still be represented without a destructive migration.
 
 ### equipment_alarms

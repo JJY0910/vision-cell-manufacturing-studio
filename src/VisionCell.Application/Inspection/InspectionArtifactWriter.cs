@@ -18,6 +18,10 @@ public interface IInspectionArtifactReader
     Task<InspectionArtifactPreviewResult> ReadPreviewAsync(
         string? artifactPath,
         CancellationToken cancellationToken);
+
+    Task<InspectionArtifactOpenResult> PrepareOpenAsync(
+        InspectionArtifactOpenRequest request,
+        CancellationToken cancellationToken);
 }
 
 public sealed record InspectionArtifactWriteRequest(
@@ -56,6 +60,128 @@ public sealed record InspectionArtifactRoi(
 public sealed record InspectionArtifactWriteResult(
     string OverlayImagePath,
     string HeightMapPath);
+
+public sealed record InspectionArtifactOpenRequest(
+    InspectionArtifactKind ArtifactKind,
+    string? ArtifactPath);
+
+public enum InspectionArtifactKind
+{
+    Overlay,
+    HeightMap
+}
+
+public sealed record InspectionArtifactOpenResult(
+    InspectionArtifactKind ArtifactKind,
+    InspectionArtifactOpenStatus Status,
+    string DisplayPath,
+    string? ResolvedPath,
+    string Message)
+{
+    public bool CanOpen => Status == InspectionArtifactOpenStatus.Ready &&
+        !string.IsNullOrWhiteSpace(ResolvedPath);
+
+    public static InspectionArtifactOpenResult Ready(
+        InspectionArtifactKind artifactKind,
+        string displayPath,
+        string resolvedPath)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.Ready,
+            displayPath,
+            resolvedPath,
+            $"{FormatLabel(artifactKind)} artifact ready for external viewer.");
+    }
+
+    public static InspectionArtifactOpenResult NotRecorded(InspectionArtifactKind artifactKind)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.NotRecorded,
+            "-",
+            ResolvedPath: null,
+            $"{FormatLabel(artifactKind)} artifact path not recorded.");
+    }
+
+    public static InspectionArtifactOpenResult Missing(
+        InspectionArtifactKind artifactKind,
+        string displayPath)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.Missing,
+            displayPath,
+            ResolvedPath: null,
+            $"{FormatLabel(artifactKind)} artifact file missing.");
+    }
+
+    public static InspectionArtifactOpenResult UnsafePath(
+        InspectionArtifactKind artifactKind,
+        string displayPath)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.UnsafePath,
+            displayPath,
+            ResolvedPath: null,
+            $"{FormatLabel(artifactKind)} artifact path rejected by safety policy.");
+    }
+
+    public static InspectionArtifactOpenResult UnsupportedType(
+        InspectionArtifactKind artifactKind,
+        string displayPath)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.UnsupportedType,
+            displayPath,
+            ResolvedPath: null,
+            $"{FormatLabel(artifactKind)} artifact type is not supported for external opening.");
+    }
+
+    public static InspectionArtifactOpenResult Unavailable(
+        InspectionArtifactKind artifactKind,
+        string displayPath,
+        string message)
+    {
+        return new InspectionArtifactOpenResult(
+            artifactKind,
+            InspectionArtifactOpenStatus.Unavailable,
+            displayPath,
+            ResolvedPath: null,
+            message);
+    }
+
+    public static InspectionArtifactOpenResult FromMetadata(
+        InspectionArtifactKind artifactKind,
+        InspectionArtifactMetadata metadata)
+    {
+        ArgumentNullException.ThrowIfNull(metadata);
+        return metadata.Status switch
+        {
+            InspectionArtifactMetadataStatus.NotRecorded => NotRecorded(artifactKind),
+            InspectionArtifactMetadataStatus.Missing => Missing(artifactKind, metadata.DisplayPath),
+            InspectionArtifactMetadataStatus.UnsafePath => UnsafePath(artifactKind, metadata.DisplayPath),
+            _ => Unavailable(artifactKind, metadata.DisplayPath, metadata.Message)
+        };
+    }
+
+    private static string FormatLabel(InspectionArtifactKind artifactKind)
+    {
+        return artifactKind == InspectionArtifactKind.HeightMap ? "Height Map" : "Overlay";
+    }
+}
+
+public enum InspectionArtifactOpenStatus
+{
+    Ready,
+    NotRecorded,
+    Missing,
+    UnsafePath,
+    UnsupportedType,
+    Unavailable
+}
 
 public sealed record InspectionArtifactMetadata(
     InspectionArtifactMetadataStatus Status,

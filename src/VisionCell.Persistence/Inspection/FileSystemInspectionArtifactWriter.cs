@@ -128,6 +128,34 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         }
     }
 
+    public async Task<InspectionArtifactOpenResult> PrepareOpenAsync(
+        InspectionArtifactOpenRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var metadata = await ReadMetadataAsync(request.ArtifactPath, cancellationToken).ConfigureAwait(false);
+        if (!metadata.IsAvailable)
+        {
+            return InspectionArtifactOpenResult.FromMetadata(request.ArtifactKind, metadata);
+        }
+
+        if (!IsSupportedOpenPath(request.ArtifactKind, metadata.DisplayPath))
+        {
+            return InspectionArtifactOpenResult.UnsupportedType(request.ArtifactKind, metadata.DisplayPath);
+        }
+
+        if (!TryResolveArtifactPath(metadata.DisplayPath, out var absolutePath))
+        {
+            return InspectionArtifactOpenResult.UnsafePath(request.ArtifactKind, metadata.DisplayPath);
+        }
+
+        return InspectionArtifactOpenResult.Ready(
+            request.ArtifactKind,
+            metadata.DisplayPath,
+            absolutePath);
+    }
+
     private string GetSafeDirectory(string dateSegment)
     {
         var directory = Path.GetFullPath(Path.Combine(_rootDirectory, dateSegment));
@@ -194,6 +222,15 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
     {
         return path.StartsWith(_rootDirectoryWithSeparator, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(path, _rootDirectory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSupportedOpenPath(InspectionArtifactKind artifactKind, string displayPath)
+    {
+        return artifactKind switch
+        {
+            InspectionArtifactKind.HeightMap => displayPath.EndsWith(".height.bmp", StringComparison.OrdinalIgnoreCase),
+            _ => displayPath.EndsWith(".overlay.bmp", StringComparison.OrdinalIgnoreCase)
+        };
     }
 
     private static string ToRelativePath(string dateSegment, string fileName)

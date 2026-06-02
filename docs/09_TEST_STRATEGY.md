@@ -91,6 +91,8 @@ tests/VisionCell.App.Tests
 - Insert/query inspection defects
 - Recent inspection result ordering and limit
 - Inspection artifact writer creates overlay and height-map BMP files with relative paths
+- Inspection artifact open preparation returns a safe resolved path only for available supported BMP artifacts under the configured root
+- Inspection artifact open preparation rejects missing, not-recorded, traversal/rooted, unsupported-type, and unavailable artifact paths
 - Repository handles relative path
 - Insert/query/acknowledge equipment alarms
 
@@ -102,6 +104,7 @@ tests/VisionCell.App.Tests
 - Navigation updates selected screen
 - Equipment fault injection updates I/O monitor rows, fault state rows, and event status
 - Offline Debug result refresh shows loaded, empty, and repository failure states
+- Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
 - AlarmView refresh and acknowledgement state updates
 
 ## Manual UI Acceptance

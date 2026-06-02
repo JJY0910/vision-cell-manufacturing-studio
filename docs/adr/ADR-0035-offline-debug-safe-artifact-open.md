@@ -47,6 +47,13 @@ The implementation boundary is:
 - Tests must cover available, missing, unsafe, not-recorded, unavailable, and confirmation-declined paths.
 - Real customer image formats, network shares, and external viewer availability remain unvalidated until a field environment exists.
 
+## Implementation Notes
+
+- Implemented with `InspectionArtifactOpenRequest`/`InspectionArtifactOpenResult` and `InspectionArtifactKind` in the Application inspection boundary.
+- `FileSystemInspectionArtifactWriter` prepares external opens only for supported overlay and height-map BMP paths under the configured artifact root.
+- `OfflineDebugViewModel` calls the injected confirmation service and artifact viewer service; WPF code-behind does not resolve paths or launch processes.
+- Actual Re-inspect execution remains separate from artifact open commands.
+
 ## Requirement Coverage
 
 - FR-221/FR-222: Offline Debug artifact viewing can expand from in-app preview to safe external open.
