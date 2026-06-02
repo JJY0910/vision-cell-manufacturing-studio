@@ -15,11 +15,13 @@
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
           <Button Content="Set Active"
                   Command="{Binding ActivateRecipeCommand}"
+                  ToolTip="Set the selected indexed recipe as the active recipe."
                   Height="36"
                   MinWidth="112"
                   Margin="0,0,8,0" />
           <Button Content="Refresh Index"
                   Command="{Binding RefreshCommand}"
+                  ToolTip="Reload the local SQLite recipe index."
                   Height="36"
                   MinWidth="132" />
         </StackPanel>
@@ -79,6 +81,7 @@
             <Button DockPanel.Dock="Right"
                     Content="Save Recipe"
                     Command="{Binding SaveRecipeCommand}"
+                    ToolTip="Validate, save, and index the recipe editor values."
                     Height="32"
                     MinWidth="112" />
             <TextBlock Text="Recipe Editor" Style="{DynamicResource Text.CardTitle}" />
@@ -87,81 +90,99 @@
           <WrapPanel Grid.Row="1" Margin="0,4,0,0">
             <StackPanel Width="180" Margin="0,0,12,8">
               <TextBlock Text="Recipe ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RecipeIdText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RecipeIdText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="220" Margin="0,0,12,8">
               <TextBlock Text="Product Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding ProductNameText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding ProductNameText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="110" Margin="0,0,12,8">
               <TextBlock Text="Version" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding VersionText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding VersionText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="120" Margin="0,0,12,8">
               <TextBlock Text="Exposure ms" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraExposureText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding CameraExposureText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="96" Margin="0,0,12,8">
               <TextBlock Text="Gain" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraGainText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding CameraGainText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="96" Margin="0,0,12,8">
               <TextBlock Text="Light" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraLightText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding CameraLightText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
           </WrapPanel>
 
           <WrapPanel Grid.Row="2" Margin="0,4,0,0">
             <StackPanel Width="150" Margin="0,0,12,8">
               <TextBlock Text="Teaching ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingPointIdText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingPointIdText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="190" Margin="0,0,12,8">
               <TextBlock Text="Teaching Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingPointNameText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingPointNameText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="84" Margin="0,0,12,8">
               <TextBlock Text="X" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingXText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingXText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="84" Margin="0,0,12,8">
               <TextBlock Text="Y" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingYText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingYText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="84" Margin="0,0,12,8">
               <TextBlock Text="Z" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingZText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingZText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="84" Margin="0,0,12,8">
               <TextBlock Text="Theta" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingThetaText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding TeachingThetaText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
           </WrapPanel>
 
           <WrapPanel Grid.Row="3" Margin="0,4,0,0">
             <StackPanel Width="120" Margin="0,0,12,8">
               <TextBlock Text="ROI ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiIdText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiIdText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="160" Margin="0,0,12,8">
               <TextBlock Text="ROI Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiNameText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiNameText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="76" Margin="0,0,12,8">
               <TextBlock Text="ROI X" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiXText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiXText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="76" Margin="0,0,12,8">
               <TextBlock Text="ROI Y" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiYText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiYText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="76" Margin="0,0,12,8">
               <TextBlock Text="Width" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiWidthText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiWidthText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
             <StackPanel Width="76" Margin="0,0,12,8">
               <TextBlock Text="Height" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiHeightText, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+              <TextBox Text="{Binding RoiHeightText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
             </StackPanel>
           </WrapPanel>
         </Grid>
@@ -183,9 +204,7 @@
                     ItemsSource="{Binding Recipes}"
                     SelectedItem="{Binding SelectedRecipe}"
                     MinHeight="220"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
+                    Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
               <GridView>
                 <GridViewColumn Header="Recipe ID" DisplayMemberBinding="{Binding RecipeId}" Width="170" />

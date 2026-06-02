@@ -461,3 +461,9 @@
 - Validation target: Core/Equipment/Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Core targeted tests passed with 4 tests; Equipment targeted tests passed with 31 tests; Application targeted tests passed with 84 tests; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: Fault injection is simulator-only; no real PLC, safety relay, EStop circuit, door switch, air/vacuum sensor, camera-ready line, servo drive alarm, or fieldbus path is validated.
+
+## 2026-06-02 16:12 - In progress
+- Branch: `feature/fr-006-ui-qa-hmi-polish`
+- Scope: Add a local WPF HMI polish pass for Dashboard, Motion, Teaching, Recipe, Inspection, and Alarm screens with wrapping command forms, shared HMI table/input styles, explicit table scrollbars, command tooltips, and InspectionView scrolling.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Risks: This slice improves local WPF layout reachability only; no actual shop-floor display, touch panel, live hardware, or production operator shift validation is performed.

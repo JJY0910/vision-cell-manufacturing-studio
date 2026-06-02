@@ -15,11 +15,13 @@
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
           <Button Content="Refresh Snapshot"
                   Command="{Binding RefreshSnapshotCommand}"
+                  ToolTip="Refresh controller, servo, axis, and command interlock state."
                   Height="36"
                   MinWidth="132"
                   Margin="0,0,8,0" />
           <Button Content="Refresh History"
                   Command="{Binding RefreshHistoryCommand}"
+                  ToolTip="Reload recent motion command records from the local history store."
                   Height="36"
                   MinWidth="126" />
         </StackPanel>
@@ -120,199 +122,102 @@
             <Button Content="Servo On"
                     Command="{Binding ServoOnCommand}"
                     ToolTip="{Binding ServoOnDisabledReason}"
-                    Height="36"
-                    MinWidth="94"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Servo Off"
                     Command="{Binding ServoOffCommand}"
                     ToolTip="{Binding ServoOffDisabledReason}"
-                    Height="36"
-                    MinWidth="94"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Home All"
                     Command="{Binding HomeCommand}"
                     ToolTip="{Binding HomeDisabledReason}"
-                    Height="36"
-                    MinWidth="94"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Stop"
                     Command="{Binding StopCommand}"
                     ToolTip="{Binding StopDisabledReason}"
-                    Height="36"
-                    MinWidth="84"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
           </WrapPanel>
-          <Grid Grid.Row="2" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="96" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="96" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Jog Axis"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <ComboBox Grid.Column="1"
-                      ItemsSource="{Binding JogAxisOptions}"
-                      SelectedItem="{Binding SelectedJogAxis}"
-                      Height="32"
-                      Margin="0,0,12,8" />
-            <TextBlock Grid.Column="2"
-                       Text="Step"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="3"
-                     Text="{Binding JogStepText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <Button Grid.Column="4"
-                    Content="Jog -"
+          <WrapPanel Grid.Row="2" Margin="0,4,0,0">
+            <StackPanel Width="112" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Jog Axis" Style="{DynamicResource Text.MetricLabel}" />
+              <ComboBox ItemsSource="{Binding JogAxisOptions}"
+                        SelectedItem="{Binding SelectedJogAxis}"
+                        Style="{DynamicResource ComboBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="112" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Step" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding JogStepText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <Button Content="Jog -"
                     Command="{Binding JogNegativeCommand}"
                     ToolTip="{Binding JogDisabledReason}"
-                    Height="32"
-                    MinWidth="76"
-                    Margin="0,0,8,8" />
-            <Button Grid.Column="5"
-                    Content="Jog +"
+                    Style="{DynamicResource Button.HmiCommand.Compact}" />
+            <Button Content="Jog +"
                     Command="{Binding JogPositiveCommand}"
                     ToolTip="{Binding JogDisabledReason}"
-                    Height="32"
-                    MinWidth="76"
-                    Margin="0,0,8,8" />
-          </Grid>
-          <Grid Grid.Row="3" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="X"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="1"
-                     Text="{Binding MoveTargetXText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="2"
-                       Text="Y"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="3"
-                     Text="{Binding MoveTargetYText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="4"
-                       Text="Z"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="5"
-                     Text="{Binding MoveTargetZText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="6"
-                       Text="Theta"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="7"
-                     Text="{Binding MoveTargetThetaText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <Button Grid.Column="8"
-                    Content="Move Absolute"
+                    Style="{DynamicResource Button.HmiCommand.Compact}" />
+          </WrapPanel>
+          <WrapPanel Grid.Row="3" Margin="0,4,0,0">
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="X Target" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveTargetXText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Y Target" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveTargetYText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Z Target" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveTargetZText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="112" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Theta Target" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveTargetThetaText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <Button Content="Move Absolute"
                     Command="{Binding MoveAbsoluteCommand}"
                     ToolTip="{Binding MoveAbsoluteDisabledReason}"
-                    Height="32"
-                    MinWidth="120"
-                    Margin="0,0,8,8" />
-          </Grid>
-          <Grid Grid.Row="4" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="156" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Profile"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <ComboBox Grid.Column="1"
-                      ItemsSource="{Binding MoveProfilePresets}"
-                      SelectedItem="{Binding SelectedMoveProfilePreset}"
-                      DisplayMemberPath="Name"
-                      Height="32"
-                      Margin="0,0,12,8" />
-          </Grid>
-          <Grid Grid.Row="5" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Velocity"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="1"
-                     Text="{Binding MoveVelocityText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="2"
-                       Text="Accel"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="3"
-                     Text="{Binding MoveAccelerationText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="4"
-                       Text="Decel"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="5"
-                     Text="{Binding MoveDecelerationText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="6"
-                       Text="Jerk"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="7"
-                     Text="{Binding MoveJerkText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="8"
-                       Text="Tol"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="9"
-                     Text="{Binding MoveArrivalToleranceText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-          </Grid>
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
+                    MinWidth="128" />
+          </WrapPanel>
+          <WrapPanel Grid.Row="4" Margin="0,4,0,0">
+            <StackPanel Width="156" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Profile" Style="{DynamicResource Text.MetricLabel}" />
+              <ComboBox ItemsSource="{Binding MoveProfilePresets}"
+                        SelectedItem="{Binding SelectedMoveProfilePreset}"
+                        DisplayMemberPath="Name"
+                        Style="{DynamicResource ComboBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Velocity" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveVelocityText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Accel" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveAccelerationText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Decel" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveDecelerationText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="96" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Jerk" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveJerkText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="104" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Tolerance" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MoveArrivalToleranceText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+          </WrapPanel>
           <TextBlock Grid.Row="6"
                      Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Last snapshot: -}"
                      Style="{DynamicResource Text.Status}"
@@ -334,9 +239,7 @@
           </DockPanel>
           <ListView Grid.Row="1"
                     ItemsSource="{Binding RecentCommands}"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
+                    Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
               <GridView>
                 <GridViewColumn Header="Time" DisplayMemberBinding="{Binding CreatedAtText}" Width="150" />
