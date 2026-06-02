@@ -57,6 +57,7 @@ Problem: Dashboard connect/disconnect/refresh/mode commands now use an Applicati
 Proposed improvement: Continue view-model cleanup in small slices, starting with the highest-risk hardware-like command surfaces that need timeout, cancellation, structured events, and backend validation.
 Requirement impact: FR-020, FR-021, FR-022, FR-061, FR-062, FR-100, FR-120, FR-180, NFR-001, NFR-002, NFR-004
 Priority: P1
+Status: MotionView snapshot refresh and command availability now flow through `IMotionPanelUseCase`; Teaching, Recipe, and Inspection cleanup remain open.
 
 Date: 2026-06-01
 Source: Phase 1 Shell status bar

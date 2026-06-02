@@ -85,6 +85,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<ITeachingPointRepository>(provider => provider.GetRequiredService<SqliteTeachingPointRepository>());
         services.AddSingleton<ITeachingHistoryRepository>(provider => provider.GetRequiredService<SqliteTeachingHistoryRepository>());
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
+        services.AddSingleton<IMotionPanelUseCase, MotionPanelUseCase>();
         services.AddSingleton<IEquipmentDashboardUseCase, EquipmentDashboardUseCase>();
         services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();

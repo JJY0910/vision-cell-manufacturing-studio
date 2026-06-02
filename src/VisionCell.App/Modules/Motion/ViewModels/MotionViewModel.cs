@@ -19,18 +19,18 @@ public sealed partial class MotionViewModel : ObservableObject
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
     private const int RecentHistoryLimit = 25;
     private readonly IMotionCommandUseCase _commandUseCase;
+    private readonly IMotionPanelUseCase _motionPanelUseCase;
     private readonly IMotionCommandHistoryReader _historyReader;
-    private readonly IEquipmentController _equipmentController;
     private InterlockContext _interlockContext = InterlockContext.Disconnected;
 
     public MotionViewModel(
         IMotionCommandUseCase commandUseCase,
         IMotionCommandHistoryReader historyReader,
-        IEquipmentController equipmentController)
+        IMotionPanelUseCase motionPanelUseCase)
     {
         _commandUseCase = commandUseCase ?? throw new ArgumentNullException(nameof(commandUseCase));
+        _motionPanelUseCase = motionPanelUseCase ?? throw new ArgumentNullException(nameof(motionPanelUseCase));
         _historyReader = historyReader ?? throw new ArgumentNullException(nameof(historyReader));
-        _equipmentController = equipmentController ?? throw new ArgumentNullException(nameof(equipmentController));
         RefreshSnapshotCommand = new AsyncRelayCommand(RefreshSnapshotAsync);
         RefreshHistoryCommand = new AsyncRelayCommand(RefreshHistoryAsync);
         ServoOnCommand = new AsyncRelayCommand(ExecuteServoOnAsync, () => CanExecuteMotionCommand(CommandKind.ServoOn));
@@ -133,24 +133,8 @@ public sealed partial class MotionViewModel : ObservableObject
 
     public async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
-            ApplySnapshot(snapshot);
-            CommandStatus = "Motion snapshot refreshed";
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            CommandStatus = "Snapshot refresh cancelled";
-        }
-        catch (OperationCanceledException)
-        {
-            CommandStatus = "Snapshot refresh timed out";
-        }
-        catch (Exception ex)
-        {
-            CommandStatus = $"Snapshot refresh failed: {ex.Message}";
-        }
+        var result = await _motionPanelUseCase.RefreshSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
+        ApplySnapshotRefreshResult(result);
     }
 
     public async Task RefreshHistoryAsync(CancellationToken cancellationToken)
@@ -253,11 +237,19 @@ public sealed partial class MotionViewModel : ObservableObject
     {
         IsCommandExecuting = true;
         NotifyCommandStateChanged();
+        var commandAttempted = false;
 
         try
         {
-            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
-            ApplySnapshot(snapshot);
+            var snapshotResult = await _motionPanelUseCase.RefreshSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
+            if (!snapshotResult.HasSnapshot)
+            {
+                CommandStatus = FormatCommandSnapshotFailure(command, snapshotResult);
+                return;
+            }
+
+            ApplySnapshot(snapshotResult.Snapshot!);
+            commandAttempted = true;
 
             var execution = await _commandUseCase.ExecuteAsync(
                 new MotionCommandExecutionRequest(command, _interlockContext, CommandTimeout, parameters),
@@ -280,8 +272,12 @@ public sealed partial class MotionViewModel : ObservableObject
         }
         finally
         {
-            await RefreshHistoryAsync(CancellationToken.None).ConfigureAwait(true);
-            await RefreshSnapshotAfterCommandAsync().ConfigureAwait(true);
+            if (commandAttempted)
+            {
+                await RefreshHistoryAsync(CancellationToken.None).ConfigureAwait(true);
+                await RefreshSnapshotAfterCommandAsync().ConfigureAwait(true);
+            }
+
             IsCommandExecuting = false;
             NotifyCommandStateChanged();
         }
@@ -294,19 +290,20 @@ public sealed partial class MotionViewModel : ObservableObject
 
     private async Task RefreshSnapshotAfterCommandAsync()
     {
-        try
+        var result = await _motionPanelUseCase.RefreshSnapshotAsync(SnapshotTimeout, CancellationToken.None).ConfigureAwait(true);
+        if (result.HasSnapshot)
         {
-            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, CancellationToken.None).ConfigureAwait(true);
-            ApplySnapshot(snapshot);
+            ApplySnapshot(result.Snapshot!);
+            return;
         }
-        catch (OperationCanceledException)
+
+        CommandStatus = result.Status switch
         {
-            CommandStatus = "Command completed, but snapshot refresh timed out";
-        }
-        catch (Exception ex)
-        {
-            CommandStatus = $"Command completed, but snapshot refresh failed: {ex.Message}";
-        }
+            MotionSnapshotRefreshStatus.Timeout => "Command completed, but snapshot refresh timed out",
+            MotionSnapshotRefreshStatus.Failed => $"Command completed, but snapshot refresh failed: {result.Message}",
+            MotionSnapshotRefreshStatus.Cancelled => "Command completed, but snapshot refresh cancelled",
+            _ => result.Message
+        };
     }
 
     private void ApplySnapshot(EquipmentSnapshot snapshot)
@@ -327,7 +324,7 @@ public sealed partial class MotionViewModel : ObservableObject
 
     private bool CanExecuteMotionCommand(CommandKind command)
     {
-        return !IsCommandExecuting && _equipmentController.GetCommandAvailability(command, _interlockContext).IsEnabled;
+        return !IsCommandExecuting && _motionPanelUseCase.GetCommandAvailability(command, _interlockContext).IsEnabled;
     }
 
     private string GetDisabledReason(CommandKind command)
@@ -337,8 +334,31 @@ public sealed partial class MotionViewModel : ObservableObject
             return "A motion command is already running.";
         }
 
-        var availability = _equipmentController.GetCommandAvailability(command, _interlockContext);
+        var availability = _motionPanelUseCase.GetCommandAvailability(command, _interlockContext);
         return availability.IsEnabled ? "Ready" : availability.DisabledReason;
+    }
+
+    private void ApplySnapshotRefreshResult(MotionSnapshotRefreshResult result)
+    {
+        if (result.Snapshot is not null)
+        {
+            ApplySnapshot(result.Snapshot);
+        }
+
+        CommandStatus = result.Status == MotionSnapshotRefreshStatus.Failed
+            ? $"Snapshot refresh failed: {result.Message}"
+            : result.Message;
+    }
+
+    private static string FormatCommandSnapshotFailure(CommandKind command, MotionSnapshotRefreshResult result)
+    {
+        return result.Status switch
+        {
+            MotionSnapshotRefreshStatus.Cancelled => $"{FormatCommand(command)} cancelled",
+            MotionSnapshotRefreshStatus.Timeout => $"{FormatCommand(command)} timed out",
+            MotionSnapshotRefreshStatus.Failed => $"{FormatCommand(command)} failed: {result.Message}",
+            _ => result.Message
+        };
     }
 
     private void NotifyCommandStateChanged()

@@ -124,6 +124,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<SyntheticHeightMapFactory>()
                 .Should()
                 .NotBeNull();
+            provider.GetRequiredService<IMotionPanelUseCase>()
+                .Should()
+                .BeOfType<MotionPanelUseCase>();
             provider.GetRequiredService<IInspectionResultRepository>()
                 .Should()
                 .BeOfType<SqliteInspectionResultRepository>();
@@ -294,6 +297,38 @@ public sealed class DashboardAndShellViewModelTests
         motion.ServoOnCommand.CanExecute(null).Should().BeTrue();
         motion.HomeCommand.CanExecute(null).Should().BeFalse();
         motion.HomeDisabledReason.Should().Contain("Home requires servo on.");
+    }
+
+    [Fact]
+    public async Task Motion_RefreshSnapshotAsync_Should_Surface_Timeout_State()
+    {
+        var controller = new FakeEquipmentController(CreateSnapshot())
+        {
+            SnapshotHandler = (_, _) => throw new OperationCanceledException("snapshot timeout")
+        };
+        var motion = CreateMotionViewModel(equipmentController: controller);
+
+        await motion.RefreshSnapshotAsync(CancellationToken.None);
+
+        motion.CommandStatus.Should().Be("Snapshot refresh timed out");
+        motion.Axes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Motion_ExecuteServoOnAsync_Should_Not_Run_When_Snapshot_Times_Out()
+    {
+        var useCase = new FakeMotionCommandUseCase();
+        var controller = new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: false))
+        {
+            SnapshotHandler = (_, _) => throw new OperationCanceledException("snapshot timeout")
+        };
+        var motion = CreateMotionViewModel(commandUseCase: useCase, equipmentController: controller);
+
+        await motion.ExecuteServoOnAsync(CancellationToken.None);
+
+        useCase.Requests.Should().BeEmpty();
+        motion.CommandStatus.Should().Be("Servo On timed out");
+        motion.RecentCommands.Should().BeEmpty();
     }
 
     [Fact]
@@ -937,10 +972,11 @@ public sealed class DashboardAndShellViewModelTests
         FakeMotionCommandUseCase? commandUseCase = null,
         FakeEquipmentController? equipmentController = null)
     {
+        var resolvedEquipmentController = equipmentController ?? new FakeEquipmentController(CreateSnapshot());
         return new MotionViewModel(
             commandUseCase ?? new FakeMotionCommandUseCase(),
             historyReader ?? new FakeMotionCommandHistoryReader(),
-            equipmentController ?? new FakeEquipmentController(CreateSnapshot()));
+            new MotionPanelUseCase(resolvedEquipmentController, new CommandInterlockService()));
     }
 
     private static TeachingViewModel CreateTeachingViewModel(
@@ -1553,6 +1589,7 @@ public sealed class DashboardAndShellViewModelTests
         public EquipmentSnapshot Snapshot { get; set; }
         public CommandKind? LastCommand { get; private set; }
         public InterlockContext? LastContext { get; private set; }
+        public Func<TimeSpan, CancellationToken, Task<EquipmentSnapshot>>? SnapshotHandler { get; init; }
 
         public Func<CommandKind, InterlockContext, TimeSpan, CancellationToken, Task<MachineCommandResult>> ExecuteHandler { get; set; } =
             (_, _, _, _) => Task.FromResult(MachineCommandResult.Failed(
@@ -1563,7 +1600,9 @@ public sealed class DashboardAndShellViewModelTests
 
         public Task<EquipmentSnapshot> GetSnapshotAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
-            return Task.FromResult(Snapshot);
+            return SnapshotHandler is not null
+                ? SnapshotHandler(timeout, cancellationToken)
+                : Task.FromResult(Snapshot);
         }
 
         public Task<MachineCommandResult> ConnectAsync(TimeSpan timeout, CancellationToken cancellationToken)
