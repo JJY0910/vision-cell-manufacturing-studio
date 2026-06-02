@@ -35,33 +35,18 @@
       </DockPanel>
 
       <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Controller" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding ControllerStatus}" Style="{DynamicResource Text.MetricValue}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Servo" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding ServoStatus}" Style="{DynamicResource Text.MetricValue}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Axis State" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding AxisStatus}"
-                       Style="{DynamicResource Text.StatusStrong}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Last Command" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding LastCommandCorrelationId}"
-                       Style="{DynamicResource Text.StatusStrong}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
+        <controls:KpiCard Title="Controller"
+                          Value="{Binding ControllerStatus}"
+                          Detail="{Binding LastSnapshotAt, StringFormat=Snapshot {0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=Snapshot -}" />
+        <controls:KpiCard Title="Servo"
+                          Value="{Binding ServoStatus}"
+                          Detail="Backend interlock remains authoritative." />
+        <controls:KpiCard Title="Axis State"
+                          Value="{Binding AxisStatus}"
+                          Detail="{Binding Axes.Count, StringFormat={}{0} axis rows}" />
+        <controls:KpiCard Title="Last Command"
+                          Value="{Binding LastCommandCorrelationId}"
+                          Detail="Correlation ID" />
       </UniformGrid>
 
       <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">

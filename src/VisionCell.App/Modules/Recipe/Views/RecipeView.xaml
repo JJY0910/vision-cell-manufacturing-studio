@@ -1,6 +1,7 @@
 <UserControl x:Class="VisionCell.App.Modules.Recipe.Views.RecipeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <Grid>
       <Grid.RowDefinitions>
@@ -34,39 +35,18 @@
       </DockPanel>
 
       <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Indexed Recipes" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding Recipes.Count}" Style="{DynamicResource Text.MetricValue}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Validation" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding ValidRecipeCount, StringFormat={}{0} valid}"
-                       Style="{DynamicResource Text.MetricValue}" />
-            <TextBlock Text="{Binding InvalidRecipeCount, StringFormat={}{0} invalid}"
-                       Style="{DynamicResource Text.Status}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Active Recipe" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding ActiveRecipeText}"
-                       Style="{DynamicResource Text.MetricValue}"
-                       TextWrapping="Wrap" />
-            <TextBlock Text="{Binding ActiveRecipeCount, StringFormat={}{0} active rows}"
-                       Style="{DynamicResource Text.Status}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Last Refresh" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding LastRefreshText}"
-                       Style="{DynamicResource Text.MetricValue}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
+        <controls:KpiCard Title="Indexed Recipes"
+                          Value="{Binding Recipes.Count}"
+                          Detail="SQLite recipe index rows" />
+        <controls:KpiCard Title="Validation"
+                          Value="{Binding ValidRecipeCount, StringFormat={}{0} valid}"
+                          Detail="{Binding InvalidRecipeCount, StringFormat={}{0} invalid}" />
+        <controls:KpiCard Title="Active Recipe"
+                          Value="{Binding ActiveRecipeText}"
+                          Detail="{Binding ActiveRecipeCount, StringFormat={}{0} active rows}" />
+        <controls:KpiCard Title="Last Refresh"
+                          Value="{Binding LastRefreshText}"
+                          Detail="{Binding StatusText}" />
       </UniformGrid>
 
       <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
