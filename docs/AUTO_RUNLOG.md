@@ -440,3 +440,10 @@
 - Validation target: Persistence/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Debug/Release solution build and test passed with 211 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: Preview supports current deterministic BMP artifacts only; safe file opening, parameter replay, actual re-inspection execution, and real hardware validation remain follow-up work.
+
+## 2026-06-02 15:05 - In progress
+- Branch: `feature/fr-184-alarm-recovery-center`
+- Scope: Add Alarm / Fault / Recovery Center domain, Application recorder/use case, SQLite alarm repository, WPF AlarmView, and simulated Motion/Camera/Inspection failure recording.
+- Validation target: Core/Application/Persistence/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Core targeted tests passed with 4 tests; Application targeted tests passed with 83 tests; Persistence targeted tests passed with 38 tests; App targeted tests passed with 43 tests. Debug/Release solution build and test passed with 218 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: Alarm records are generated from simulator/Application failure paths only; no real PLC, motion controller, camera, fieldbus, or safety relay alarm source is validated.

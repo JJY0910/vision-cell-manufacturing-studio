@@ -22,6 +22,7 @@
 │ Teaching      │                                                      │
 │ Recipe        │                                                      │
 │ Inspection    │                                                      │
+│ Alarm         │                                                      │
 │ OfflineDebug  │                                                      │
 │ Reports       │                                                      │
 │ Settings      │                                                      │
@@ -174,6 +175,21 @@ Implementation status:
 - `OfflineDebugViewModel` loads recent persisted inspection result rows through `IInspectionResultReader` and artifact availability/preview data through `IInspectionArtifactReader`.
 - `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, Re-inspect preparation status, and selected defect rows.
 - Safe file opening, parameter replay, and actual re-inspection execution remain follow-up work.
+
+### AlarmView
+
+- Alarm / Fault / Recovery records
+- Code, severity, equipment area, message, correlation ID
+- Occurred/acknowledged time
+- Operator action memo
+- Acknowledge command
+
+Implementation status:
+
+- `AlarmViewModel` loads recent persisted alarm rows through `IAlarmCenterUseCase`.
+- `AlarmView` shows active/critical/acknowledged counts, recent alarm rows, selected alarm detail, and recovery action memo input.
+- Acknowledge writes `acknowledgedAt` and `actionMemo` through the Application use case.
+- Hardware reset remains separate from AlarmView acknowledgement.
 
 ### ReportsView
 

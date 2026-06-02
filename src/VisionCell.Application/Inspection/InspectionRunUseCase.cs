@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using VisionCell.Application.Alarms;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
@@ -48,6 +51,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private readonly SyntheticHeightMapFactory _syntheticHeightMapFactory;
     private readonly IInspectionArtifactWriter _inspectionArtifactWriter;
     private readonly IInspectionResultRepository _inspectionResultRepository;
+    private readonly IEquipmentAlarmRecorder _alarmRecorder;
     private readonly Func<DateTimeOffset> _clock;
 
     public InspectionRunUseCase(
@@ -61,7 +65,8 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         SyntheticHeightMapFactory syntheticHeightMapFactory,
         IInspectionArtifactWriter inspectionArtifactWriter,
         IInspectionResultRepository inspectionResultRepository,
-        Func<DateTimeOffset>? clock = null)
+        Func<DateTimeOffset>? clock = null,
+        IEquipmentAlarmRecorder? alarmRecorder = null)
     {
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         _recipeDocumentStore = recipeDocumentStore ?? throw new ArgumentNullException(nameof(recipeDocumentStore));
@@ -73,6 +78,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         _syntheticHeightMapFactory = syntheticHeightMapFactory ?? throw new ArgumentNullException(nameof(syntheticHeightMapFactory));
         _inspectionArtifactWriter = inspectionArtifactWriter ?? throw new ArgumentNullException(nameof(inspectionArtifactWriter));
         _inspectionResultRepository = inspectionResultRepository ?? throw new ArgumentNullException(nameof(inspectionResultRepository));
+        _alarmRecorder = alarmRecorder ?? NoopEquipmentAlarmRecorder.Instance;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -168,6 +174,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 var failedStatus = MapCommandStatus(commandResult.Status);
                 recorder.Update(StartSequenceStep, MapStepStatus(commandResult.Status), commandResult.Message, commandStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because controller did not accept inspection sequence execution.");
+                await RecordCommandAlarmAsync(commandResult, EquipmentArea.Equipment, cancellationToken).ConfigureAwait(false);
                 return Finish(failedStatus, commandResult.Message);
             }
 
@@ -213,6 +220,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             {
                 recorder.Update(GrabImageStep, MapCameraStepStatus(cameraGrabResult.Status), cameraGrabResult.Message, grabStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because camera grab did not produce a frame.");
+                await RecordCameraAlarmAsync(cameraGrabResult, cancellationToken).ConfigureAwait(false);
                 return Finish(MapCameraStatus(cameraGrabResult.Status), cameraGrabResult.Message);
             }
 
@@ -242,6 +250,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 var message = $"2D inspection failed: {ex.Message}";
                 recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Failed, message, visionStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because 2D inspection did not complete.");
+                await RecordInspectionAlarmAsync(message, commandRequest.CorrelationId.ToString(), cancellationToken).ConfigureAwait(false);
                 return Finish(InspectionRunStatus.VisionInspectionFailed, message);
             }
 
@@ -250,6 +259,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             {
                 recorder.Update(Inspect2DStep, InspectionSequenceStepStatus.Failed, visionResult.Message, visionStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because 2D inspection returned an invalid result.");
+                await RecordInspectionAlarmAsync(visionResult.Message, commandRequest.CorrelationId.ToString(), cancellationToken).ConfigureAwait(false);
                 return Finish(InspectionRunStatus.VisionInspectionFailed, visionResult.Message);
             }
 
@@ -279,6 +289,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 var message = $"3D inspection failed: {ex.Message}";
                 recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Failed, message, heightMapStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because 3D inspection did not complete.");
+                await RecordInspectionAlarmAsync(message, commandRequest.CorrelationId.ToString(), cancellationToken).ConfigureAwait(false);
                 return Finish(InspectionRunStatus.HeightMapInspectionFailed, message);
             }
 
@@ -287,6 +298,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             {
                 recorder.Update(Inspect3DStep, InspectionSequenceStepStatus.Failed, heightMapResult.Message, heightMapStopwatch.Elapsed);
                 recorder.SkipPending("Skipped because 3D inspection returned an invalid result.");
+                await RecordInspectionAlarmAsync(heightMapResult.Message, commandRequest.CorrelationId.ToString(), cancellationToken).ConfigureAwait(false);
                 return Finish(InspectionRunStatus.HeightMapInspectionFailed, heightMapResult.Message);
             }
 
@@ -342,6 +354,12 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 persistStopwatch.Stop();
                 var message = $"Inspection result persistence failed: {ex.Message}";
                 recorder.Update(PersistResultStep, InspectionSequenceStepStatus.Failed, message, persistStopwatch.Elapsed);
+                await _alarmRecorder.RecordFailureAsync(
+                    ErrorCode.PersistenceFailed,
+                    EquipmentArea.Database,
+                    message,
+                    commandRequest.CorrelationId.ToString(),
+                    cancellationToken).ConfigureAwait(false);
                 return Finish(InspectionRunStatus.ResultPersistenceFailed, message);
             }
 
@@ -362,6 +380,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
         {
             recorder.FailRunning($"Inspection run failed: {ex.Message}");
             recorder.SkipPending("Skipped because inspection run failed.");
+            await RecordInspectionAlarmAsync($"Inspection run failed: {ex.Message}", commandRequest?.CorrelationId.ToString(), cancellationToken).ConfigureAwait(false);
             return Finish(InspectionRunStatus.Failed, $"Inspection run failed: {ex.Message}");
         }
 
@@ -382,6 +401,54 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
                 startedAt,
                 _clock());
         }
+    }
+
+    private Task RecordCommandAlarmAsync(
+        MachineCommandResult result,
+        EquipmentArea area,
+        CancellationToken cancellationToken)
+    {
+        if (result.Status == CommandStatus.Cancelled || result.ErrorCode is not { } errorCode)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _alarmRecorder.RecordFailureAsync(
+            errorCode,
+            area,
+            result.Message,
+            result.CorrelationId.ToString(),
+            cancellationToken);
+    }
+
+    private Task RecordCameraAlarmAsync(
+        CameraGrabResult result,
+        CancellationToken cancellationToken)
+    {
+        if (result.Status == CameraGrabStatus.Cancelled || result.ErrorCode is not { } errorCode)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _alarmRecorder.RecordFailureAsync(
+            errorCode,
+            EquipmentArea.Camera,
+            result.Message,
+            result.CorrelationId.ToString(),
+            cancellationToken);
+    }
+
+    private Task RecordInspectionAlarmAsync(
+        string message,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        return _alarmRecorder.RecordFailureAsync(
+            ErrorCode.InspectionFailed,
+            EquipmentArea.Inspection,
+            message,
+            correlationId,
+            cancellationToken);
     }
 
     private VisionInspectionRequest CreateVisionInspectionRequest(

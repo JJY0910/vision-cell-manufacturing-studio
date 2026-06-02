@@ -1,5 +1,7 @@
 using FluentAssertions;
+using VisionCell.Application.Alarms;
 using VisionCell.Application.Motion;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
@@ -87,6 +89,28 @@ public sealed class MotionCommandUseCaseTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_Record_Alarm_For_Motion_Failure()
+    {
+        var controller = new FakeEquipmentController
+        {
+            ExecuteHandler = (_, _, _, _) => Task.FromResult(
+                MachineCommandResult.Timeout(ErrorCode.MotionTimeout, "Move timed out.", TimeSpan.FromSeconds(1), CorrelationId.New()))
+        };
+        var history = new CapturingMotionCommandHistoryRepository();
+        var alarmRecorder = new CapturingEquipmentAlarmRecorder();
+        var useCase = CreateUseCase(controller, history, alarmRecorder);
+
+        var execution = await useCase.ExecuteAsync(
+            new MotionCommandExecutionRequest(CommandKind.MoveAbsolute, ReadyManualContext(), TimeSpan.FromSeconds(1)),
+            CancellationToken.None);
+
+        alarmRecorder.Failures.Should().ContainSingle();
+        alarmRecorder.Failures[0].ErrorCode.Should().Be(ErrorCode.MotionTimeout);
+        alarmRecorder.Failures[0].Area.Should().Be(EquipmentArea.Motion);
+        alarmRecorder.Failures[0].CorrelationId.Should().Be(execution.Request.CorrelationId.ToString());
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_Reject_Unsupported_Command_Without_Controller_Call_And_Save_History()
     {
         var controller = new FakeEquipmentController();
@@ -140,12 +164,14 @@ public sealed class MotionCommandUseCaseTests
 
     private static MotionCommandUseCase CreateUseCase(
         IEquipmentController controller,
-        IMotionCommandHistoryRepository historyRepository)
+        IMotionCommandHistoryRepository historyRepository,
+        IEquipmentAlarmRecorder? alarmRecorder = null)
     {
         return new MotionCommandUseCase(
             controller,
             historyRepository,
-            () => new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero));
+            () => new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
+            alarmRecorder);
     }
 
     private static InterlockContext ReadyManualContext()
@@ -184,6 +210,27 @@ public sealed class MotionCommandUseCaseTests
             {
                 await OnSave(entry, cancellationToken).ConfigureAwait(false);
             }
+        }
+    }
+
+    private sealed class CapturingEquipmentAlarmRecorder : IEquipmentAlarmRecorder
+    {
+        public List<(ErrorCode ErrorCode, EquipmentArea Area, string Message, string? CorrelationId)> Failures { get; } = new();
+
+        public Task RecordAsync(EquipmentAlarm alarm, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RecordFailureAsync(
+            ErrorCode errorCode,
+            EquipmentArea area,
+            string message,
+            string? correlationId,
+            CancellationToken cancellationToken)
+        {
+            Failures.Add((errorCode, area, message, correlationId));
+            return Task.CompletedTask;
         }
     }
 

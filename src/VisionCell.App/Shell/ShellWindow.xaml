@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls"
+        xmlns:alarmViews="clr-namespace:VisionCell.App.Modules.Alarm.Views"
+        xmlns:alarmViewModels="clr-namespace:VisionCell.App.Modules.Alarm.ViewModels"
         xmlns:dashboardViews="clr-namespace:VisionCell.App.Modules.Dashboard.Views"
         xmlns:dashboardViewModels="clr-namespace:VisionCell.App.Modules.Dashboard.ViewModels"
         xmlns:equipmentViews="clr-namespace:VisionCell.App.Modules.Equipment.Views"
@@ -30,6 +32,9 @@
         MinHeight="768"
         Background="{DynamicResource Brush.AppBackground}">
   <Window.Resources>
+    <DataTemplate DataType="{x:Type alarmViewModels:AlarmViewModel}">
+      <alarmViews:AlarmView />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
       <dashboardViews:DashboardView />
     </DataTemplate>

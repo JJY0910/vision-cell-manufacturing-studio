@@ -12,6 +12,7 @@
 
 - [x] Dashboard shows connection status.
 - [x] Dashboard shows Machine Mode and Alarm status.
+- [x] AlarmView lists persisted alarm records and supports operator acknowledgement memo for simulator/Application failure paths.
 - [x] Dashboard shows Axis X/Y/Z/Theta state.
 - [x] Dashboard shows I/O bit state.
 - [x] Dashboard shows recent system events.

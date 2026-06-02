@@ -165,6 +165,8 @@ Current implementation status:
 - Result persistence now flows through Application `IInspectionResultRepository` and Persistence `SqliteInspectionResultRepository`, storing Judge, defect, timing, Recipe, and correlation metadata after Judge.
 - Artifact generation now flows through Application `IInspectionArtifactWriter` and Persistence `FileSystemInspectionArtifactWriter`, creating deterministic overlay and height-map BMP files during Persist Result.
 - Offline Debug now reads persisted inspection results through Application `IInspectionResultReader` and artifact metadata/preview pixels through `IInspectionArtifactReader`, displaying recent result metadata, defect rows, correlation IDs, artifact paths, artifact state, overlay preview, and height-map preview.
+- Alarm / Fault / Recovery now uses Core `EquipmentAlarm`, Application `IEquipmentAlarmRecorder`/`IAlarmCenterUseCase`, and Persistence `SqliteEquipmentAlarmRepository` so non-cancelled Motion, Camera, Inspection, and result persistence failures can be stored as recoverable alarm records.
+- AlarmView is registered through Shell navigation and displays recent alarm code, severity, equipment area, message, correlation ID, acknowledgement time, and operator action memo.
 - Simulator motion commands now preserve `MachineCommandRequest.CorrelationId` across success, rejected, timeout, cancelled, and stop results.
 - Rich live UI overlay rendering remains a separate follow-up slice.
 
@@ -206,4 +208,5 @@ User Button
 | Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
 | Native height-map vision | IHeightMapInspectionEngine | 3D sensor SDK/OpenCV DLL |
 | Inspection artifact storage | IInspectionArtifactWriter, IInspectionArtifactReader | PNG/export package writer and preview/metadata reader |
+| Alarm persistence | IEquipmentAlarmRepository, IEquipmentAlarmRecorder | PLC/vendor alarm adapter and recovery workflow |
 | AI classifier | IDefectClassifier | ONNX Runtime |

@@ -1,7 +1,9 @@
 using FluentAssertions;
+using VisionCell.Application.Alarms;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
@@ -129,7 +131,12 @@ public sealed class InspectionRunUseCaseTests
                 TimeSpan.FromMilliseconds(10),
                 request.CorrelationId))
         };
-        var useCase = CreateUseCase(new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)), controller, cameraDevice: camera);
+        var alarmRecorder = new CapturingEquipmentAlarmRecorder();
+        var useCase = CreateUseCase(
+            new FakeActiveRecipeContext(ActiveRecipeContextResult.Success(recipe)),
+            controller,
+            cameraDevice: camera,
+            alarmRecorder: alarmRecorder);
 
         var result = await useCase.RunAsync(CreateRequest() with { GrabTimeout = TimeSpan.FromMilliseconds(10) }, progress: null, CancellationToken.None);
 
@@ -142,6 +149,10 @@ public sealed class InspectionRunUseCaseTests
         camera.Requests[0].CorrelationId.Should().Be(result.Request!.CorrelationId);
         result.Steps.Should().Contain(step => step.Name == "Grab Image" && step.Status == InspectionSequenceStepStatus.Failed);
         result.Steps.Should().Contain(step => step.Name == "Inspect 2D" && step.Status == InspectionSequenceStepStatus.Skipped);
+        alarmRecorder.Failures.Should().ContainSingle();
+        alarmRecorder.Failures[0].ErrorCode.Should().Be(ErrorCode.CameraGrabTimeout);
+        alarmRecorder.Failures[0].Area.Should().Be(EquipmentArea.Camera);
+        alarmRecorder.Failures[0].CorrelationId.Should().Be(result.Request.CorrelationId.ToString());
     }
 
     [Fact]
@@ -394,7 +405,8 @@ public sealed class InspectionRunUseCaseTests
         IHeightMapInspectionEngine? heightMapInspectionEngine = null,
         SyntheticHeightMapFactory? syntheticHeightMapFactory = null,
         IInspectionArtifactWriter? inspectionArtifactWriter = null,
-        IInspectionResultRepository? inspectionResultRepository = null)
+        IInspectionResultRepository? inspectionResultRepository = null,
+        IEquipmentAlarmRecorder? alarmRecorder = null)
     {
         return new InspectionRunUseCase(
             activeRecipeContext,
@@ -407,7 +419,8 @@ public sealed class InspectionRunUseCaseTests
             syntheticHeightMapFactory ?? new SyntheticHeightMapFactory(),
             inspectionArtifactWriter ?? new FakeInspectionArtifactWriter(),
             inspectionResultRepository ?? new FakeInspectionResultRepository(),
-            () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
+            () => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero),
+            alarmRecorder);
     }
 
     private static InspectionRunRequest CreateRequest()
@@ -686,6 +699,27 @@ public sealed class InspectionRunUseCaseTests
                     ["RecipeId"] = request.RecipeId,
                     ["RecipeVersion"] = request.RecipeVersion
                 });
+        }
+    }
+
+    private sealed class CapturingEquipmentAlarmRecorder : IEquipmentAlarmRecorder
+    {
+        public List<(ErrorCode ErrorCode, EquipmentArea Area, string Message, string? CorrelationId)> Failures { get; } = new();
+
+        public Task RecordAsync(EquipmentAlarm alarm, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RecordFailureAsync(
+            ErrorCode errorCode,
+            EquipmentArea area,
+            string message,
+            string? correlationId,
+            CancellationToken cancellationToken)
+        {
+            Failures.Add((errorCode, area, message, correlationId));
+            return Task.CompletedTask;
         }
     }
 

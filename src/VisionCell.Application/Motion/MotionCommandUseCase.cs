@@ -1,3 +1,5 @@
+using VisionCell.Application.Alarms;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Primitives;
@@ -20,15 +22,18 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
 
     private readonly IEquipmentController _controller;
     private readonly IMotionCommandHistoryRepository _historyRepository;
+    private readonly IEquipmentAlarmRecorder _alarmRecorder;
     private readonly Func<DateTimeOffset> _clock;
 
     public MotionCommandUseCase(
         IEquipmentController controller,
         IMotionCommandHistoryRepository historyRepository,
-        Func<DateTimeOffset>? clock = null)
+        Func<DateTimeOffset>? clock = null,
+        IEquipmentAlarmRecorder? alarmRecorder = null)
     {
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
+        _alarmRecorder = alarmRecorder ?? NoopEquipmentAlarmRecorder.Instance;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -61,8 +66,28 @@ public sealed class MotionCommandUseCase : IMotionCommandUseCase
             _clock());
 
         await _historyRepository.SaveAsync(historyEntry, cancellationToken).ConfigureAwait(false);
+        await RecordAlarmIfNeededAsync(correlatedResult, cancellationToken).ConfigureAwait(false);
 
         return new MotionCommandExecutionResult(commandRequest, correlatedResult);
+    }
+
+    private Task RecordAlarmIfNeededAsync(
+        MachineCommandResult result,
+        CancellationToken cancellationToken)
+    {
+        if (result.IsSuccess ||
+            result.Status == CommandStatus.Cancelled ||
+            result.ErrorCode is not { } errorCode)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _alarmRecorder.RecordFailureAsync(
+            errorCode,
+            EquipmentArea.Motion,
+            result.Message,
+            result.CorrelationId.ToString(),
+            cancellationToken);
     }
 
     private async Task<MachineCommandResult> ExecuteControllerCommandAsync(

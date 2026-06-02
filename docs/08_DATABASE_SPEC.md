@@ -121,6 +121,29 @@ Implementation note:
 - `FileSystemInspectionArtifactWriter` also implements `IInspectionArtifactReader` so Offline Debug can read live artifact existence, size, modified-time metadata, and deterministic BMP preview pixels without direct WPF file I/O.
 - The columns remain nullable so failed or legacy partial records can still be represented without a destructive migration.
 
+### equipment_alarms
+
+```sql
+CREATE TABLE IF NOT EXISTS equipment_alarms (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  area TEXT NOT NULL,
+  message TEXT NOT NULL,
+  correlation_id TEXT NULL,
+  occurred_at TEXT NOT NULL,
+  acknowledged_at TEXT NULL,
+  action_memo TEXT NULL
+);
+```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `equipment_alarms` through migration id `006_equipment_alarms`.
+- `SqliteEquipmentAlarmRepository` implements `IEquipmentAlarmRepository` for save, latest-first list, and acknowledgement update.
+- Motion, Camera, Inspection, and result persistence failures can write alarm rows through Application `IEquipmentAlarmRecorder`.
+- `acknowledged_at` and `action_memo` are operator recovery state, not proof that a real controller alarm was reset.
+
 ### teaching_points
 
 ```sql
@@ -183,6 +206,7 @@ Implementation note:
 - `ITeachingHistoryRepository`
 - `IInspectionResultRepository`
 - `IMotionHistoryRepository`
+- `IEquipmentAlarmRepository`
 
 ## Data Retention
 

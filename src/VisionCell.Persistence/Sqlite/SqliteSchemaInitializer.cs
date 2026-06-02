@@ -9,6 +9,7 @@ public sealed class SqliteSchemaInitializer
     private const string TeachingHistoryMigrationId = "003_teaching_history";
     private const string RecipesMigrationId = "004_recipes";
     private const string InspectionResultsMigrationId = "005_inspection_results";
+    private const string EquipmentAlarmsMigrationId = "006_equipment_alarms";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -30,6 +31,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, RecipesMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateInspectionResultTablesAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, InspectionResultsMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateEquipmentAlarmsTableAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, EquipmentAlarmsMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -181,6 +184,32 @@ public sealed class SqliteSchemaInitializer
             """;
         command.Parameters.AddWithValue("$id", migrationId);
         command.Parameters.AddWithValue("$applied_at", DateTimeOffset.UtcNow.ToString("O"));
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateEquipmentAlarmsTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS equipment_alarms (
+              id TEXT PRIMARY KEY,
+              code TEXT NOT NULL,
+              severity TEXT NOT NULL,
+              area TEXT NOT NULL,
+              message TEXT NOT NULL,
+              correlation_id TEXT NULL,
+              occurred_at TEXT NOT NULL,
+              acknowledged_at TEXT NULL,
+              action_memo TEXT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ix_equipment_alarms_occurred_at
+              ON equipment_alarms (occurred_at DESC);
+
+            CREATE INDEX IF NOT EXISTS ix_equipment_alarms_acknowledged_at
+              ON equipment_alarms (acknowledged_at);
+            """;
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }

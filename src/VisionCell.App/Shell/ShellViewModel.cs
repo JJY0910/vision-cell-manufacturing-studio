@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Modules.Alarm.ViewModels;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 using VisionCell.App.Modules.Equipment.ViewModels;
 using VisionCell.App.Modules.Inspection.ViewModels;
@@ -23,6 +24,7 @@ public sealed partial class ShellViewModel : ObservableObject
 
     public ShellViewModel(
         INavigationService navigationService,
+        AlarmViewModel alarmViewModel,
         DashboardViewModel dashboardViewModel,
         EquipmentViewModel equipmentViewModel,
         MotionViewModel motionViewModel,
@@ -37,6 +39,7 @@ public sealed partial class ShellViewModel : ObservableObject
         _dashboardViewModel = dashboardViewModel;
 
         RegisterNavigationTargets(
+            alarmViewModel,
             dashboardViewModel,
             equipmentViewModel,
             motionViewModel,
@@ -55,6 +58,7 @@ public sealed partial class ShellViewModel : ObservableObject
             CreateNavigationItem("Teaching", "Teaching"),
             CreateNavigationItem("Recipe", "Recipe"),
             CreateNavigationItem("Inspection", "Inspection"),
+            CreateNavigationItem("Alarm", "Alarm"),
             CreateNavigationItem("OfflineDebug", "Offline Debug"),
             CreateNavigationItem("Reports", "Reports"),
             CreateNavigationItem("Settings", "Settings")
@@ -86,6 +90,7 @@ public sealed partial class ShellViewModel : ObservableObject
     }
 
     private void RegisterNavigationTargets(
+        AlarmViewModel alarmViewModel,
         DashboardViewModel dashboardViewModel,
         EquipmentViewModel equipmentViewModel,
         MotionViewModel motionViewModel,
@@ -96,6 +101,7 @@ public sealed partial class ShellViewModel : ObservableObject
         ReportsViewModel reportsViewModel,
         SettingsViewModel settingsViewModel)
     {
+        _navigationService.Register("Alarm", alarmViewModel);
         _navigationService.Register("Dashboard", dashboardViewModel);
         _navigationService.Register("Equipment", equipmentViewModel);
         _navigationService.Register("Motion", motionViewModel);

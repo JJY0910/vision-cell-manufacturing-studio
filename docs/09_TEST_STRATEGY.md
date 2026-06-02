@@ -80,6 +80,7 @@ tests/VisionCell.App.Tests
 - Persist result success path saves Judge, defect, timing, Recipe, and correlation metadata after Judge.
 - Persist result success path writes overlay and height-map artifact paths before SQLite save.
 - Persist result failure path returns explicit `ResultPersistenceFailed` status and failed Persist Result timeline state for artifact or repository failures.
+- Camera, 2D/3D inspection, controller start, and result persistence failure paths record alarm candidates through `IEquipmentAlarmRecorder`.
 
 ### Persistence
 
@@ -90,6 +91,7 @@ tests/VisionCell.App.Tests
 - Recent inspection result ordering and limit
 - Inspection artifact writer creates overlay and height-map BMP files with relative paths
 - Repository handles relative path
+- Insert/query/acknowledge equipment alarms
 
 ### WPF ViewModels
 
@@ -98,6 +100,7 @@ tests/VisionCell.App.Tests
 - Error event displayed
 - Navigation updates selected screen
 - Offline Debug result refresh shows loaded, empty, and repository failure states
+- AlarmView refresh and acknowledgement state updates
 
 ## Manual UI Acceptance
 

@@ -372,6 +372,14 @@ Requirement impact: FR-202, FR-220, FR-221, FR-200, NFR-004, NFR-006, NFR-TEST-0
 Priority: P1
 Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact metadata availability is addressed by ADR-0029; artifact preview and Re-inspect preparation are addressed by ADR-0030; actual re-inspection remains follow-up work.
 
+Date: 2026-06-02
+Source: Priority 2 Alarm / Fault / Recovery Center
+Problem: Alarm records can now be stored and acknowledged from simulator/Application failure paths, but real PLC/vendor alarm sources and hardware reset confirmation are not validated.
+Proposed improvement: After Hardware Adapter Boundary, connect real alarm-source adapters and distinguish operator acknowledgement from controller alarm reset confirmation.
+Requirement impact: FR-022, FR-043, FR-067, FR-141, FR-184, FR-201, FR-241, NFR-004, NFR-007
+Priority: P1
+Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; real hardware source integration remains follow-up work.
+
 Date: 2026-06-01
 Source: FR-221 Offline Debug artifact rendering
 Problem: Offline Debug can display artifact paths, live metadata status, and deterministic BMP previews, but it does not yet launch a safe file viewer or replay inspection parameters.
