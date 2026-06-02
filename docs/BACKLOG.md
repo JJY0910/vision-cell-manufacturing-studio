@@ -353,4 +353,20 @@ Problem: SQLite result rows can now store nullable overlay and height-map artifa
 Proposed improvement: Add deterministic overlay rendering and artifact path policy that writes generated overlays/height-map snapshots under a safe local-data subdirectory and records those paths in `inspection_results`.
 Requirement impact: FR-160, FR-162, FR-180, FR-200, NFR-004, NFR-008, NFR-TEST-001
 Priority: P0
-Status: In progress on `codex/feature/fr-200-inspection-artifacts`.
+Status: Addressed by ADR-0021 and PR #44.
+
+Date: 2026-06-01
+Source: FR-220 Offline Debug result browser
+Problem: Inspection results and artifact paths are persisted, but Offline Debug still needs a WPF surface to load and inspect historical rows.
+Proposed improvement: Bind OfflineDebugView to `IInspectionResultReader` so operators can refresh recent results, select one row, and inspect source/overlay/height-map paths plus defects.
+Requirement impact: FR-202, FR-220, FR-221, FR-200, NFR-004, NFR-006, NFR-TEST-001
+Priority: P1
+Status: In progress on `codex/feature/fr-221-offline-debug-results`.
+
+Date: 2026-06-01
+Source: FR-221 Offline Debug artifact rendering
+Problem: Offline Debug can display artifact paths, but it does not yet render BMP overlays/height maps or launch a safe file viewer.
+Proposed improvement: Add an artifact resolver/viewer boundary that maps relative artifact paths under the local data root, validates existence, and renders overlay/height-map previews in the Offline Debug workspace.
+Requirement impact: FR-202, FR-221, FR-222, FR-200, NFR-006, NFR-008, NFR-TEST-001
+Priority: P1
+Status: Open.

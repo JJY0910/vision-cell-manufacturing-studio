@@ -37,8 +37,8 @@
 - [ ] Inspection sequence runs end-to-end.
 - [ ] 2D inspection detects at least two defect types.
 - [ ] 3D height map inspection detects at least one defect type.
-- [ ] Inspection result persisted to SQLite.
-- [ ] Offline Debug loads result and re-inspects.
+- [x] Inspection result persisted to SQLite.
+- [ ] Offline Debug loads result and re-inspects. Result browsing is implemented; re-inspection remains open.
 - [ ] CSV export works.
 - [ ] GitHub Actions build/test works.
 - [ ] At least 20 meaningful tests exist.

@@ -169,6 +169,12 @@ Implementation status:
 - Re-inspect panel
 - Current vs previous result comparison
 
+Implementation status:
+
+- `OfflineDebugViewModel` loads recent persisted inspection result rows through `IInspectionResultReader`.
+- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, and selected defect rows.
+- Artifact file opening, image rendering, parameter replay, and re-inspection remain follow-up work.
+
 ### ReportsView
 
 - Lot summary

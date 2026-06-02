@@ -65,7 +65,7 @@ public sealed class DashboardAndShellViewModelTests
             CreateTeachingViewModel(),
             CreateRecipeViewModel(),
             CreateInspectionViewModel(),
-            new OfflineDebugViewModel(),
+            CreateOfflineDebugViewModel(),
             new ReportsViewModel(),
             new SettingsViewModel());
 
@@ -215,6 +215,64 @@ public sealed class DashboardAndShellViewModelTests
         motion.HasHistory.Should().BeFalse();
         motion.RecentCommands.Should().BeEmpty();
         motion.HistoryStatus.Should().Be("No motion command history");
+    }
+
+    [Fact]
+    public async Task OfflineDebug_RefreshResultsAsync_Should_Load_Recent_Result_State()
+    {
+        var createdAt = new DateTimeOffset(2026, 6, 1, 12, 30, 0, TimeSpan.Zero);
+        var offlineDebug = CreateOfflineDebugViewModel(new FakeInspectionResultReader(
+            CreateInspectionResultRecord(
+                Judgment.Fail,
+                createdAt,
+                new[]
+                {
+                    new InspectionDefectRecord("Missing", 0.91, "ROI-01", 10, 20, 30, 40, "Missing area.")
+                })));
+
+        await offlineDebug.RefreshResultsAsync(CancellationToken.None);
+
+        offlineDebug.HasResults.Should().BeTrue();
+        offlineDebug.Results.Should().ContainSingle();
+        offlineDebug.SelectedResult.Should().NotBeNull();
+        offlineDebug.SelectedResult!.Judgment.Should().Be(Judgment.Fail);
+        offlineDebug.SelectedResult.DefectCount.Should().Be(1);
+        offlineDebug.SelectedResult.OverlayImagePath.Should().Contain(".overlay.bmp");
+        offlineDebug.SelectedResult.HeightMapPath.Should().Contain(".height.bmp");
+        offlineDebug.SelectedResult.Defects.Should().ContainSingle(defect => defect.Type == "Missing" && defect.RoiId == "ROI-01");
+        offlineDebug.FailCount.Should().Be(1);
+        offlineDebug.PassCount.Should().Be(0);
+        offlineDebug.DefectCount.Should().Be(1);
+        offlineDebug.StatusText.Should().Be("1 inspection result records loaded");
+        offlineDebug.LastRefreshText.Should().NotBe("-");
+    }
+
+    [Fact]
+    public async Task OfflineDebug_RefreshResultsAsync_Should_Surface_Empty_State()
+    {
+        var offlineDebug = CreateOfflineDebugViewModel(new FakeInspectionResultReader());
+
+        await offlineDebug.RefreshResultsAsync(CancellationToken.None);
+
+        offlineDebug.HasResults.Should().BeFalse();
+        offlineDebug.Results.Should().BeEmpty();
+        offlineDebug.SelectedResult.Should().BeNull();
+        offlineDebug.StatusText.Should().Be("No inspection result records");
+    }
+
+    [Fact]
+    public async Task OfflineDebug_RefreshResultsAsync_Should_Surface_Reader_Failure()
+    {
+        var offlineDebug = CreateOfflineDebugViewModel(new FakeInspectionResultReader
+        {
+            ListHandler = (_, _) => throw new InvalidOperationException("result store unavailable")
+        });
+
+        await offlineDebug.RefreshResultsAsync(CancellationToken.None);
+
+        offlineDebug.StatusText.Should().Contain("result store unavailable");
+        offlineDebug.HasResults.Should().BeFalse();
+        offlineDebug.Results.Should().BeEmpty();
     }
 
     [Fact]
@@ -910,6 +968,12 @@ public sealed class DashboardAndShellViewModelTests
             libraryUseCase ?? new FakeRecipeLibraryUseCase());
     }
 
+    private static OfflineDebugViewModel CreateOfflineDebugViewModel(
+        FakeInspectionResultReader? resultReader = null)
+    {
+        return new OfflineDebugViewModel(resultReader ?? new FakeInspectionResultReader());
+    }
+
     private static RecipeIndexEntry CreateRecipeIndexEntry(
         string recipeId,
         string version,
@@ -1037,6 +1101,29 @@ public sealed class DashboardAndShellViewModelTests
             },
             timestamp,
             timestamp.AddMilliseconds(12));
+    }
+
+    private static InspectionResultRecord CreateInspectionResultRecord(
+        Judgment judgment,
+        DateTimeOffset createdAt,
+        IReadOnlyList<InspectionDefectRecord>? defects = null)
+    {
+        var resultId = Guid.NewGuid();
+        var resolvedDefects = defects ?? Array.Empty<InspectionDefectRecord>();
+        return new InspectionResultRecord(
+            resultId,
+            CorrelationId.New().ToString(),
+            "LOT-20260601123000",
+            "RCP-OFFLINE",
+            "1.0.0",
+            judgment,
+            resolvedDefects.Count == 0 ? "No defects" : $"{resolvedDefects.Count} defect(s)",
+            $"camera-frame://VirtualCamera/{resultId:N}",
+            $"inspection-artifacts/20260601/{resultId:N}.overlay.bmp",
+            $"inspection-artifacts/20260601/{resultId:N}.height.bmp",
+            TimeSpan.FromMilliseconds(123),
+            createdAt,
+            resolvedDefects);
     }
 
     private static CameraFrame CreateCameraFrame(string recipeId, string version)
@@ -1296,6 +1383,30 @@ public sealed class DashboardAndShellViewModelTests
         public Task<IReadOnlyList<MotionCommandHistoryRecord>> ListRecentAsync(int limit, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<MotionCommandHistoryRecord>>(_records.Take(limit).ToArray());
+        }
+    }
+
+    private sealed class FakeInspectionResultReader : IInspectionResultReader
+    {
+        private readonly IReadOnlyList<InspectionResultRecord> _records;
+
+        public FakeInspectionResultReader(params InspectionResultRecord[] records)
+        {
+            _records = records;
+        }
+
+        public Func<int, CancellationToken, Task<IReadOnlyList<InspectionResultRecord>>>? ListHandler { get; init; }
+
+        public Task<IReadOnlyList<InspectionResultRecord>> ListRecentAsync(
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            if (ListHandler is not null)
+            {
+                return ListHandler(limit, cancellationToken);
+            }
+
+            return Task.FromResult<IReadOnlyList<InspectionResultRecord>>(_records.Take(limit).ToArray());
         }
     }
 
