@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Inspection;
 using VisionCell.Vision.Inspection;
 
@@ -33,6 +34,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusText = "Inspection results not loaded";
+
+    [ObservableProperty]
+    private string? _alertMessage;
 
     [ObservableProperty]
     private OfflineInspectionResultItemViewModel? _selectedResult;
@@ -69,6 +73,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     [ObservableProperty]
     private InspectionReinspectPreparation? _preparedReinspect;
+
+    public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
 
     public async Task RefreshResultsAsync(CancellationToken cancellationToken)
     {
@@ -123,6 +129,26 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         PrepareReinspectCommand.NotifyCanExecuteChanged();
     }
 
+    partial void OnStatusTextChanged(string value)
+    {
+        UpdateAlertMessage();
+    }
+
+    partial void OnArtifactPreviewStatusTextChanged(string value)
+    {
+        UpdateAlertMessage();
+    }
+
+    partial void OnReinspectStatusTextChanged(string value)
+    {
+        UpdateAlertMessage();
+    }
+
+    partial void OnAlertMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasAlert));
+    }
+
     partial void OnSelectedResultChanged(OfflineInspectionResultItemViewModel? value)
     {
         OverlayPreviewImageSource = null;
@@ -136,6 +162,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             : "Re-inspect not prepared";
         LoadSelectedArtifactsCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
+    }
+
+    private void UpdateAlertMessage()
+    {
+        AlertMessage =
+            OperatorAlertClassifier.GetAlertMessage(StatusText) ??
+            OperatorAlertClassifier.GetAlertMessage(ArtifactPreviewStatusText) ??
+            OperatorAlertClassifier.GetAlertMessage(ReinspectStatusText);
     }
 
     public async Task LoadSelectedArtifactsAsync(CancellationToken cancellationToken)

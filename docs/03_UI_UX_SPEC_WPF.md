@@ -70,7 +70,8 @@ Implementation status:
 - `IoBitIndicator` is implemented and reused by Dashboard and Equipment I/O monitor rows.
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
 - `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces.
-- `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
+- `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
+- `RoiOverlayCanvas` and `CommandBar` remain follow-up reusable control extractions.
 
 ## Screens
 

@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Recipes;
 using VisionCell.Equipment.Cameras;
@@ -38,6 +39,9 @@ public sealed partial class InspectionViewModel : ObservableObject
     private string _statusText = "Inspection sequence not started";
 
     [ObservableProperty]
+    private string? _alertMessage;
+
+    [ObservableProperty]
     private string _activeRecipeText = "-";
 
     [ObservableProperty]
@@ -57,6 +61,8 @@ public sealed partial class InspectionViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isBusy;
+
+    public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
 
     public async Task RefreshActiveRecipeAsync(CancellationToken cancellationToken)
     {
@@ -124,6 +130,16 @@ public sealed partial class InspectionViewModel : ObservableObject
         RefreshActiveRecipeCommand.NotifyCanExecuteChanged();
         RunInspectionCommand.NotifyCanExecuteChanged();
         StopInspectionCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnStatusTextChanged(string value)
+    {
+        AlertMessage = OperatorAlertClassifier.GetAlertMessage(value);
+    }
+
+    partial void OnAlertMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasAlert));
     }
 
     private void StopInspection()
