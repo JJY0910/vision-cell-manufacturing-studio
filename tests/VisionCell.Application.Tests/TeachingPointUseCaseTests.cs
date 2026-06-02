@@ -105,6 +105,34 @@ public sealed class TeachingPointUseCaseTests
     }
 
     [Fact]
+    public async Task ListHistoryAsync_Should_Delegate_To_History_Repository_With_Limit()
+    {
+        var point = TeachingPointFactory.Create(
+            "History",
+            TeachingRole.Camera,
+            new Position4D(1.0, 2.0, 3.0, 4.0),
+            PositionTolerance.Default).Point!;
+        var historyRepository = new InMemoryTeachingHistoryRepository();
+        var entry = TeachingHistoryEntry.Create(
+            point.Id,
+            "RCP-HISTORY",
+            TeachingHistoryAction.Updated,
+            beforeJson: "{}",
+            afterJson: "{\"name\":\"History\"}",
+            clock: () => new DateTimeOffset(2026, 6, 1, 8, 0, 0, TimeSpan.Zero));
+        historyRepository.Entries.Add(entry);
+        var useCase = CreateUseCase(
+            new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)),
+            new InMemoryTeachingPointRepository(),
+            historyRepository: historyRepository);
+
+        var entries = await useCase.ListHistoryAsync(point.Id, 5, CancellationToken.None);
+
+        entries.Should().ContainSingle().Which.Should().Be(entry);
+        historyRepository.ListRequests.Should().ContainSingle().Which.Should().Be((point.Id, 5));
+    }
+
+    [Fact]
     public async Task SaveCurrentPositionAsync_Should_Reject_Duplicate_Name_Before_Save()
     {
         var controller = new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0));
@@ -458,6 +486,7 @@ public sealed class TeachingPointUseCaseTests
     private sealed class InMemoryTeachingHistoryRepository : ITeachingHistoryRepository
     {
         public List<TeachingHistoryEntry> Entries { get; } = new();
+        public List<(Guid TeachingPointId, int Limit)> ListRequests { get; } = new();
         public Func<TeachingHistoryEntry, CancellationToken, Task>? SaveHandler { get; init; }
 
         public async Task SaveAsync(TeachingHistoryEntry entry, CancellationToken cancellationToken)
@@ -476,6 +505,7 @@ public sealed class TeachingPointUseCaseTests
             int limit,
             CancellationToken cancellationToken)
         {
+            ListRequests.Add((teachingPointId, limit));
             return Task.FromResult<IReadOnlyList<TeachingHistoryEntry>>(
                 Entries
                     .Where(entry => entry.TeachingPointId == teachingPointId)

@@ -16,7 +16,6 @@ public sealed partial class TeachingViewModel : ObservableObject
     private const int TeachingPointLimit = 50;
     private const int TeachingHistoryLimit = 12;
     private readonly ITeachingPointUseCase _teachingPointUseCase;
-    private readonly ITeachingHistoryRepository _historyRepository;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IActiveRecipeContext _activeRecipeContext;
     private int _historyRefreshVersion;
@@ -24,12 +23,10 @@ public sealed partial class TeachingViewModel : ObservableObject
 
     public TeachingViewModel(
         ITeachingPointUseCase teachingPointUseCase,
-        ITeachingHistoryRepository historyRepository,
         IUserConfirmationService confirmationService,
         IActiveRecipeContext activeRecipeContext)
     {
         _teachingPointUseCase = teachingPointUseCase ?? throw new ArgumentNullException(nameof(teachingPointUseCase));
-        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
@@ -292,7 +289,7 @@ public sealed partial class TeachingViewModel : ObservableObject
 
         try
         {
-            var entries = await _historyRepository.ListByPointAsync(
+            var entries = await _teachingPointUseCase.ListHistoryAsync(
                 selected.Id,
                 TeachingHistoryLimit,
                 cancellationToken).ConfigureAwait(true);

@@ -155,6 +155,7 @@ Current implementation status:
 - Dashboard equipment actions now flow through Application `IEquipmentDashboardUseCase`, which coordinates command availability, connect/disconnect, Manual/Auto mode commands, snapshot refresh, timeout/cancellation, and event projection before WPF state binding.
 - Motion panel snapshot refresh and command availability now flow through Application `IMotionPanelUseCase`; Motion command execution remains in `IMotionCommandUseCase` with correlated history persistence.
 - Teaching Go To now reads equipment snapshots and builds motion interlock context inside Application `ITeachingPointUseCase`; WPF passes only the selected Teaching point and timeouts.
+- Teaching selected-point history reads now flow through Application `ITeachingPointUseCase.ListHistoryAsync`; WPF formats selected history rows only.
 - Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
 - Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
 - 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.

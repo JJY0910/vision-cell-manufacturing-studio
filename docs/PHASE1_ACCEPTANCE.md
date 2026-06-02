@@ -27,6 +27,7 @@
 ## Teaching
 
 - [x] Teaching Go To snapshot/interlock orchestration flows through an Application use case.
+- [x] Teaching selected-point history reads flow through an Application use case.
 
 ## Simulator
 

@@ -8,6 +8,11 @@ public interface ITeachingPointUseCase
         int limit,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<TeachingHistoryEntry>> ListHistoryAsync(
+        Guid teachingPointId,
+        int limit,
+        CancellationToken cancellationToken);
+
     Task<TeachingPointSaveResult> SaveCurrentPositionAsync(
         TeachingPointSaveRequest request,
         CancellationToken cancellationToken);
