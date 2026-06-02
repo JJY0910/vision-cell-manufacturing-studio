@@ -152,6 +152,7 @@ Current implementation status:
 
 - `InspectionRunUseCase` owns the first Application-layer inspection sequence boundary.
 - The use case validates active Recipe context, loads the Recipe document, evaluates Run Inspection interlocks, submits a correlated controller command, moves to the Recipe Camera Teaching point through `IMotionCommandUseCase`, and returns ordered timeline state for WPF binding.
+- Dashboard equipment actions now flow through Application `IEquipmentDashboardUseCase`, which coordinates command availability, connect/disconnect, Manual/Auto mode commands, snapshot refresh, timeout/cancellation, and event projection before WPF state binding.
 - Dashboard exposes simulator Manual/Auto mode transitions through backend `CommandKind.EnterManualMode` and `CommandKind.EnterAutoMode` interlocks.
 - Camera grab now flows through `ICameraDevice` and `VirtualCameraDevice`, using Recipe camera settings and returning a correlated synthetic Gray8 frame to the Inspection UI.
 - 2D inspection now flows through `IVisionInspectionEngine` and `Deterministic2DInspectionEngine`, using Recipe ROI and 2D parameters before Judge.

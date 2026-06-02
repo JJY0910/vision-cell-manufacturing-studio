@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.App;
+using VisionCell.Application.Equipment;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
@@ -41,7 +42,7 @@ public sealed class DashboardAndShellViewModelTests
     [Fact]
     public async Task Dashboard_ConnectAsync_Should_Surface_Connection_Axis_Io_And_EventLog_State()
     {
-        var dashboard = new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService());
+        var dashboard = CreateDashboardViewModel();
 
         await dashboard.ConnectAsync(CancellationToken.None);
 
@@ -59,7 +60,7 @@ public sealed class DashboardAndShellViewModelTests
     {
         var shell = new ShellViewModel(
             new NavigationService(),
-            new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService()),
+            CreateDashboardViewModel(),
             new EquipmentViewModel(),
             CreateMotionViewModel(),
             CreateTeachingViewModel(),
@@ -142,7 +143,7 @@ public sealed class DashboardAndShellViewModelTests
     [Fact]
     public void Dashboard_Initial_State_Should_Disable_Dangerous_Commands()
     {
-        var dashboard = new DashboardViewModel(new VirtualEquipmentController(), new CommandInterlockService());
+        var dashboard = CreateDashboardViewModel();
 
         dashboard.GetCommandAvailability(CommandKind.Connect).IsEnabled.Should().BeTrue();
         dashboard.GetCommandAvailability(CommandKind.Home).IsEnabled.Should().BeFalse();
@@ -165,7 +166,7 @@ public sealed class DashboardAndShellViewModelTests
 
             return Task.FromResult(MachineCommandResult.Success("Machine mode changed to Auto.", TimeSpan.FromMilliseconds(12), CorrelationId.New()));
         };
-        var dashboard = new DashboardViewModel(controller, new CommandInterlockService());
+        var dashboard = CreateDashboardViewModel(controller);
 
         await dashboard.RefreshAsync(CancellationToken.None);
         dashboard.EnterAutoModeCommand.CanExecute(null).Should().BeTrue();
@@ -922,6 +923,13 @@ public sealed class DashboardAndShellViewModelTests
         parameters.Should().Contain("Axis", "Y");
         parameters.Should().Contain("Direction", "-");
         parameters.Should().Contain("Step", "2.5");
+    }
+
+    private static DashboardViewModel CreateDashboardViewModel(IEquipmentController? equipmentController = null)
+    {
+        return new DashboardViewModel(new EquipmentDashboardUseCase(
+            equipmentController ?? new VirtualEquipmentController(),
+            new CommandInterlockService()));
     }
 
     private static MotionViewModel CreateMotionViewModel(
