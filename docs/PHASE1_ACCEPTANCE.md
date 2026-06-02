@@ -19,6 +19,11 @@
 - [x] Dashboard equipment command orchestration flows through an Application use case.
 - [ ] Dashboard polish review is complete on a real display.
 
+## Motion
+
+- [x] Motion snapshot refresh and command availability flow through an Application use case.
+- [x] Motion command execution remains traceable through Application command history.
+
 ## Simulator
 
 - [x] Simulator supports Connect.

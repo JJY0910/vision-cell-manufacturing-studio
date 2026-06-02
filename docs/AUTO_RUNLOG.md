@@ -391,3 +391,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 72 tests; App targeted tests passed with 38 tests; Debug/Release solution build and test passed with 195 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice cleans Dashboard equipment command orchestration only; Motion, Teaching, Recipe, and Inspection view-model cleanup remain follow-up work.
+
+## 2026-06-02 10:31 - In progress
+- Branch: `feature/fr-063-motion-application-boundary`
+- Scope: Move MotionView snapshot refresh and command availability behind Application `IMotionPanelUseCase`, while keeping command execution in `IMotionCommandUseCase`.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 75 tests; App targeted tests passed with 40 tests; Debug/Release solution build and test passed with 198 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: Motion input parsing remains in WPF by design for this slice; Teaching, Recipe, and Inspection view-model cleanup remain follow-up work.
