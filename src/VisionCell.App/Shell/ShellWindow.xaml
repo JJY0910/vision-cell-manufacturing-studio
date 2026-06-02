@@ -75,17 +75,57 @@
     </Grid.ColumnDefinitions>
 
     <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.TopBar}" Padding="20,0">
-      <DockPanel LastChildFill="True">
-        <TextBlock DockPanel.Dock="Left" Text="VISIONCELL" Style="{DynamicResource Text.Logo}" VerticalAlignment="Center" />
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="Mode:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
-          <TextBlock Text="{Binding ModeStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
-          <TextBlock Text="Controller:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
-          <TextBlock Text="{Binding ConnectionStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
-          <TextBlock Text="{Binding ActiveRecipeStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,16,0" />
-          <TextBlock Text="Alarm:" Style="{DynamicResource Text.Status}" Margin="0,0,6,0" />
-          <TextBlock Text="{Binding AlarmStatus}" Style="{DynamicResource Text.StatusStrong}" />
+      <DockPanel LastChildFill="False">
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="VISIONCELL" Style="{DynamicResource Text.Logo}" VerticalAlignment="Center" />
+          <Border Style="{DynamicResource TopBar.StatusChip}"
+                  MinWidth="148"
+                  ToolTip="Current workspace screen.">
+            <StackPanel>
+              <TextBlock Text="SCREEN" Style="{DynamicResource Text.TopBarLabel}" />
+              <TextBlock Text="{Binding CurrentScreenTitle}"
+                         Style="{DynamicResource Text.TopBarValue}"
+                         MaxWidth="128" />
+            </StackPanel>
+          </Border>
         </StackPanel>
+        <WrapPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <Border Style="{DynamicResource TopBar.StatusChip}" ToolTip="Current machine mode.">
+            <StackPanel>
+              <TextBlock Text="MODE" Style="{DynamicResource Text.TopBarLabel}" />
+              <TextBlock Text="{Binding ModeStatus}"
+                         Style="{DynamicResource Text.TopBarValue}"
+                         MaxWidth="92" />
+            </StackPanel>
+          </Border>
+          <Border Style="{DynamicResource TopBar.StatusChip}" ToolTip="Controller connection state.">
+            <StackPanel>
+              <TextBlock Text="CONTROLLER" Style="{DynamicResource Text.TopBarLabel}" />
+              <TextBlock Text="{Binding ConnectionStatus}"
+                         Style="{DynamicResource Text.TopBarValue}"
+                         MaxWidth="116" />
+            </StackPanel>
+          </Border>
+          <Border Style="{DynamicResource TopBar.StatusChip}"
+                  MinWidth="180"
+                  MaxWidth="260"
+                  ToolTip="{Binding ActiveRecipeStatus}">
+            <StackPanel>
+              <TextBlock Text="ACTIVE RECIPE" Style="{DynamicResource Text.TopBarLabel}" />
+              <TextBlock Text="{Binding ActiveRecipeStatus}"
+                         Style="{DynamicResource Text.TopBarValue}"
+                         MaxWidth="220" />
+            </StackPanel>
+          </Border>
+          <Border Style="{DynamicResource TopBar.StatusChip}" ToolTip="Current alarm summary.">
+            <StackPanel>
+              <TextBlock Text="ALARM" Style="{DynamicResource Text.TopBarLabel}" />
+              <TextBlock Text="{Binding AlarmStatus}"
+                         Style="{DynamicResource Text.TopBarValue}"
+                         MaxWidth="116" />
+            </StackPanel>
+          </Border>
+        </WrapPanel>
       </DockPanel>
     </Border>
 
@@ -97,6 +137,7 @@
             <DataTemplate>
               <Button Content="{Binding Title}"
                       Command="{Binding NavigateCommand}"
+                      ToolTip="{Binding Title}"
                       Style="{DynamicResource Button.Nav}" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>

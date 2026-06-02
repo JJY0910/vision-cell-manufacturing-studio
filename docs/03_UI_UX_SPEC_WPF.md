@@ -205,6 +205,8 @@ Implementation status:
 - Motion and Teaching command editors use wrapping field groups instead of fixed-width single-row grids so operator inputs remain reachable when the workspace is constrained.
 - InspectionView now has vertical scrolling so sequence timeline and image evidence remain reachable in smaller windows.
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
+- Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
+- Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.
 - This pass is a local WPF layout quality slice. It does not claim final shop-floor monitor, touch-panel, or real equipment HMI acceptance.
 
 ### ReportsView

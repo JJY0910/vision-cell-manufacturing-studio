@@ -80,6 +80,7 @@ public sealed class DashboardAndShellViewModelTests
         motionItem.NavigateCommand.Execute(null);
 
         shell.CurrentViewModel.Should().BeOfType<MotionViewModel>();
+        shell.CurrentScreenTitle.Should().Be("Motion");
         motionItem.IsSelected.Should().BeTrue();
         shell.NavigationItems.Should().Contain(item => item.Key == "Alarm");
     }
