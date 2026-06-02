@@ -457,9 +457,7 @@ public sealed class DashboardAndShellViewModelTests
             new Position4D(1.0, 2.0, 3.0, 4.0),
             PositionTolerance.Default).Point!;
         var useCase = new FakeTeachingPointUseCase(point);
-        var teaching = CreateTeachingViewModel(
-            useCase,
-            new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)));
+        var teaching = CreateTeachingViewModel(useCase);
 
         await teaching.RefreshAsync(CancellationToken.None);
         teaching.SelectedPoint = teaching.Points.Single();
@@ -467,7 +465,8 @@ public sealed class DashboardAndShellViewModelTests
 
         useCase.GoToRequests.Should().ContainSingle();
         useCase.GoToRequests[0].TeachingPointId.Should().Be(point.Id);
-        useCase.GoToRequests[0].InterlockContext.ServoOn.Should().BeTrue();
+        useCase.GoToRequests[0].SnapshotTimeout.Should().Be(TimeSpan.FromMilliseconds(500));
+        useCase.GoToRequests[0].CommandTimeout.Should().Be(TimeSpan.FromSeconds(3));
         teaching.StatusText.Should().Contain("completed");
     }
 
@@ -981,7 +980,6 @@ public sealed class DashboardAndShellViewModelTests
 
     private static TeachingViewModel CreateTeachingViewModel(
         FakeTeachingPointUseCase? useCase = null,
-        FakeEquipmentController? equipmentController = null,
         FakeUserConfirmationService? confirmationService = null,
         FakeTeachingHistoryRepository? historyRepository = null,
         FakeActiveRecipeContext? activeRecipeContext = null)
@@ -989,7 +987,6 @@ public sealed class DashboardAndShellViewModelTests
         return new TeachingViewModel(
             useCase ?? new FakeTeachingPointUseCase(),
             historyRepository ?? new FakeTeachingHistoryRepository(),
-            equipmentController ?? new FakeEquipmentController(CreateSnapshot(connected: true, servoOn: true, homed: true)),
             confirmationService ?? new FakeUserConfirmationService(true),
             activeRecipeContext ?? new FakeActiveRecipeContext());
     }
@@ -1566,7 +1563,7 @@ public sealed class DashboardAndShellViewModelTests
             var commandRequest = new MachineCommandRequest(
                 "Move Absolute",
                 CorrelationId.New(),
-                request.Timeout,
+                request.CommandTimeout,
                 DateTimeOffset.UtcNow,
                 new Dictionary<string, string>());
             var commandResult = MachineCommandResult.Success(

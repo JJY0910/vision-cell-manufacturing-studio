@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VisionCell.Application.Interlocks;
 using VisionCell.Application.Motion;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Primitives;
@@ -296,7 +297,8 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        EnsurePositiveTimeout(request.Timeout, nameof(request.Timeout));
+        EnsurePositiveTimeout(request.SnapshotTimeout, nameof(request.SnapshotTimeout));
+        EnsurePositiveTimeout(request.CommandTimeout, nameof(request.CommandTimeout));
 
         TeachingPoint? point;
         try
@@ -317,11 +319,24 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
                 $"Teaching point '{request.TeachingPointId}' was not found.");
         }
 
+        EquipmentSnapshot snapshot;
+        try
+        {
+            snapshot = await _controller.GetSnapshotAsync(request.SnapshotTimeout, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return TeachingPointGoToResult.Failure(
+                TeachingPointOperationStatus.SnapshotUnavailable,
+                $"Unable to read equipment state for Go To Teaching Point: {ex.Message}",
+                point);
+        }
+
         var target = CreateMoveTarget(point);
         var executionRequest = new MotionCommandExecutionRequest(
             CommandKind.MoveAbsolute,
-            request.InterlockContext,
-            request.Timeout,
+            EquipmentSnapshotInterlockContextFactory.Create(snapshot),
+            request.CommandTimeout,
             target.ToParameters());
 
         try

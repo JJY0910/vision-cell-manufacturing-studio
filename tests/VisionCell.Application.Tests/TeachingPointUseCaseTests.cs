@@ -378,7 +378,7 @@ public sealed class TeachingPointUseCaseTests
         var useCase = CreateUseCase(new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)), repository, motion);
 
         var result = await useCase.GoToAsync(
-            new TeachingPointGoToRequest(point.Id, ReadyManualContext(), TimeSpan.FromSeconds(2)),
+            new TeachingPointGoToRequest(point.Id, TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2)),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -386,6 +386,9 @@ public sealed class TeachingPointUseCaseTests
         motion.Requests.Should().ContainSingle();
         motion.Requests[0].Command.Should().Be(CommandKind.MoveAbsolute);
         motion.Requests[0].Timeout.Should().Be(TimeSpan.FromSeconds(2));
+        motion.Requests[0].InterlockContext.Connected.Should().BeTrue();
+        motion.Requests[0].InterlockContext.ServoOn.Should().BeTrue();
+        motion.Requests[0].InterlockContext.AllRequiredAxesHomed.Should().BeTrue();
         motion.Requests[0].Parameters.Should().Contain("X", "11");
         motion.Requests[0].Parameters.Should().Contain("Y", "12");
         motion.Requests[0].Parameters.Should().Contain("Z", "13");
@@ -402,11 +405,39 @@ public sealed class TeachingPointUseCaseTests
         var useCase = CreateUseCase(new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0)), repository, motion);
 
         var result = await useCase.GoToAsync(
-            new TeachingPointGoToRequest(Guid.NewGuid(), ReadyManualContext(), TimeSpan.FromSeconds(1)),
+            new TeachingPointGoToRequest(Guid.NewGuid(), TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(1)),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(TeachingPointOperationStatus.NotFound);
+        motion.Requests.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GoToAsync_Should_Return_SnapshotUnavailable_When_Snapshot_Read_Fails()
+    {
+        var point = TeachingPointFactory.Create(
+            "Review",
+            TeachingRole.Review,
+            new Position4D(11.0, 12.0, 13.0, 14.0),
+            PositionTolerance.Default).Point!;
+        var repository = new InMemoryTeachingPointRepository();
+        repository.Points[point.Id] = point;
+        var motion = new CapturingMotionCommandUseCase();
+        var controller = new SnapshotEquipmentController(CreateSnapshot(0.0, 0.0, 0.0, 0.0))
+        {
+            SnapshotHandler = (_, _) => throw new InvalidOperationException("controller unavailable")
+        };
+        var useCase = CreateUseCase(controller, repository, motion);
+
+        var result = await useCase.GoToAsync(
+            new TeachingPointGoToRequest(point.Id, TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(1)),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(TeachingPointOperationStatus.SnapshotUnavailable);
+        result.Point.Should().Be(point);
+        result.Message.Should().Contain("controller unavailable");
         motion.Requests.Should().BeEmpty();
     }
 
@@ -458,6 +489,8 @@ public sealed class TeachingPointUseCaseTests
         var axes = AxisDefaults.CreatePowerOffAxes()
             .Select(axis => axis with
             {
+                ServoOn = true,
+                IsHomed = true,
                 Position = axis.AxisId switch
                 {
                     AxisId.X => x,
@@ -484,29 +517,6 @@ public sealed class TeachingPointUseCaseTests
             new CameraSnapshot(true, "Virtual camera", timestamp),
             Alarm: null,
             timestamp);
-    }
-
-    private static InterlockContext ReadyManualContext()
-    {
-        return new InterlockContext(
-            Connected: true,
-            ControllerBusy: false,
-            SequenceRunning: false,
-            EmergencyStopActive: false,
-            DoorClosed: true,
-            SafetyOk: true,
-            ManualMode: true,
-            AutoMode: false,
-            ServoOn: true,
-            AxisHomed: true,
-            AllRequiredAxesHomed: true,
-            AxisBusy: false,
-            AxisAlarm: false,
-            WithinSoftLimit: true,
-            RecipeLoaded: true,
-            CameraConnected: true,
-            IoReady: true,
-            AlarmActive: false);
     }
 
     private sealed class InMemoryTeachingPointRepository : ITeachingPointRepository
@@ -584,9 +594,13 @@ public sealed class TeachingPointUseCaseTests
             _snapshot = snapshot;
         }
 
+        public Func<TimeSpan, CancellationToken, Task<EquipmentSnapshot>>? SnapshotHandler { get; init; }
+
         public Task<EquipmentSnapshot> GetSnapshotAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_snapshot);
+            return SnapshotHandler is not null
+                ? SnapshotHandler(timeout, cancellationToken)
+                : Task.FromResult(_snapshot);
         }
 
         public Task<MachineCommandResult> ConnectAsync(TimeSpan timeout, CancellationToken cancellationToken)
