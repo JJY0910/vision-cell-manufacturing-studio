@@ -20,6 +20,22 @@ namespace VisionCell_Application_Tests;
 public sealed class InspectionRunUseCaseTests
 {
     [Fact]
+    public async Task PrecheckActiveRecipeAsync_Should_Return_Active_Context_Result()
+    {
+        var recipe = CreateRecipeIndexEntry("RCP-PRECHECK", "1.0.0");
+        var expected = ActiveRecipeContextResult.Success(recipe);
+        var activeRecipeContext = new FakeActiveRecipeContext(expected);
+        var useCase = CreateUseCase(
+            activeRecipeContext,
+            new FakeEquipmentController(CreateSnapshot(MachineMode.Auto, connected: true, servoOn: true, homed: true)));
+
+        var result = await useCase.PrecheckActiveRecipeAsync(CancellationToken.None);
+
+        result.Should().Be(expected);
+        activeRecipeContext.RequestCount.Should().Be(1);
+    }
+
+    [Fact]
     public async Task RunAsync_Should_Submit_RunInspection_When_ActiveRecipe_And_Interlocks_Are_Ready()
     {
         var recipe = CreateRecipeIndexEntry("RCP-AUTO", "1.0.0");
@@ -497,8 +513,11 @@ public sealed class InspectionRunUseCaseTests
             _result = result;
         }
 
+        public int RequestCount { get; private set; }
+
         public Task<ActiveRecipeContextResult> GetActiveAsync(CancellationToken cancellationToken)
         {
+            RequestCount++;
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(_result);
         }

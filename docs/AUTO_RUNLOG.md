@@ -419,3 +419,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 81 tests; App targeted tests passed with 40 tests. Debug/Release solution build and test passed with 206 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice keeps WPF editor parsing and Recipe row formatting in the ViewModel; Inspection view-model cleanup remains follow-up work.
+
+## 2026-06-02 12:53 - In progress
+- Branch: `feature/fr-180-inspection-precheck-usecase-boundary`
+- Scope: Move InspectionView active Recipe precheck behind Application `IInspectionRunUseCase`, removing direct active Recipe context injection from WPF.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 82 tests; App targeted tests passed with 41 tests. Debug/Release solution build and test passed with 208 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice keeps WPF image-source creation and sequence row formatting in the ViewModel; richer inspection image preview/export polish remains follow-up work.

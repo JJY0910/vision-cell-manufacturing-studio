@@ -18,15 +18,11 @@ public sealed partial class InspectionViewModel : ObservableObject
         GrabTimeout = TimeSpan.FromSeconds(2)
     };
 
-    private readonly IActiveRecipeContext _activeRecipeContext;
     private readonly IInspectionRunUseCase _inspectionRunUseCase;
     private CancellationTokenSource? _activeRunCancellation;
 
-    public InspectionViewModel(
-        IActiveRecipeContext activeRecipeContext,
-        IInspectionRunUseCase inspectionRunUseCase)
+    public InspectionViewModel(IInspectionRunUseCase inspectionRunUseCase)
     {
-        _activeRecipeContext = activeRecipeContext ?? throw new ArgumentNullException(nameof(activeRecipeContext));
         _inspectionRunUseCase = inspectionRunUseCase ?? throw new ArgumentNullException(nameof(inspectionRunUseCase));
         RefreshActiveRecipeCommand = new AsyncRelayCommand(RefreshActiveRecipeAsync, () => !IsBusy);
         RunInspectionCommand = new AsyncRelayCommand(RunInspectionAsync, () => !IsBusy);
@@ -67,7 +63,7 @@ public sealed partial class InspectionViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var result = await _activeRecipeContext.GetActiveAsync(cancellationToken).ConfigureAwait(true);
+            var result = await _inspectionRunUseCase.PrecheckActiveRecipeAsync(cancellationToken).ConfigureAwait(true);
             ApplyActiveRecipeResult(result);
             StatusText = result.IsSuccess
                 ? "Inspection precheck ready"

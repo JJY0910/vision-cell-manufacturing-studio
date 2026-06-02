@@ -153,6 +153,7 @@ Current implementation status:
 
 - `InspectionRunUseCase` owns the first Application-layer inspection sequence boundary.
 - The use case validates active Recipe context, loads the Recipe document, evaluates Run Inspection interlocks, submits a correlated controller command, moves to the Recipe Camera Teaching point through `IMotionCommandUseCase`, and returns ordered timeline state for WPF binding.
+- InspectionView binds both active Recipe precheck and Run Inspection through `IInspectionRunUseCase`; it does not inject `IActiveRecipeContext` directly.
 - Dashboard equipment actions now flow through Application `IEquipmentDashboardUseCase`, which coordinates command availability, connect/disconnect, Manual/Auto mode commands, snapshot refresh, timeout/cancellation, and event projection before WPF state binding.
 - Motion panel snapshot refresh and command availability now flow through Application `IMotionPanelUseCase`; Motion command execution remains in `IMotionCommandUseCase` with correlated history persistence.
 - Teaching Go To now reads equipment snapshots and builds motion interlock context inside Application `ITeachingPointUseCase`; WPF passes only the selected Teaching point and timeouts.

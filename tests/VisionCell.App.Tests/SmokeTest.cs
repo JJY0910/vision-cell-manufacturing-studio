@@ -685,14 +685,41 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
-    public async Task Inspection_RefreshActiveRecipeAsync_Should_Surface_RepositoryUnavailable()
+    public async Task Inspection_RefreshActiveRecipeAsync_Should_Load_Precheck_Through_Run_UseCase()
     {
-        var activeRecipe = new FakeActiveRecipeContext(
-            ActiveRecipeContextResult.RepositoryUnavailable("recipe index unavailable"));
-        var inspection = CreateInspectionViewModel(activeRecipe);
+        var activeRecipe = CreateRecipeIndexEntry(
+            "RCP-PRECHECK",
+            "1.0.0",
+            "Precheck Recipe",
+            isActive: true,
+            isValid: true);
+        var runUseCase = new FakeInspectionRunUseCase
+        {
+            PrecheckResult = ActiveRecipeContextResult.Success(activeRecipe)
+        };
+        var inspection = CreateInspectionViewModel(runUseCase);
 
         await inspection.RefreshActiveRecipeAsync(CancellationToken.None);
 
+        runUseCase.PrecheckRequests.Should().Be(1);
+        inspection.ActiveRecipeText.Should().Be("RCP-PRECHECK v1.0.0");
+        inspection.PrecheckStatusText.Should().Contain("RCP-PRECHECK");
+        inspection.StatusText.Should().Be("Inspection precheck ready");
+        inspection.LastCheckText.Should().NotBe("-");
+    }
+
+    [Fact]
+    public async Task Inspection_RefreshActiveRecipeAsync_Should_Surface_RepositoryUnavailable()
+    {
+        var runUseCase = new FakeInspectionRunUseCase
+        {
+            PrecheckResult = ActiveRecipeContextResult.RepositoryUnavailable("recipe index unavailable")
+        };
+        var inspection = CreateInspectionViewModel(runUseCase);
+
+        await inspection.RefreshActiveRecipeAsync(CancellationToken.None);
+
+        runUseCase.PrecheckRequests.Should().Be(1);
         inspection.ActiveRecipeText.Should().Be("-");
         inspection.PrecheckStatusText.Should().Contain("recipe index unavailable");
         inspection.StatusText.Should().Contain("Inspection precheck blocked");
@@ -989,12 +1016,9 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     private static InspectionViewModel CreateInspectionViewModel(
-        FakeActiveRecipeContext? activeRecipeContext = null,
         FakeInspectionRunUseCase? inspectionRunUseCase = null)
     {
-        return new InspectionViewModel(
-            activeRecipeContext ?? new FakeActiveRecipeContext(),
-            inspectionRunUseCase ?? new FakeInspectionRunUseCase());
+        return new InspectionViewModel(inspectionRunUseCase ?? new FakeInspectionRunUseCase());
     }
 
     private static RecipeViewModel CreateRecipeViewModel(
@@ -1332,6 +1356,15 @@ public sealed class DashboardAndShellViewModelTests
         }
 
         public List<InspectionRunRequest> Requests { get; } = new();
+        public int PrecheckRequests { get; private set; }
+        public ActiveRecipeContextResult PrecheckResult { get; init; } = ActiveRecipeContextResult.NotSelected();
+
+        public Task<ActiveRecipeContextResult> PrecheckActiveRecipeAsync(CancellationToken cancellationToken)
+        {
+            PrecheckRequests++;
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(PrecheckResult);
+        }
 
         public Task<InspectionRunResult> RunAsync(
             InspectionRunRequest request,

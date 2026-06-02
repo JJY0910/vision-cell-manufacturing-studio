@@ -34,6 +34,11 @@
 - [x] Recipe list, save, and activation workflows flow through an Application use case.
 - [x] RecipeView avoids direct Recipe index repository orchestration.
 
+## Inspection
+
+- [x] Inspection active Recipe precheck flows through the Inspection Application use case.
+- [x] Inspection run orchestration and timeline state flow through the Inspection Application use case.
+
 ## Simulator
 
 - [x] Simulator supports Connect.
