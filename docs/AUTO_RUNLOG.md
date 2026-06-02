@@ -370,3 +370,10 @@
 - Validation target: Application/Persistence/App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 68 tests; Persistence targeted tests passed with 33 tests; App targeted tests passed with 35 tests. Debug/Release solution build and test passed with 183 tests; WPF hidden launch smoke passed through `dotnet run --project .\src\VisionCell.App\VisionCell.App.csproj -c Debug --no-build`.
 - Risks: BMP artifacts are deterministic evidence files and not final rich viewport rendering; PNG/export packaging remains future polish.
+
+## 2026-06-02 00:35 - In progress
+- Branch: `codex/feature/fr-221-offline-debug-results`
+- Scope: Add ADR-backed Offline Debug result browser over `IInspectionResultReader`, including result KPIs, selected result metadata, artifact paths, and defect rows.
+- Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App targeted tests passed with 38 tests. Debug/Release solution build and test passed with 186 tests; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice displays artifact paths only; safe artifact preview/open commands and re-inspection remain follow-up work.

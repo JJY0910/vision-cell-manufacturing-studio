@@ -97,6 +97,7 @@ tests/VisionCell.App.Tests
 - State update after snapshot
 - Error event displayed
 - Navigation updates selected screen
+- Offline Debug result refresh shows loaded, empty, and repository failure states
 
 ## Manual UI Acceptance
 
