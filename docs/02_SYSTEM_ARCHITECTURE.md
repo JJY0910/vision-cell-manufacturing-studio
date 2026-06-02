@@ -159,6 +159,7 @@ Current implementation status:
 - Result persistence now flows through Application `IInspectionResultRepository` and Persistence `SqliteInspectionResultRepository`, storing Judge, defect, timing, Recipe, and correlation metadata after Judge.
 - Artifact generation now flows through Application `IInspectionArtifactWriter` and Persistence `FileSystemInspectionArtifactWriter`, creating deterministic overlay and height-map BMP files during Persist Result.
 - Offline Debug now reads persisted inspection results through Application `IInspectionResultReader` and displays recent result metadata, defect rows, correlation IDs, and artifact paths.
+- Simulator motion commands now preserve `MachineCommandRequest.CorrelationId` across success, rejected, timeout, cancelled, and stop results.
 - Rich live UI overlay rendering remains a separate follow-up slice.
 
 ## Error Handling Policy

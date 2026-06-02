@@ -377,3 +377,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App targeted tests passed with 38 tests. Debug/Release solution build and test passed with 186 tests; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice displays artifact paths only; safe artifact preview/open commands and re-inspection remain follow-up work.
+
+## 2026-06-02 09:45 - In progress
+- Branch: `feature/fr-060-motion-command-hardening`
+- Scope: Preserve `MachineCommandRequest.CorrelationId` in simulator motion/controller backend results across success, rejected, timeout, cancelled, and Stop paths.
+- Validation target: Equipment targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Equipment targeted tests passed with 26 tests; Debug/Release solution build and test passed with 193 tests; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice hardens simulator/backend traceability; richer operator-facing motion history filtering remains follow-up work.

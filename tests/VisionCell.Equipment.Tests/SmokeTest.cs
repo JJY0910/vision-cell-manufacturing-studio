@@ -344,6 +344,90 @@ public sealed class VirtualEquipmentControllerTests
     }
 
     [Fact]
+    public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Success_Result()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Move Absolute",
+            TimeSpan.FromSeconds(1),
+            new AbsoluteMoveTarget(1.0, 2.0, 3.0, 4.0).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Success);
+        result.CorrelationId.Should().Be(request.CorrelationId);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Rejected_Result()
+    {
+        var controller = new VirtualEquipmentController();
+        var request = CreateRequest("Home", TimeSpan.FromSeconds(1), new Dictionary<string, string>());
+
+        var result = await controller.ExecuteCommandAsync(
+            CommandKind.Home,
+            ReadyManualContext() with { ServoOn = false },
+            request,
+            CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Rejected);
+        result.CorrelationId.Should().Be(request.CorrelationId);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Timeout_Result()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest(
+            "Move Absolute",
+            TimeSpan.FromMilliseconds(1),
+            new AbsoluteMoveTarget(1.0, 2.0, 3.0, 4.0).ToParameters());
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), request, CancellationToken.None);
+
+        result.Status.Should().Be(CommandStatus.Timeout);
+        result.CorrelationId.Should().Be(request.CorrelationId);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Cancelled_Result()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateRequest("Home", TimeSpan.FromSeconds(5), new Dictionary<string, string>());
+        using var cancellation = new CancellationTokenSource();
+        cancellation.CancelAfter(TimeSpan.FromMilliseconds(20));
+
+        var result = await controller.ExecuteCommandAsync(CommandKind.Home, ReadyManualContext(), request, cancellation.Token);
+
+        result.Status.Should().Be(CommandStatus.Cancelled);
+        result.CorrelationId.Should().Be(request.CorrelationId);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Stop_Result()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var moveTask = controller.ExecuteCommandAsync(CommandKind.MoveAbsolute, ReadyManualContext(), TimeSpan.FromSeconds(5), CancellationToken.None);
+        await Task.Delay(TimeSpan.FromMilliseconds(20));
+        var stopRequest = CreateRequest("Stop", TimeSpan.FromSeconds(1), new Dictionary<string, string>());
+
+        var stop = await controller.ExecuteCommandAsync(CommandKind.Stop, ReadyManualContext() with { AxisBusy = true }, stopRequest, CancellationToken.None);
+        await moveTask;
+
+        stop.Status.Should().Be(CommandStatus.Success);
+        stop.CorrelationId.Should().Be(stopRequest.CorrelationId);
+    }
+
+    [Fact]
     public async Task VirtualCameraDevice_GrabAsync_Should_Return_Synthetic_Gray8_Frame_With_Metadata()
     {
         var camera = new VirtualCameraDevice(() => new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));

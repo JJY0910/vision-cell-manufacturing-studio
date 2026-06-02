@@ -26,7 +26,7 @@
 - [x] Hardware-like commands return explicit result status.
 - [x] Hardware-like commands support timeout and cancellation.
 - [x] Backend command entry can reject disabled commands with code/message.
-- [ ] Motion command timeout/cancellation paths are fully implemented beyond connection baseline.
+- [x] Motion command timeout/cancellation paths are implemented beyond connection baseline with correlated success/rejected/timeout/cancelled/stop results.
 
 ## Tests
 
