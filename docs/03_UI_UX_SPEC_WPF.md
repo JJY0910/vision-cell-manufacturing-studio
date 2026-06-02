@@ -58,6 +58,7 @@ File: `src/VisionCell.App/Themes/DesignTokens.xaml`
 | SequenceTimeline | Shared/Controls/SequenceTimeline.xaml | 검사 step 표시 |
 | ImageViewport | Shared/Controls/ImageViewport.xaml | 원본/overlay 이미지 표시 |
 | RoiOverlayCanvas | Shared/Controls/RoiOverlayCanvas.cs | read-only ROI/defect overlay display |
+| RecipeEditorField | Shared/Controls/RecipeEditorField.xaml | Recipe editor label/input field |
 | EventLogGrid | Shared/Controls/EventLogGrid.xaml | system event 표시 |
 | ErrorBanner | Shared/Controls/ErrorBanner.xaml | alarm/error 표시 |
 | CommandBar | Shared/Controls/CommandBar.xaml | 화면별 primary commands |
@@ -73,6 +74,7 @@ Implementation status:
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
 - `CommandBar` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe screen command headers.
 - `RoiOverlayCanvas` is implemented as a read-only shared overlay surface for ViewModel-projected image-space ROI/defect rectangles.
+- `RecipeEditorField` is implemented and reused by the Recipe editor metadata, camera, Teaching, and ROI input fields.
 
 ## Screens
 
@@ -167,6 +169,7 @@ Implementation status:
 - RecipeView binds to `RecipeViewModel` for SQLite Recipe index refresh.
 - The view shows indexed recipe id, version, product name, active state, validation state, updated time, checksum, document path, and validation summary.
 - RecipeView has a metadata/camera/teaching/ROI editor and Save Recipe command backed by the Application Recipe library use case.
+- RecipeView uses reusable `RecipeEditorField` controls for editor inputs so label, textbox styling, automation name, and tooltip behavior stay consistent.
 - Recipe clone/export controls and full multi-row Teaching/ROI editing remain follow-up work.
 
 ### InspectionView

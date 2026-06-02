@@ -411,3 +411,11 @@ Proposed improvement: Implement `RoiOverlayCanvas` as a presentation-only shared
 Requirement impact: FR-006, FR-140, FR-160, FR-162, FR-221, NFR-009, NFR-010
 Priority: P1
 Status: Addressed with read-only `RoiOverlayCanvas` binding for Inspection last-grab and Offline Debug overlay preview surfaces; edit/drag/save and real camera/panel alignment remain out of scope.
+
+Date: 2026-06-02
+Source: UI QA reusable controls
+Problem: RecipeView editor fields repeated label/textbox styling and tooltip behavior across metadata, camera, Teaching, and ROI inputs.
+Proposed improvement: Extract `RecipeEditorField` as a shared WPF control and reuse it across the Recipe editor without changing Recipe save behavior.
+Requirement impact: FR-006, FR-120, NFR-009, NFR-010
+Priority: P1
+Status: Addressed for single-row Recipe editor fields; multi-row Recipe editing remains follow-up work.
