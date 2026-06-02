@@ -581,14 +581,14 @@ public sealed class DashboardAndShellViewModelTests
             "{\"Name\":\"Camera\"}",
             "{\"Name\":\"Camera Revised\"}",
             () => new DateTimeOffset(2026, 6, 1, 9, 30, 0, TimeSpan.Zero));
-        var historyRepository = new FakeTeachingHistoryRepository(historyEntry);
+        var useCase = new FakeTeachingPointUseCase(point);
+        useCase.HistoryEntries.Add(historyEntry);
         var teaching = CreateTeachingViewModel(
-            new FakeTeachingPointUseCase(point),
-            historyRepository: historyRepository);
+            useCase);
 
         await teaching.RefreshAsync(CancellationToken.None);
 
-        historyRepository.ListRequests.Should().Contain(request => request.TeachingPointId == point.Id);
+        useCase.ListHistoryRequests.Should().Contain(request => request.TeachingPointId == point.Id);
         teaching.HasSelectedPointHistory.Should().BeTrue();
         teaching.SelectedPointHistory.Should().ContainSingle();
         teaching.SelectedPointHistory[0].ActionText.Should().Be("Updated");
@@ -605,13 +605,12 @@ public sealed class DashboardAndShellViewModelTests
             TeachingRole.Camera,
             new Position4D(1.0, 2.0, 3.0, 4.0),
             PositionTolerance.Default).Point!;
-        var historyRepository = new FakeTeachingHistoryRepository
+        var useCase = new FakeTeachingPointUseCase(point)
         {
             ListHandler = (_, _, _) => throw new InvalidOperationException("history store unavailable")
         };
         var teaching = CreateTeachingViewModel(
-            new FakeTeachingPointUseCase(point),
-            historyRepository: historyRepository);
+            useCase);
 
         await teaching.RefreshAsync(CancellationToken.None);
 
@@ -981,12 +980,10 @@ public sealed class DashboardAndShellViewModelTests
     private static TeachingViewModel CreateTeachingViewModel(
         FakeTeachingPointUseCase? useCase = null,
         FakeUserConfirmationService? confirmationService = null,
-        FakeTeachingHistoryRepository? historyRepository = null,
         FakeActiveRecipeContext? activeRecipeContext = null)
     {
         return new TeachingViewModel(
             useCase ?? new FakeTeachingPointUseCase(),
-            historyRepository ?? new FakeTeachingHistoryRepository(),
             confirmationService ?? new FakeUserConfirmationService(true),
             activeRecipeContext ?? new FakeActiveRecipeContext());
     }
@@ -1488,10 +1485,31 @@ public sealed class DashboardAndShellViewModelTests
         public List<TeachingPointUpdateRequest> UpdateRequests { get; } = new();
         public List<TeachingPointDeleteRequest> DeleteRequests { get; } = new();
         public List<TeachingPointGoToRequest> GoToRequests { get; } = new();
+        public List<TeachingHistoryEntry> HistoryEntries { get; } = new();
+        public List<(Guid TeachingPointId, int Limit)> ListHistoryRequests { get; } = new();
+        public Func<Guid, int, CancellationToken, Task<IReadOnlyList<TeachingHistoryEntry>>>? ListHandler { get; init; }
 
         public Task<IReadOnlyList<TeachingPoint>> ListAsync(int limit, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<TeachingPoint>>(_points.Take(limit).ToArray());
+        }
+
+        public Task<IReadOnlyList<TeachingHistoryEntry>> ListHistoryAsync(
+            Guid teachingPointId,
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            ListHistoryRequests.Add((teachingPointId, limit));
+            if (ListHandler is not null)
+            {
+                return ListHandler(teachingPointId, limit, cancellationToken);
+            }
+
+            return Task.FromResult<IReadOnlyList<TeachingHistoryEntry>>(
+                HistoryEntries
+                    .Where(entry => entry.TeachingPointId == teachingPointId)
+                    .Take(limit)
+                    .ToArray());
         }
 
         public Task<TeachingPointSaveResult> SaveCurrentPositionAsync(

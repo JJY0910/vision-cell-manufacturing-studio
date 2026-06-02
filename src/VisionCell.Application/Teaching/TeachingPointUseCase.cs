@@ -44,6 +44,24 @@ public sealed class TeachingPointUseCase : ITeachingPointUseCase
         return await _repository.ListAsync(limit, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<TeachingHistoryEntry>> ListHistoryAsync(
+        Guid teachingPointId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        if (teachingPointId == Guid.Empty)
+        {
+            throw new ArgumentException("Teaching point id must not be empty.", nameof(teachingPointId));
+        }
+
+        if (limit <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "Teaching history list limit must be greater than zero.");
+        }
+
+        return await _historyRepository.ListByPointAsync(teachingPointId, limit, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<TeachingPointSaveResult> SaveCurrentPositionAsync(
         TeachingPointSaveRequest request,
         CancellationToken cancellationToken)
