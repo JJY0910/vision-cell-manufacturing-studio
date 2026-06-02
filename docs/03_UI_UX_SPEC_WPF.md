@@ -72,7 +72,7 @@ Implementation status:
 - `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces.
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
 - `CommandBar` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe screen command headers.
-- `RoiOverlayCanvas` remains a follow-up reusable control extraction.
+- `RoiOverlayCanvas` remains a follow-up reusable control extraction; ADR-0034 defines its read-only overlay boundary.
 
 ## Screens
 
