@@ -47,17 +47,8 @@ public sealed class VirtualEquipmentController : IEquipmentController
             TimeSpan.FromMilliseconds(150),
             timeout,
             cancellationToken,
-            () =>
-            {
-                lock (_gate)
-                {
-                    _connected = true;
-                    _mode = MachineMode.Manual;
-                    _alarm = null;
-                }
-
-                return "Virtual controller connected.";
-            });
+            CorrelationId.New(),
+            ApplyConnect);
     }
 
     public Task<MachineCommandResult> DisconnectAsync(TimeSpan timeout, CancellationToken cancellationToken)
@@ -67,21 +58,8 @@ public sealed class VirtualEquipmentController : IEquipmentController
             TimeSpan.FromMilliseconds(50),
             timeout,
             cancellationToken,
-            () =>
-            {
-                lock (_gate)
-                {
-                    _connected = false;
-                    _mode = MachineMode.Offline;
-                    _servoEnabled = false;
-                    _axisBusy = false;
-                    _activeMotionCancellation?.Cancel();
-                    _activeMotionCancellation = null;
-                    _axes = AxisDefaults.CreatePowerOffAxes();
-                }
-
-                return "Virtual controller disconnected.";
-            });
+            CorrelationId.New(),
+            ApplyDisconnect);
     }
 
     public CommandAvailability GetCommandAvailability(CommandKind command, InterlockContext context)
@@ -113,18 +91,31 @@ public sealed class VirtualEquipmentController : IEquipmentController
         var availability = GetCommandAvailability(command, CreateEffectiveContext(context));
         if (!availability.IsEnabled)
         {
-            return Task.FromResult(CreateRejectedResult(availability));
+            return Task.FromResult(CreateRejectedResult(availability, request.CorrelationId));
         }
 
         return command switch
         {
-            CommandKind.Connect => ConnectAsync(timeout, cancellationToken),
-            CommandKind.Disconnect => DisconnectAsync(timeout, cancellationToken),
+            CommandKind.Connect => RunControllerCommandAsync(
+                FormatCommand(command),
+                TimeSpan.FromMilliseconds(150),
+                timeout,
+                cancellationToken,
+                request.CorrelationId,
+                ApplyConnect),
+            CommandKind.Disconnect => RunControllerCommandAsync(
+                FormatCommand(command),
+                TimeSpan.FromMilliseconds(50),
+                timeout,
+                cancellationToken,
+                request.CorrelationId,
+                ApplyDisconnect),
             CommandKind.ServoOn => RunControllerCommandAsync(
                 FormatCommand(command),
                 ServoLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -140,6 +131,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 ServoLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -155,6 +147,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 HomeLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -177,25 +170,29 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 JogLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () => ApplyJogStep(request.Parameters)),
             CommandKind.MoveAbsolute => RunMotionCommandAsync(
                 FormatCommand(command),
                 MoveLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () => ApplyMoveAbsolute(request.Parameters)),
             CommandKind.SequenceMoveToCamera => RunMotionCommandAsync(
                 FormatCommand(command),
                 MoveLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () => ApplyMoveAbsolute(request.Parameters)),
-            CommandKind.Stop => RunStopCommandAsync(timeout, cancellationToken),
+            CommandKind.Stop => RunStopCommandAsync(timeout, cancellationToken, request.CorrelationId),
             CommandKind.ResetAlarm => RunControllerCommandAsync(
                 FormatCommand(command),
                 ServoLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -211,6 +208,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 ServoLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -225,6 +223,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 ServoLatency,
                 timeout,
                 cancellationToken,
+                request.CorrelationId,
                 () =>
                 {
                     lock (_gate)
@@ -237,7 +236,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
             CommandKind.RunInspection => Task.FromResult(MachineCommandResult.Success(
                 "Run Inspection interlock accepted. Inspection execution remains a later use case.",
                 TimeSpan.Zero,
-                CorrelationId.New())),
+                request.CorrelationId)),
             _ => throw new ArgumentOutOfRangeException(nameof(command), command, "Unsupported command kind.")
         };
     }
@@ -247,12 +246,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
         TimeSpan latency,
         TimeSpan timeout,
         CancellationToken cancellationToken,
+        CorrelationId correlationId,
         Func<string> applyState)
     {
         var sw = Stopwatch.StartNew();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(timeout);
-        var correlationId = CorrelationId.New();
 
         try
         {
@@ -288,10 +287,10 @@ public sealed class VirtualEquipmentController : IEquipmentController
         TimeSpan latency,
         TimeSpan timeout,
         CancellationToken cancellationToken,
+        CorrelationId correlationId,
         Func<string> applyState)
     {
         var sw = Stopwatch.StartNew();
-        var correlationId = CorrelationId.New();
         using var commandTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         using var motionCancellation = new CancellationTokenSource();
         using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(commandTimeout.Token, motionCancellation.Token);
@@ -380,10 +379,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
         }
     }
 
-    private async Task<MachineCommandResult> RunStopCommandAsync(TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task<MachineCommandResult> RunStopCommandAsync(
+        TimeSpan timeout,
+        CancellationToken cancellationToken,
+        CorrelationId correlationId)
     {
         var sw = Stopwatch.StartNew();
-        var correlationId = CorrelationId.New();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(timeout);
 
@@ -439,10 +440,10 @@ public sealed class VirtualEquipmentController : IEquipmentController
         }
     }
 
-    private static MachineCommandResult CreateRejectedResult(CommandAvailability availability)
+    private static MachineCommandResult CreateRejectedResult(CommandAvailability availability, CorrelationId correlationId)
     {
         var errorCode = MapAvailabilityError(availability);
-        return MachineCommandResult.Rejected(errorCode, availability.DisabledReason, TimeSpan.Zero, CorrelationId.New());
+        return MachineCommandResult.Rejected(errorCode, availability.DisabledReason, TimeSpan.Zero, correlationId);
     }
 
     private static ErrorCode MapAvailabilityError(CommandAvailability availability)
@@ -491,6 +492,34 @@ public sealed class VirtualEquipmentController : IEquipmentController
             CommandKind.RunInspection => "Run Inspection",
             _ => command.ToString()
         };
+    }
+
+    private string ApplyConnect()
+    {
+        lock (_gate)
+        {
+            _connected = true;
+            _mode = MachineMode.Manual;
+            _alarm = null;
+        }
+
+        return "Virtual controller connected.";
+    }
+
+    private string ApplyDisconnect()
+    {
+        lock (_gate)
+        {
+            _connected = false;
+            _mode = MachineMode.Offline;
+            _servoEnabled = false;
+            _axisBusy = false;
+            _activeMotionCancellation?.Cancel();
+            _activeMotionCancellation = null;
+            _axes = AxisDefaults.CreatePowerOffAxes();
+        }
+
+        return "Virtual controller disconnected.";
     }
 
     private string ApplyJogStep(IReadOnlyDictionary<string, string> parameters)

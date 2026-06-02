@@ -361,7 +361,7 @@ Problem: Inspection results and artifact paths are persisted, but Offline Debug 
 Proposed improvement: Bind OfflineDebugView to `IInspectionResultReader` so operators can refresh recent results, select one row, and inspect source/overlay/height-map paths plus defects.
 Requirement impact: FR-202, FR-220, FR-221, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P1
-Status: In progress on `codex/feature/fr-221-offline-debug-results`.
+Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact rendering and re-inspection remain separate follow-up work.
 
 Date: 2026-06-01
 Source: FR-221 Offline Debug artifact rendering
