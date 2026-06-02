@@ -21,8 +21,8 @@
 - Fault injection is simulator-only; no real EStop circuit, door switch, vacuum sensor, air pressure switch, camera ready line, servo drive alarm, PLC output write, or safety relay reset path has been validated.
 - No production calibration, metrology accuracy, takt-time, thermal, vibration, EMI, or long-duration burn-in validation has been performed.
 - Offline Debug Re-inspect currently prepares context only; it does not replay a real inspection sequence.
-- Offline Debug safe external artifact opening is planned only; no OS shell launch, external viewer, network-share, customer-image, or operator-confirmation workflow has been implemented or validated.
-- Artifact preview currently supports the deterministic uncompressed 24-bit BMP files produced by this project, not arbitrary customer image formats.
+- Offline Debug safe external artifact opening is implemented only for local deterministic overlay/height-map BMP artifact paths under the configured artifact root, with ViewModel tests using a fake viewer service. Real external viewer availability, OS file association behavior, network-share paths, customer-image formats, and shop-floor operator confirmation workflow have not been field validated.
+- Artifact preview and external-open preparation currently support the deterministic uncompressed 24-bit BMP files produced by this project, not arbitrary customer image formats.
 - WPF visual QA has not yet been completed on actual shop-floor displays or touch panels. The current polish pass has not been validated against real operator gloves, sunlight/glare, industrial panel scaling profiles, or live production shift usage.
 - ROI/defect overlay validation covers ViewModel projection and WPF launch smoke only. Real camera calibration, optical alignment, lens distortion, image-to-stage coordinate transforms, physical HMI panel scaling, and operator interpretation under production conditions have not been validated.
 

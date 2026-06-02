@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Interaction;
 using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Inspection;
 using VisionCell.Vision.Inspection;
@@ -14,15 +15,23 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private const int ResultLimit = 50;
     private readonly IInspectionResultReader _inspectionResultReader;
     private readonly IInspectionArtifactReader _inspectionArtifactReader;
+    private readonly IUserConfirmationService _confirmationService;
+    private readonly IArtifactViewerService _artifactViewerService;
 
     public OfflineDebugViewModel(
         IInspectionResultReader inspectionResultReader,
-        IInspectionArtifactReader inspectionArtifactReader)
+        IInspectionArtifactReader inspectionArtifactReader,
+        IUserConfirmationService confirmationService,
+        IArtifactViewerService artifactViewerService)
     {
         _inspectionResultReader = inspectionResultReader ?? throw new ArgumentNullException(nameof(inspectionResultReader));
         _inspectionArtifactReader = inspectionArtifactReader ?? throw new ArgumentNullException(nameof(inspectionArtifactReader));
+        _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
+        _artifactViewerService = artifactViewerService ?? throw new ArgumentNullException(nameof(artifactViewerService));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
         LoadSelectedArtifactsCommand = new AsyncRelayCommand(LoadSelectedArtifactsAsync, CanInspectSelectedResult);
+        OpenOverlayArtifactCommand = new AsyncRelayCommand(OpenSelectedOverlayArtifactAsync, CanInspectSelectedResult);
+        OpenHeightMapArtifactCommand = new AsyncRelayCommand(OpenSelectedHeightMapArtifactAsync, CanInspectSelectedResult);
         PrepareReinspectCommand = new RelayCommand(PrepareReinspect, CanInspectSelectedResult);
     }
 
@@ -30,6 +39,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     public IAsyncRelayCommand RefreshResultsCommand { get; }
     public IAsyncRelayCommand LoadSelectedArtifactsCommand { get; }
+    public IAsyncRelayCommand OpenOverlayArtifactCommand { get; }
+    public IAsyncRelayCommand OpenHeightMapArtifactCommand { get; }
     public IRelayCommand PrepareReinspectCommand { get; }
 
     [ObservableProperty]
@@ -61,6 +72,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     [ObservableProperty]
     private string _artifactPreviewStatusText = "Artifact preview not loaded";
+
+    [ObservableProperty]
+    private string _artifactOpenStatusText = "Artifact open not requested";
 
     [ObservableProperty]
     private ImageSource? _overlayPreviewImageSource;
@@ -132,6 +146,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     {
         RefreshResultsCommand.NotifyCanExecuteChanged();
         LoadSelectedArtifactsCommand.NotifyCanExecuteChanged();
+        OpenOverlayArtifactCommand.NotifyCanExecuteChanged();
+        OpenHeightMapArtifactCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
     }
 
@@ -141,6 +157,11 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     }
 
     partial void OnArtifactPreviewStatusTextChanged(string value)
+    {
+        UpdateAlertMessage();
+    }
+
+    partial void OnArtifactOpenStatusTextChanged(string value)
     {
         UpdateAlertMessage();
     }
@@ -165,10 +186,15 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         ArtifactPreviewStatusText = value is null
             ? "Select an inspection result to load artifacts"
             : "Artifact preview not loaded";
+        ArtifactOpenStatusText = value is null
+            ? "Select an inspection result to open artifacts"
+            : "Artifact open not requested";
         ReinspectStatusText = value is null
             ? "Select an inspection result to prepare re-inspect"
             : "Re-inspect not prepared";
         LoadSelectedArtifactsCommand.NotifyCanExecuteChanged();
+        OpenOverlayArtifactCommand.NotifyCanExecuteChanged();
+        OpenHeightMapArtifactCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
     }
 
@@ -177,6 +203,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         AlertMessage =
             OperatorAlertClassifier.GetAlertMessage(StatusText) ??
             OperatorAlertClassifier.GetAlertMessage(ArtifactPreviewStatusText) ??
+            OperatorAlertClassifier.GetAlertMessage(ArtifactOpenStatusText) ??
             OperatorAlertClassifier.GetAlertMessage(ReinspectStatusText);
     }
 
@@ -222,6 +249,74 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         }
     }
 
+    public Task OpenSelectedOverlayArtifactAsync(CancellationToken cancellationToken)
+    {
+        return OpenSelectedArtifactAsync(InspectionArtifactKind.Overlay, cancellationToken);
+    }
+
+    public Task OpenSelectedHeightMapArtifactAsync(CancellationToken cancellationToken)
+    {
+        return OpenSelectedArtifactAsync(InspectionArtifactKind.HeightMap, cancellationToken);
+    }
+
+    private async Task OpenSelectedArtifactAsync(
+        InspectionArtifactKind artifactKind,
+        CancellationToken cancellationToken)
+    {
+        if (SelectedResult is null)
+        {
+            ArtifactOpenStatusText = "Select an inspection result to open artifacts";
+            return;
+        }
+
+        IsBusy = true;
+        var label = FormatArtifactLabel(artifactKind);
+        try
+        {
+            var artifactPath = artifactKind == InspectionArtifactKind.HeightMap
+                ? SelectedResult.HeightMapPath
+                : SelectedResult.OverlayImagePath;
+            var preparation = await _inspectionArtifactReader
+                .PrepareOpenAsync(new InspectionArtifactOpenRequest(artifactKind, artifactPath), cancellationToken)
+                .ConfigureAwait(true);
+
+            if (!preparation.CanOpen)
+            {
+                ArtifactOpenStatusText = $"{label} open unavailable: {preparation.Message}";
+                return;
+            }
+
+            var confirmed = await _confirmationService
+                .ConfirmAsync(
+                    $"Open {label} Artifact",
+                    $"Open {preparation.DisplayPath} in an external viewer?",
+                    cancellationToken)
+                .ConfigureAwait(true);
+            if (!confirmed)
+            {
+                ArtifactOpenStatusText = $"{label} artifact open cancelled by operator.";
+                return;
+            }
+
+            await _artifactViewerService
+                .OpenAsync(preparation.ResolvedPath!, cancellationToken)
+                .ConfigureAwait(true);
+            ArtifactOpenStatusText = $"{label} artifact open requested: {preparation.DisplayPath}";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            ArtifactOpenStatusText = $"{label} artifact open cancelled";
+        }
+        catch (Exception ex)
+        {
+            ArtifactOpenStatusText = $"{label} artifact open failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public void PrepareReinspect()
     {
         if (SelectedResult is null)
@@ -258,6 +353,11 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private bool CanInspectSelectedResult()
     {
         return !IsBusy && SelectedResult is not null;
+    }
+
+    private static string FormatArtifactLabel(InspectionArtifactKind artifactKind)
+    {
+        return artifactKind == InspectionArtifactKind.HeightMap ? "Height Map" : "Overlay";
     }
 
     private static ImageSource? CreateImageSource(InspectionArtifactPreviewResult preview)

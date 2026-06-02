@@ -16,7 +16,7 @@
                            AlertMessage="{Binding AlertMessage}"
                            HasAlert="{Binding HasAlert}">
         <controls:CommandBar.CommandContent>
-          <StackPanel Orientation="Horizontal">
+          <WrapPanel>
             <Button Content="Refresh Results"
                     Command="{Binding RefreshResultsCommand}"
                     Height="36"
@@ -27,12 +27,22 @@
                     Height="36"
                     MinWidth="132"
                     Margin="8,0,0,0" />
+            <Button Content="Open Overlay"
+                    Command="{Binding OpenOverlayArtifactCommand}"
+                    Height="36"
+                    MinWidth="124"
+                    Margin="8,0,0,0" />
+            <Button Content="Open Height Map"
+                    Command="{Binding OpenHeightMapArtifactCommand}"
+                    Height="36"
+                    MinWidth="148"
+                    Margin="8,0,0,0" />
             <Button Content="Prepare Re-inspect"
                     Command="{Binding PrepareReinspectCommand}"
                     Height="36"
                     MinWidth="148"
                     Margin="8,0,0,0" />
-          </StackPanel>
+          </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
 
@@ -177,11 +187,17 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding ArtifactPreviewStatusText}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap" />
-            <UniformGrid Grid.Row="1" Columns="2" Margin="0,8,0,0">
+            <TextBlock Grid.Row="1"
+                       Text="{Binding ArtifactOpenStatusText}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <UniformGrid Grid.Row="2" Columns="2" Margin="0,8,0,0">
               <controls:ImageViewport Title="Overlay Preview"
                                       StatusText="{Binding SelectedResult.OverlayArtifactStatus, TargetNullValue=Overlay: -}"
                                       ImageSource="{Binding OverlayPreviewImageSource}"
@@ -196,7 +212,7 @@
                                       ViewportMinHeight="160"
                                       Margin="8,0,0,0" />
             </UniformGrid>
-            <TextBlock Grid.Row="2"
+            <TextBlock Grid.Row="3"
                        Text="{Binding ReinspectStatusText}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"

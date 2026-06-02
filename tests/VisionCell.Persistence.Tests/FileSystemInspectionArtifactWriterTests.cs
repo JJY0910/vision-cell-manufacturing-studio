@@ -59,6 +59,66 @@ public sealed class FileSystemInspectionArtifactWriterTests
     }
 
     [Fact]
+    public async Task PrepareOpenAsync_Should_Return_Resolved_Path_For_Available_Bmp_Artifact()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var artifactRoot = Path.Combine(directory.Path, "inspection-artifacts");
+        var writer = new FileSystemInspectionArtifactWriter(artifactRoot);
+        var resultId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var written = await writer.WriteAsync(CreateRequest(resultId), CancellationToken.None);
+
+        var overlay = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.Overlay, written.OverlayImagePath),
+            CancellationToken.None);
+        var heightMap = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.HeightMap, written.HeightMapPath),
+            CancellationToken.None);
+
+        overlay.Status.Should().Be(InspectionArtifactOpenStatus.Ready);
+        overlay.CanOpen.Should().BeTrue();
+        overlay.DisplayPath.Should().Be(written.OverlayImagePath);
+        overlay.ResolvedPath.Should().NotBeNull();
+        Path.IsPathRooted(overlay.ResolvedPath!).Should().BeTrue();
+        File.Exists(overlay.ResolvedPath!).Should().BeTrue();
+        overlay.ResolvedPath!.StartsWith(artifactRoot, StringComparison.OrdinalIgnoreCase).Should().BeTrue();
+        heightMap.Status.Should().Be(InspectionArtifactOpenStatus.Ready);
+        heightMap.CanOpen.Should().BeTrue();
+        heightMap.ResolvedPath.Should().EndWith(".height.bmp");
+    }
+
+    [Fact]
+    public async Task PrepareOpenAsync_Should_Reject_Missing_NotRecorded_Unsafe_And_Unsupported_Paths()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var artifactRoot = Path.Combine(directory.Path, "inspection-artifacts");
+        var writer = new FileSystemInspectionArtifactWriter(artifactRoot);
+        var unsupportedDirectory = Path.Combine(artifactRoot, "20260601");
+        Directory.CreateDirectory(unsupportedDirectory);
+        var unsupportedPath = Path.Combine(unsupportedDirectory, "artifact.txt");
+        await File.WriteAllTextAsync(unsupportedPath, "not a supported inspection artifact");
+
+        var missing = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.Overlay, "inspection-artifacts/20260601/missing.overlay.bmp"),
+            CancellationToken.None);
+        var notRecorded = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.Overlay, " "),
+            CancellationToken.None);
+        var unsafePath = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.HeightMap, "inspection-artifacts/../outside.height.bmp"),
+            CancellationToken.None);
+        var unsupported = await writer.PrepareOpenAsync(
+            new InspectionArtifactOpenRequest(InspectionArtifactKind.Overlay, "inspection-artifacts/20260601/artifact.txt"),
+            CancellationToken.None);
+
+        missing.Status.Should().Be(InspectionArtifactOpenStatus.Missing);
+        missing.CanOpen.Should().BeFalse();
+        notRecorded.Status.Should().Be(InspectionArtifactOpenStatus.NotRecorded);
+        unsafePath.Status.Should().Be(InspectionArtifactOpenStatus.UnsafePath);
+        unsupported.Status.Should().Be(InspectionArtifactOpenStatus.UnsupportedType);
+        unsupported.CanOpen.Should().BeFalse();
+    }
+
+    [Fact]
     public void Constructor_Should_Reject_Blank_Root_Path()
     {
         var act = () => new FileSystemInspectionArtifactWriter(" ");

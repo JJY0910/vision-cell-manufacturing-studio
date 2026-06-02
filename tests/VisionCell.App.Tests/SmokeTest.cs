@@ -217,6 +217,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionArtifactReader>()
                 .Should()
                 .BeOfType<FileSystemInspectionArtifactWriter>();
+            provider.GetRequiredService<IArtifactViewerService>()
+                .Should()
+                .BeOfType<ShellArtifactViewerService>();
         }
         finally
         {
@@ -1233,11 +1236,15 @@ public sealed class DashboardAndShellViewModelTests
 
     private static OfflineDebugViewModel CreateOfflineDebugViewModel(
         FakeInspectionResultReader? resultReader = null,
-        FakeInspectionArtifactReader? artifactReader = null)
+        FakeInspectionArtifactReader? artifactReader = null,
+        FakeUserConfirmationService? confirmationService = null,
+        FakeArtifactViewerService? artifactViewerService = null)
     {
         return new OfflineDebugViewModel(
             resultReader ?? new FakeInspectionResultReader(),
-            artifactReader ?? new FakeInspectionArtifactReader());
+            artifactReader ?? new FakeInspectionArtifactReader(),
+            confirmationService ?? new FakeUserConfirmationService(true),
+            artifactViewerService ?? new FakeArtifactViewerService());
     }
 
     private static RecipeIndexEntry CreateRecipeIndexEntry(
@@ -1628,6 +1635,19 @@ public sealed class DashboardAndShellViewModelTests
         }
     }
 
+    private sealed class FakeArtifactViewerService : IArtifactViewerService
+    {
+        public List<string> OpenedPaths { get; } = new();
+
+        public Task OpenAsync(
+            string artifactPath,
+            CancellationToken cancellationToken)
+        {
+            OpenedPaths.Add(artifactPath);
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed class FakeTeachingHistoryRepository : ITeachingHistoryRepository
     {
         private readonly List<TeachingHistoryEntry> _entries = new();
@@ -1782,9 +1802,11 @@ public sealed class DashboardAndShellViewModelTests
 
         public List<string?> MetadataRequests { get; } = new();
         public List<string?> PreviewRequests { get; } = new();
+        public List<InspectionArtifactOpenRequest> OpenRequests { get; } = new();
 
         public Func<string?, CancellationToken, Task<InspectionArtifactMetadata>>? ReadHandler { get; init; }
         public Func<string?, CancellationToken, Task<InspectionArtifactPreviewResult>>? PreviewHandler { get; init; }
+        public Func<InspectionArtifactOpenRequest, CancellationToken, Task<InspectionArtifactOpenResult>>? OpenHandler { get; init; }
 
         public Task<InspectionArtifactMetadata> ReadMetadataAsync(
             string? artifactPath,
@@ -1820,6 +1842,27 @@ public sealed class DashboardAndShellViewModelTests
                     stride: 8,
                     pixelFormat: InspectionArtifactPreviewPixelFormat.Bgra32,
                     pixels: PreviewPixels));
+        }
+
+        public Task<InspectionArtifactOpenResult> PrepareOpenAsync(
+            InspectionArtifactOpenRequest request,
+            CancellationToken cancellationToken)
+        {
+            OpenRequests.Add(request);
+            if (OpenHandler is not null)
+            {
+                return OpenHandler(request, cancellationToken);
+            }
+
+            return Task.FromResult(string.IsNullOrWhiteSpace(request.ArtifactPath)
+                ? InspectionArtifactOpenResult.NotRecorded(request.ArtifactKind)
+                : InspectionArtifactOpenResult.Ready(
+                    request.ArtifactKind,
+                    request.ArtifactPath,
+                    Path.Combine(
+                        Path.GetTempPath(),
+                        "VisionCellArtifacts",
+                        $"{request.ArtifactKind}.bmp")));
         }
     }
 

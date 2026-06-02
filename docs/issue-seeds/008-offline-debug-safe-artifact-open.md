@@ -10,15 +10,15 @@ Implement safe operator-confirmed external opening for Offline Debug overlay and
 
 ## Acceptance Criteria
 
-- [ ] Add an Application-facing artifact open request/result boundary.
-- [ ] Reuse the existing relative artifact path safety policy.
-- [ ] Reject rooted paths, traversal segments, not-recorded paths, missing files, and unavailable files with operator-visible messages.
-- [ ] Add explicit Overlay and Height Map open commands in Offline Debug.
-- [ ] Require operator confirmation before launching an external viewer.
-- [ ] Keep WPF code-behind free of business logic, path resolution, and process-launch policy.
-- [ ] Do not execute Re-inspect as part of artifact open.
-- [ ] Add Application/Persistence/App tests for available, missing, unsafe, declined-confirmation, and success paths.
-- [ ] Run Debug/Release build/test and document real field validation limits.
+- [x] Add an Application-facing artifact open request/result boundary.
+- [x] Reuse the existing relative artifact path safety policy.
+- [x] Reject rooted paths, traversal segments, not-recorded paths, missing files, unsupported types, and unavailable files with operator-visible messages.
+- [x] Add explicit Overlay and Height Map open commands in Offline Debug.
+- [x] Require operator confirmation before launching an external viewer.
+- [x] Keep WPF code-behind free of business logic, path resolution, and process-launch policy.
+- [x] Do not execute Re-inspect as part of artifact open.
+- [x] Add Application/Persistence/App tests for available, missing, unsafe, declined-confirmation, and success paths.
+- [x] Run Debug/Release build/test and document real field validation limits.
 
 ## Codex Prompt
 
