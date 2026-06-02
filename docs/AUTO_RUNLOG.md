@@ -467,3 +467,9 @@
 - Scope: Add a local WPF HMI polish pass for Dashboard, Motion, Teaching, Recipe, Inspection, and Alarm screens with wrapping command forms, shared HMI table/input styles, explicit table scrollbars, command tooltips, and InspectionView scrolling.
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Risks: This slice improves local WPF layout reachability only; no actual shop-floor display, touch panel, live hardware, or production operator shift validation is performed.
+
+## 2026-06-02 16:22 - In progress
+- Branch: `feature/fr-001-shell-eventlog-hmi-polish`
+- Scope: Polish always-visible Shell HMI surfaces with compact top status chips, current screen visibility, navigation tooltips, and a dark shared Event Log DataGrid style.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Risks: This slice changes WPF resources and Shell/EventLog layout only; no equipment behavior, hardware state, or real panel validation is included.
