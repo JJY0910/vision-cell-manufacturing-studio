@@ -113,25 +113,7 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <Border Style="{DynamicResource Card.Compact}">
-                    <StackPanel>
-                      <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.MetricValue}" />
-                      <TextBlock Text="{Binding Position, StringFormat=Pos {0:0.000}}"
-                                 Style="{DynamicResource Text.Status}"
-                                 Margin="0,8,0,0" />
-                      <TextBlock Text="{Binding Target, StringFormat=Target {0:0.000}}"
-                                 Style="{DynamicResource Text.Status}" />
-                      <TextBlock Text="{Binding Unit, StringFormat=Unit {0}}"
-                                 Style="{DynamicResource Text.MetricLabel}"
-                                 Margin="0,6,0,0" />
-                      <TextBlock Text="{Binding IsHomed, StringFormat=Homed {0}}"
-                                 Style="{DynamicResource Text.MetricLabel}" />
-                      <TextBlock Text="{Binding ServoOn, StringFormat=Servo {0}}"
-                                 Style="{DynamicResource Text.MetricLabel}" />
-                      <TextBlock Text="{Binding Alarm, StringFormat=Alarm {0}}"
-                                 Style="{DynamicResource Text.MetricLabel}" />
-                    </StackPanel>
-                  </Border>
+                  <controls:AxisCard />
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

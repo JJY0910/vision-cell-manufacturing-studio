@@ -473,3 +473,9 @@
 - Scope: Polish always-visible Shell HMI surfaces with compact top status chips, current screen visibility, navigation tooltips, and a dark shared Event Log DataGrid style.
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Risks: This slice changes WPF resources and Shell/EventLog layout only; no equipment behavior, hardware state, or real panel validation is included.
+
+## 2026-06-02 16:33 - In progress
+- Branch: `feature/fr-006-reusable-hmi-controls`
+- Scope: Extract reusable `AxisCard` and `SequenceTimeline` controls, reuse them in Dashboard, Motion, and Inspection screens, and add Dashboard axis display text regression coverage.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Risks: This slice changes WPF binding surfaces only; no motion, inspection sequence, or hardware behavior changes are included.

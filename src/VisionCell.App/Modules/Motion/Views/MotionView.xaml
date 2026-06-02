@@ -1,6 +1,7 @@
 <UserControl x:Class="VisionCell.App.Modules.Motion.Views.MotionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <Grid>
       <Grid.RowDefinitions>
@@ -78,28 +79,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Border Style="{DynamicResource Card.Compact}">
-                  <StackPanel>
-                    <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.MetricValue}" />
-                    <TextBlock Text="{Binding MotionState}"
-                               Style="{DynamicResource Text.StatusStrong}"
-                               Margin="0,8,0,0" />
-                    <TextBlock Text="{Binding PositionText}"
-                               Style="{DynamicResource Text.Status}"
-                               Margin="0,8,0,0" />
-                    <TextBlock Text="{Binding TargetText}"
-                               Style="{DynamicResource Text.Status}" />
-                    <TextBlock Text="{Binding SoftLimitText}"
-                               Style="{DynamicResource Text.MetricLabel}"
-                               Margin="0,8,0,0" />
-                    <TextBlock Text="{Binding HomeState}"
-                               Style="{DynamicResource Text.MetricLabel}" />
-                    <TextBlock Text="{Binding ServoState}"
-                               Style="{DynamicResource Text.MetricLabel}" />
-                    <TextBlock Text="{Binding Alarm, StringFormat=Alarm {0}}"
-                               Style="{DynamicResource Text.MetricLabel}" />
-                  </StackPanel>
-                </Border>
+                <controls:AxisCard />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
