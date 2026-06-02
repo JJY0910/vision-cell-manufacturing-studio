@@ -66,6 +66,12 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private ImageSource? _overlayPreviewImageSource;
 
     [ObservableProperty]
+    private double _overlayImagePixelWidth;
+
+    [ObservableProperty]
+    private double _overlayImagePixelHeight;
+
+    [ObservableProperty]
     private ImageSource? _heightMapPreviewImageSource;
 
     [ObservableProperty]
@@ -152,6 +158,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     partial void OnSelectedResultChanged(OfflineInspectionResultItemViewModel? value)
     {
         OverlayPreviewImageSource = null;
+        OverlayImagePixelWidth = 0;
+        OverlayImagePixelHeight = 0;
         HeightMapPreviewImageSource = null;
         PreparedReinspect = null;
         ArtifactPreviewStatusText = value is null
@@ -191,6 +199,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
                 .ConfigureAwait(true);
 
             OverlayPreviewImageSource = CreateImageSource(overlay);
+            OverlayImagePixelWidth = overlay.HasImage ? overlay.Width : 0;
+            OverlayImagePixelHeight = overlay.HasImage ? overlay.Height : 0;
             HeightMapPreviewImageSource = CreateImageSource(heightMap);
             ArtifactPreviewStatusText = $"Overlay: {overlay.Message} Height Map: {heightMap.Message}";
         }
@@ -201,6 +211,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         catch (Exception ex)
         {
             OverlayPreviewImageSource = null;
+            OverlayImagePixelWidth = 0;
+            OverlayImagePixelHeight = 0;
             HeightMapPreviewImageSource = null;
             ArtifactPreviewStatusText = $"Artifact preview load failed: {ex.Message}";
         }
@@ -305,6 +317,7 @@ public sealed class OfflineInspectionResultItemViewModel
         Defects = record.Defects
             .Select(defect => new OfflineInspectionDefectItemViewModel(defect))
             .ToArray();
+        OverlayItems = Defects.Select(defect => defect.OverlayItem).ToArray();
     }
 
     public Guid Id { get; }
@@ -325,6 +338,7 @@ public sealed class OfflineInspectionResultItemViewModel
     public string CreatedAtText { get; }
     public int DefectCount { get; }
     public IReadOnlyList<OfflineInspectionDefectItemViewModel> Defects { get; }
+    public IReadOnlyList<RoiOverlayItemViewModel> OverlayItems { get; }
 
     private static string FormatArtifactStatus(string label, InspectionArtifactMetadata metadata)
     {
@@ -362,13 +376,37 @@ public sealed class OfflineInspectionDefectItemViewModel
         Type = defect.Type;
         ScoreText = defect.Score.ToString("0.000");
         RoiId = string.IsNullOrWhiteSpace(defect.RoiId) ? "-" : defect.RoiId;
+        X = defect.X;
+        Y = defect.Y;
+        Width = defect.Width;
+        Height = defect.Height;
         BoundingBoxText = $"{defect.X},{defect.Y} {defect.Width}x{defect.Height}";
         Message = string.IsNullOrWhiteSpace(defect.Message) ? "-" : defect.Message;
+        OverlayItem = new RoiOverlayItemViewModel(
+            defect.X,
+            defect.Y,
+            defect.Width,
+            defect.Height,
+            FormatOverlayLabel(Type, RoiId),
+            ScoreText,
+            "Defect");
     }
 
     public string Type { get; }
     public string ScoreText { get; }
     public string RoiId { get; }
+    public int X { get; }
+    public int Y { get; }
+    public int Width { get; }
+    public int Height { get; }
     public string BoundingBoxText { get; }
     public string Message { get; }
+    public RoiOverlayItemViewModel OverlayItem { get; }
+
+    private static string FormatOverlayLabel(string type, string roiId)
+    {
+        return roiId == "-"
+            ? type
+            : $"{roiId} {type}";
+    }
 }

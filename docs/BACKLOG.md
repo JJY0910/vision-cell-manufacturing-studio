@@ -410,4 +410,4 @@ Problem: `ImageViewport` can show images, but ROI and defect overlays still need
 Proposed improvement: Implement `RoiOverlayCanvas` as a presentation-only shared control that consumes ViewModel-projected image-space overlay items and reuses it in Inspection/Offline Debug.
 Requirement impact: FR-006, FR-140, FR-160, FR-162, FR-221, NFR-009, NFR-010
 Priority: P1
-Status: Planned by ADR-0034 and issue seed 007; not implemented in the planning PR.
+Status: Addressed with read-only `RoiOverlayCanvas` binding for Inspection last-grab and Offline Debug overlay preview surfaces; edit/drag/save and real camera/panel alignment remain out of scope.

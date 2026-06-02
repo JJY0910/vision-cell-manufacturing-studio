@@ -335,6 +335,14 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.SelectedResult.ArtifactStatusSummary.Should().Contain("Overlay");
         offlineDebug.SelectedResult.ArtifactStatusSummary.Should().Contain("Height Map");
         offlineDebug.SelectedResult.Defects.Should().ContainSingle(defect => defect.Type == "Missing" && defect.RoiId == "ROI-01");
+        offlineDebug.SelectedResult.OverlayItems.Should().ContainSingle();
+        var overlayItem = offlineDebug.SelectedResult.OverlayItems[0];
+        overlayItem.X.Should().Be(10);
+        overlayItem.Y.Should().Be(20);
+        overlayItem.Width.Should().Be(30);
+        overlayItem.Height.Should().Be(40);
+        overlayItem.DisplayText.Should().Contain("ROI-01");
+        overlayItem.DisplayText.Should().Contain("0.910");
         offlineDebug.FailCount.Should().Be(1);
         offlineDebug.PassCount.Should().Be(0);
         offlineDebug.DefectCount.Should().Be(1);
@@ -359,6 +367,8 @@ public sealed class DashboardAndShellViewModelTests
 
         artifactReader.PreviewRequests.Should().HaveCount(2);
         offlineDebug.OverlayPreviewImageSource.Should().NotBeNull();
+        offlineDebug.OverlayImagePixelWidth.Should().Be(2);
+        offlineDebug.OverlayImagePixelHeight.Should().Be(2);
         offlineDebug.HeightMapPreviewImageSource.Should().NotBeNull();
         offlineDebug.ArtifactPreviewStatusText.Should().Contain("Artifact preview available");
         offlineDebug.PreparedReinspect.Should().NotBeNull();
@@ -372,6 +382,8 @@ public sealed class DashboardAndShellViewModelTests
 
         offlineDebug.PreparedReinspect.Should().BeNull();
         offlineDebug.OverlayPreviewImageSource.Should().BeNull();
+        offlineDebug.OverlayImagePixelWidth.Should().Be(0);
+        offlineDebug.OverlayImagePixelHeight.Should().Be(0);
         offlineDebug.HeightMapPreviewImageSource.Should().BeNull();
         offlineDebug.ReinspectStatusText.Should().Contain("Select an inspection result");
     }
@@ -763,7 +775,23 @@ public sealed class DashboardAndShellViewModelTests
                 CreateCameraFrame("RCP-INSPECT", "1.0.0"),
                 "Grabbed 16x12 Gray8 frame from Fake camera.",
                 TimeSpan.FromMilliseconds(3),
-                CorrelationId.New())));
+                CorrelationId.New()),
+            visionResult: new VisionInspectionResult(
+                Judgment.Fail,
+                new[] { new Defect("Missing", 0.92, 1, 2, 3, 4, "Missing area.") },
+                "2D inspection Fail: 1 defect.",
+                "RCP-INSPECT",
+                "1.0.0",
+                TimeSpan.FromMilliseconds(2),
+                DateTimeOffset.UtcNow),
+            heightMapResult: new VisionInspectionResult(
+                Judgment.Fail,
+                new[] { new Defect("Lift", 0.81, 5, 6, 7, 8, "Lift detected.") },
+                "3D inspection Fail: 1 defect.",
+                "RCP-INSPECT",
+                "1.0.0",
+                TimeSpan.FromMilliseconds(2),
+                DateTimeOffset.UtcNow)));
         var inspection = CreateInspectionViewModel(inspectionRunUseCase: runUseCase);
 
         await inspection.RunInspectionAsync(CancellationToken.None);
@@ -777,6 +805,11 @@ public sealed class DashboardAndShellViewModelTests
         inspection.LastGrabText.Should().Contain("16 x 12");
         inspection.LastGrabText.Should().Contain("Fake camera");
         inspection.LastGrabImageSource.Should().NotBeNull();
+        inspection.LastGrabImagePixelWidth.Should().Be(16);
+        inspection.LastGrabImagePixelHeight.Should().Be(12);
+        inspection.LastGrabOverlayItems.Should().HaveCount(2);
+        inspection.LastGrabOverlayItems.Should().Contain(item => item.Label == "2D Missing" && item.X == 1 && item.Y == 2);
+        inspection.LastGrabOverlayItems.Should().Contain(item => item.Label == "3D Lift" && item.Width == 7 && item.Height == 8);
         inspection.LastRunCorrelationId.Should().NotBe("-");
         inspection.LastCheckText.Should().NotBe("-");
         inspection.HasAlert.Should().BeFalse();

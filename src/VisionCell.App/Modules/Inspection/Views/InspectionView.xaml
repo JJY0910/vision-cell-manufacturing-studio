@@ -81,6 +81,9 @@
       <controls:ImageViewport Title="Last Grab"
                               StatusText="{Binding LastGrabText}"
                               ImageSource="{Binding LastGrabImageSource}"
+                              OverlayItems="{Binding LastGrabOverlayItems}"
+                              ImagePixelWidth="{Binding LastGrabImagePixelWidth}"
+                              ImagePixelHeight="{Binding LastGrabImagePixelHeight}"
                               ViewportMinHeight="260"
                               Margin="0,0,12,0" />
 

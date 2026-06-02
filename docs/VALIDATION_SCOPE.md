@@ -10,7 +10,7 @@
 - Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, and WPF AlarmView ViewModel state against simulator/Application failure paths.
 - Hardware Adapter Boundary validation covers interface contracts and fake adapter tests only.
 - I/O Monitor and Fault Injection validation covers `VirtualEquipmentController`, Application fault injection use case, WPF `EquipmentViewModel`, simulator I/O forced-state rows, interlock blocking, and Application alarm recorder calls.
-- UI QA validation covers local WPF build/runtime loading, shared XAML resource resolution, ViewModel regression tests, static code-behind scans, and a five-second WPF launch smoke. The current HMI polish pass covers layout reachability, command tooltips, wrapping command forms, scrollable operator tables, Shell status chips, dark Event Log styling, and reusable `KpiCard` / `AxisCard` / `SequenceTimeline` / `IoBitIndicator` / `ImageViewport` / `ErrorBanner` / `CommandBar` binding only in the local developer environment.
+- UI QA validation covers local WPF build/runtime loading, shared XAML resource resolution, ViewModel regression tests, static code-behind scans, and a five-second WPF launch smoke. The current HMI polish pass covers layout reachability, command tooltips, wrapping command forms, scrollable operator tables, Shell status chips, dark Event Log styling, and reusable `KpiCard` / `AxisCard` / `SequenceTimeline` / `IoBitIndicator` / `ImageViewport` / `RoiOverlayCanvas` / `ErrorBanner` / `CommandBar` binding only in the local developer environment.
 
 ## Not Yet Validated
 
@@ -23,6 +23,7 @@
 - Offline Debug Re-inspect currently prepares context only; it does not replay a real inspection sequence.
 - Artifact preview currently supports the deterministic uncompressed 24-bit BMP files produced by this project, not arbitrary customer image formats.
 - WPF visual QA has not yet been completed on actual shop-floor displays or touch panels. The current polish pass has not been validated against real operator gloves, sunlight/glare, industrial panel scaling profiles, or live production shift usage.
+- ROI/defect overlay validation covers ViewModel projection and WPF launch smoke only. Real camera calibration, optical alignment, lens distortion, image-to-stage coordinate transforms, physical HMI panel scaling, and operator interpretation under production conditions have not been validated.
 
 ## Reporting Rule
 

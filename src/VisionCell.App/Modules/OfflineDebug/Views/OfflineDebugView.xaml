@@ -185,6 +185,9 @@
               <controls:ImageViewport Title="Overlay Preview"
                                       StatusText="{Binding SelectedResult.OverlayArtifactStatus, TargetNullValue=Overlay: -}"
                                       ImageSource="{Binding OverlayPreviewImageSource}"
+                                      OverlayItems="{Binding SelectedResult.OverlayItems}"
+                                      ImagePixelWidth="{Binding OverlayImagePixelWidth}"
+                                      ImagePixelHeight="{Binding OverlayImagePixelHeight}"
                                       ViewportMinHeight="160"
                                       Margin="0,0,8,0" />
               <controls:ImageViewport Title="Height Map Preview"

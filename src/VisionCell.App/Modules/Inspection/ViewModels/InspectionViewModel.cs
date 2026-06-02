@@ -7,6 +7,7 @@ using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Inspection;
 using VisionCell.Application.Recipes;
 using VisionCell.Equipment.Cameras;
+using VisionCell.Vision.Inspection;
 
 namespace VisionCell.App.Modules.Inspection.ViewModels;
 
@@ -58,6 +59,15 @@ public sealed partial class InspectionViewModel : ObservableObject
 
     [ObservableProperty]
     private ImageSource? _lastGrabImageSource;
+
+    [ObservableProperty]
+    private double _lastGrabImagePixelWidth;
+
+    [ObservableProperty]
+    private double _lastGrabImagePixelHeight;
+
+    [ObservableProperty]
+    private IReadOnlyList<RoiOverlayItemViewModel> _lastGrabOverlayItems = Array.Empty<RoiOverlayItemViewModel>();
 
     [ObservableProperty]
     private bool _isBusy;
@@ -180,6 +190,7 @@ public sealed partial class InspectionViewModel : ObservableObject
         LastRunCorrelationId = result.Request?.CorrelationId.ToString() ?? "-";
         LastCheckText = result.CompletedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         ApplyCameraGrabResult(result.CameraGrabResult);
+        LastGrabOverlayItems = CreateOverlayItems(result);
         StatusText = result.Status switch
         {
             InspectionRunStatus.Accepted => result.Message,
@@ -211,11 +222,47 @@ public sealed partial class InspectionViewModel : ObservableObject
         {
             LastGrabText = $"{result.Frame.Width} x {result.Frame.Height} {result.Frame.PixelFormat} | {result.Frame.CameraName}";
             LastGrabImageSource = CreateImageSource(result.Frame);
+            LastGrabImagePixelWidth = result.Frame.Width;
+            LastGrabImagePixelHeight = result.Frame.Height;
             return;
         }
 
         LastGrabText = result?.Message ?? "No camera frame grabbed";
         LastGrabImageSource = null;
+        LastGrabImagePixelWidth = 0;
+        LastGrabImagePixelHeight = 0;
+        LastGrabOverlayItems = Array.Empty<RoiOverlayItemViewModel>();
+    }
+
+    private static IReadOnlyList<RoiOverlayItemViewModel> CreateOverlayItems(InspectionRunResult result)
+    {
+        var items = new List<RoiOverlayItemViewModel>();
+        AddDefectItems(items, result.VisionResult?.Defects, "2D");
+        AddDefectItems(items, result.HeightMapResult?.Defects, "3D");
+        return items;
+    }
+
+    private static void AddDefectItems(
+        ICollection<RoiOverlayItemViewModel> target,
+        IReadOnlyList<Defect>? defects,
+        string source)
+    {
+        if (defects is null)
+        {
+            return;
+        }
+
+        foreach (var defect in defects)
+        {
+            target.Add(new RoiOverlayItemViewModel(
+                defect.X,
+                defect.Y,
+                defect.Width,
+                defect.Height,
+                $"{source} {defect.Type}",
+                defect.Score.ToString("0.000"),
+                "Defect"));
+        }
     }
 
     private static ImageSource CreateImageSource(CameraFrame frame)

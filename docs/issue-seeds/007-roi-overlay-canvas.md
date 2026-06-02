@@ -10,11 +10,11 @@ Implement a read-only shared `RoiOverlayCanvas` for Inspection and Offline Debug
 
 ## Acceptance Criteria
 
-- [ ] Control is placed under `src/VisionCell.App/Shared/Controls/`.
-- [ ] Control consumes ViewModel-projected overlay items, not persistence records directly.
-- [ ] Initial implementation is read-only; no edit/drag/resize/save workflow.
-- [ ] WPF code-behind contains no business logic, file I/O, database, camera, or equipment command dependency.
-- [ ] ViewModel tests cover overlay projection from inspection/offline debug data.
+- [x] Control is placed under `src/VisionCell.App/Shared/Controls/`.
+- [x] Control consumes ViewModel-projected overlay items, not persistence records directly.
+- [x] Initial implementation is read-only; no edit/drag/resize/save workflow.
+- [x] WPF code-behind contains no business logic, file I/O, database, camera, or equipment command dependency.
+- [x] ViewModel tests cover overlay projection from inspection/offline debug data.
 - [ ] Debug/Release solution build and tests pass on Windows.
 - [ ] PR summary includes requirement coverage and explicitly states real camera/panel validation limits.
 

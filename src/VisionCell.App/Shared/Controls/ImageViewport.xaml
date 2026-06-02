@@ -1,6 +1,7 @@
 <UserControl x:Class="VisionCell.App.Shared.Controls.ImageViewport"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls"
              x:Name="Root">
   <Border Style="{DynamicResource Card.Panel}">
     <Grid>
@@ -26,6 +27,11 @@
           <Image Source="{Binding ImageSource, ElementName=Root}"
                  Stretch="Uniform"
                  RenderOptions.BitmapScalingMode="NearestNeighbor" />
+          <controls:RoiOverlayCanvas OverlayItems="{Binding OverlayItems, ElementName=Root}"
+                                     ImagePixelWidth="{Binding ImagePixelWidth, ElementName=Root}"
+                                     ImagePixelHeight="{Binding ImagePixelHeight, ElementName=Root}"
+                                     ShowLabels="{Binding ShowOverlayLabels, ElementName=Root}"
+                                     IsHitTestVisible="False" />
           <TextBlock Text="No image"
                      HorizontalAlignment="Center"
                      VerticalAlignment="Center">
