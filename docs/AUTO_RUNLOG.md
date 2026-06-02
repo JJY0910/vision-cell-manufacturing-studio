@@ -520,3 +520,10 @@
 - Validation target: Docs-only full Debug/Release build/test, static checks, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Debug/Release solution build and test passed with 225 tests; blocking wait scan passed; WPF code-behind scan output was limited to the already-merged `CommandBar.xaml.cs` dependency-property wrapper false positive; artifact scan found only expected existing docs/test references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice implements no runtime overlay behavior; actual read-only ROI/defect rendering remains a follow-up PR.
+
+## 2026-06-02 17:42 - Local validation passed
+- Branch: `feature/fr-006-roi-overlay-canvas`
+- Scope: Implement read-only `RoiOverlayCanvas`, bind it through `ImageViewport`, and project Inspection/Offline Debug defect boxes into overlay items without adding edit, persistence, camera, or equipment dependencies to WPF code-behind.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App Debug build passed; App targeted tests passed with 44 tests including overlay projection assertions. Debug/Release solution build and test passed with 225 tests. `git diff --check` passed with CRLF warnings only; blocking scan found only existing simulator/test `Task.Delay` paths; WPF code-behind scan output remained limited to the existing `CommandBar.xaml.cs` dependency-property wrapper false positive; new overlay control dependency scan found no file, SQLite, hardware, async, or process dependencies; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: Overlay validation is limited to ViewModel projection, local WPF rendering smoke, and CI build/test. Real camera calibration, optical alignment, stage coordinate transforms, HMI panel scaling, and production operator interpretation are not validated.

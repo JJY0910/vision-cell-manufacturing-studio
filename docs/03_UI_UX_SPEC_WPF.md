@@ -57,7 +57,7 @@ File: `src/VisionCell.App/Themes/DesignTokens.xaml`
 | IoBitIndicator | Shared/Controls/IoBitIndicator.xaml | I/O bit 표시 |
 | SequenceTimeline | Shared/Controls/SequenceTimeline.xaml | 검사 step 표시 |
 | ImageViewport | Shared/Controls/ImageViewport.xaml | 원본/overlay 이미지 표시 |
-| RoiOverlayCanvas | Shared/Controls/RoiOverlayCanvas.xaml | ROI drawing/selection |
+| RoiOverlayCanvas | Shared/Controls/RoiOverlayCanvas.cs | read-only ROI/defect overlay display |
 | EventLogGrid | Shared/Controls/EventLogGrid.xaml | system event 표시 |
 | ErrorBanner | Shared/Controls/ErrorBanner.xaml | alarm/error 표시 |
 | CommandBar | Shared/Controls/CommandBar.xaml | 화면별 primary commands |
@@ -69,10 +69,10 @@ Implementation status:
 - `AxisCard` is implemented and reused by Dashboard and Motion axis snapshots.
 - `IoBitIndicator` is implemented and reused by Dashboard and Equipment I/O monitor rows.
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
-- `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces.
+- `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces, including optional read-only overlay binding.
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
 - `CommandBar` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe screen command headers.
-- `RoiOverlayCanvas` remains a follow-up reusable control extraction; ADR-0034 defines its read-only overlay boundary.
+- `RoiOverlayCanvas` is implemented as a read-only shared overlay surface for ViewModel-projected image-space ROI/defect rectangles.
 
 ## Screens
 
@@ -175,6 +175,7 @@ Implementation status:
 - Sequence timeline
 - Image viewer original/overlay
 - Last Grab viewer displays the latest simulator camera frame after a successful Grab Image step.
+- Last Grab viewer can show read-only 2D/3D defect overlays projected from the accepted inspection run result.
 - Current result and defect table
 - Cycle time breakdown
 - Lot summary
@@ -191,7 +192,7 @@ Implementation status:
 Implementation status:
 
 - `OfflineDebugViewModel` loads recent persisted inspection result rows through `IInspectionResultReader` and artifact availability/preview data through `IInspectionArtifactReader`.
-- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, Re-inspect preparation status, and selected defect rows.
+- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, read-only defect overlays, Re-inspect preparation status, and selected defect rows.
 - Safe file opening, parameter replay, and actual re-inspection execution remain follow-up work.
 
 ### AlarmView
