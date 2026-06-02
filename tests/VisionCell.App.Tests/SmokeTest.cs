@@ -228,6 +228,7 @@ public sealed class DashboardAndShellViewModelTests
     public async Task OfflineDebug_RefreshResultsAsync_Should_Load_Recent_Result_State()
     {
         var createdAt = new DateTimeOffset(2026, 6, 1, 12, 30, 0, TimeSpan.Zero);
+        var artifactReader = new FakeInspectionArtifactReader();
         var offlineDebug = CreateOfflineDebugViewModel(new FakeInspectionResultReader(
             CreateInspectionResultRecord(
                 Judgment.Fail,
@@ -235,10 +236,12 @@ public sealed class DashboardAndShellViewModelTests
                 new[]
                 {
                     new InspectionDefectRecord("Missing", 0.91, "ROI-01", 10, 20, 30, 40, "Missing area.")
-                })));
+                })),
+            artifactReader);
 
         await offlineDebug.RefreshResultsAsync(CancellationToken.None);
 
+        artifactReader.MetadataRequests.Should().HaveCount(2);
         offlineDebug.HasResults.Should().BeTrue();
         offlineDebug.Results.Should().ContainSingle();
         offlineDebug.SelectedResult.Should().NotBeNull();
@@ -256,6 +259,38 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.DefectCount.Should().Be(1);
         offlineDebug.StatusText.Should().Be("1 inspection result records loaded");
         offlineDebug.LastRefreshText.Should().NotBe("-");
+    }
+
+    [Fact]
+    public async Task OfflineDebug_LoadSelectedArtifactsAsync_Should_Load_Previews_And_Prepare_Reinspect()
+    {
+        var artifactReader = new FakeInspectionArtifactReader();
+        var result = CreateInspectionResultRecord(
+            Judgment.Pass,
+            new DateTimeOffset(2026, 6, 1, 12, 30, 0, TimeSpan.Zero));
+        var offlineDebug = CreateOfflineDebugViewModel(
+            new FakeInspectionResultReader(result),
+            artifactReader);
+
+        await offlineDebug.RefreshResultsAsync(CancellationToken.None);
+        await offlineDebug.LoadSelectedArtifactsAsync(CancellationToken.None);
+        offlineDebug.PrepareReinspect();
+
+        artifactReader.PreviewRequests.Should().HaveCount(2);
+        offlineDebug.OverlayPreviewImageSource.Should().NotBeNull();
+        offlineDebug.HeightMapPreviewImageSource.Should().NotBeNull();
+        offlineDebug.ArtifactPreviewStatusText.Should().Contain("Artifact preview available");
+        offlineDebug.PreparedReinspect.Should().NotBeNull();
+        offlineDebug.PreparedReinspect!.SourceResultId.Should().Be(result.Id);
+        offlineDebug.PreparedReinspect.RecipeId.Should().Be(result.RecipeId);
+        offlineDebug.ReinspectStatusText.Should().Contain(result.LotId);
+
+        offlineDebug.SelectedResult = null;
+
+        offlineDebug.PreparedReinspect.Should().BeNull();
+        offlineDebug.OverlayPreviewImageSource.Should().BeNull();
+        offlineDebug.HeightMapPreviewImageSource.Should().BeNull();
+        offlineDebug.ReinspectStatusText.Should().Contain("Select an inspection result");
     }
 
     [Fact]
@@ -1516,16 +1551,25 @@ public sealed class DashboardAndShellViewModelTests
     private sealed class FakeInspectionArtifactReader : IInspectionArtifactReader
     {
         private static readonly DateTimeOffset Timestamp = new(2026, 6, 1, 12, 45, 0, TimeSpan.Zero);
+        private static readonly byte[] PreviewPixels =
+        {
+            0, 0, 0, 255,
+            255, 0, 0, 255,
+            0, 255, 0, 255,
+            0, 0, 255, 255
+        };
 
-        public List<string?> Requests { get; } = new();
+        public List<string?> MetadataRequests { get; } = new();
+        public List<string?> PreviewRequests { get; } = new();
 
         public Func<string?, CancellationToken, Task<InspectionArtifactMetadata>>? ReadHandler { get; init; }
+        public Func<string?, CancellationToken, Task<InspectionArtifactPreviewResult>>? PreviewHandler { get; init; }
 
         public Task<InspectionArtifactMetadata> ReadMetadataAsync(
             string? artifactPath,
             CancellationToken cancellationToken)
         {
-            Requests.Add(artifactPath);
+            MetadataRequests.Add(artifactPath);
             if (ReadHandler is not null)
             {
                 return ReadHandler(artifactPath, cancellationToken);
@@ -1534,6 +1578,27 @@ public sealed class DashboardAndShellViewModelTests
             return Task.FromResult(string.IsNullOrWhiteSpace(artifactPath)
                 ? InspectionArtifactMetadata.NotRecorded()
                 : InspectionArtifactMetadata.Available(artifactPath, 2048, Timestamp));
+        }
+
+        public Task<InspectionArtifactPreviewResult> ReadPreviewAsync(
+            string? artifactPath,
+            CancellationToken cancellationToken)
+        {
+            PreviewRequests.Add(artifactPath);
+            if (PreviewHandler is not null)
+            {
+                return PreviewHandler(artifactPath, cancellationToken);
+            }
+
+            return Task.FromResult(string.IsNullOrWhiteSpace(artifactPath)
+                ? InspectionArtifactPreviewResult.FromMetadata(InspectionArtifactMetadata.NotRecorded())
+                : InspectionArtifactPreviewResult.Available(
+                    artifactPath,
+                    width: 2,
+                    height: 2,
+                    stride: 8,
+                    pixelFormat: InspectionArtifactPreviewPixelFormat.Bgra32,
+                    pixels: PreviewPixels));
         }
     }
 

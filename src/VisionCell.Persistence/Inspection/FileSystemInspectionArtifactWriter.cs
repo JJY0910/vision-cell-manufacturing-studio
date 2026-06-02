@@ -99,6 +99,35 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         }
     }
 
+    public async Task<InspectionArtifactPreviewResult> ReadPreviewAsync(
+        string? artifactPath,
+        CancellationToken cancellationToken)
+    {
+        var metadata = await ReadMetadataAsync(artifactPath, cancellationToken).ConfigureAwait(false);
+        if (!metadata.IsAvailable)
+        {
+            return InspectionArtifactPreviewResult.FromMetadata(metadata);
+        }
+
+        if (!TryResolveArtifactPath(metadata.DisplayPath, out var absolutePath))
+        {
+            return InspectionArtifactPreviewResult.FromMetadata(
+                InspectionArtifactMetadata.UnsafePath(metadata.DisplayPath));
+        }
+
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(absolutePath, cancellationToken).ConfigureAwait(false);
+            return DecodeBmpPreview(metadata.DisplayPath, bytes);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return InspectionArtifactPreviewResult.Unavailable(
+                metadata.DisplayPath,
+                $"Artifact preview unavailable: {ex.Message}");
+        }
+    }
+
     private string GetSafeDirectory(string dateSegment)
     {
         var directory = Path.GetFullPath(Path.Combine(_rootDirectory, dateSegment));
@@ -338,6 +367,75 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         }
 
         return stream.ToArray();
+    }
+
+    private static InspectionArtifactPreviewResult DecodeBmpPreview(string displayPath, byte[] bytes)
+    {
+        if (bytes.Length < 54 || bytes[0] != (byte)'B' || bytes[1] != (byte)'M')
+        {
+            return InspectionArtifactPreviewResult.Unavailable(displayPath, "Artifact preview rejected: not a BMP file.");
+        }
+
+        var pixelOffset = BitConverter.ToInt32(bytes, 10);
+        var dibHeaderSize = BitConverter.ToInt32(bytes, 14);
+        var width = BitConverter.ToInt32(bytes, 18);
+        var signedHeight = BitConverter.ToInt32(bytes, 22);
+        var planes = BitConverter.ToInt16(bytes, 26);
+        var bitsPerPixel = BitConverter.ToInt16(bytes, 28);
+        var compression = BitConverter.ToInt32(bytes, 30);
+
+        if (dibHeaderSize < 40 ||
+            width <= 0 ||
+            signedHeight == 0 ||
+            signedHeight == int.MinValue ||
+            planes != 1 ||
+            bitsPerPixel != 24 ||
+            compression != 0 ||
+            pixelOffset < 54)
+        {
+            return InspectionArtifactPreviewResult.Unavailable(displayPath, "Artifact preview rejected: unsupported BMP format.");
+        }
+
+        var height = Math.Abs(signedHeight);
+        var sourceStride = (((long)width * 3) + 3) & ~3L;
+        var expectedLength = pixelOffset + (sourceStride * height);
+        if (expectedLength > bytes.Length || expectedLength > int.MaxValue)
+        {
+            return InspectionArtifactPreviewResult.Unavailable(displayPath, "Artifact preview rejected: BMP pixel data is incomplete.");
+        }
+
+        var targetStride = (long)width * 4;
+        var targetLength = targetStride * height;
+        if (targetStride > int.MaxValue || targetLength > int.MaxValue)
+        {
+            return InspectionArtifactPreviewResult.Unavailable(displayPath, "Artifact preview rejected: BMP image is too large.");
+        }
+
+        var pixels = new byte[(int)targetLength];
+        var bottomUp = signedHeight > 0;
+        for (var y = 0; y < height; y++)
+        {
+            var sourceY = bottomUp ? height - 1 - y : y;
+            var sourceRow = pixelOffset + (sourceY * sourceStride);
+            var targetRow = y * targetStride;
+            for (var x = 0; x < width; x++)
+            {
+                var sourceIndex = (int)(sourceRow + (x * 3));
+                var targetIndex = (int)(targetRow + (x * 4));
+                pixels[targetIndex] = bytes[sourceIndex];
+                pixels[targetIndex + 1] = bytes[sourceIndex + 1];
+                pixels[targetIndex + 2] = bytes[sourceIndex + 2];
+                pixels[targetIndex + 3] = 255;
+            }
+        }
+
+        return InspectionArtifactPreviewResult.Available(
+            displayPath,
+            width,
+            height,
+            (int)targetStride,
+            InspectionArtifactPreviewPixelFormat.Bgra32,
+            pixels);
     }
 
     private static void ValidateImage(InspectionArtifactImageFrame image)

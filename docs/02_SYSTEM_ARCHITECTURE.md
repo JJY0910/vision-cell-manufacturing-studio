@@ -164,7 +164,7 @@ Current implementation status:
 - 3D inspection now flows through `SyntheticHeightMapFactory`, `IHeightMapInspectionEngine`, and `DeterministicHeightMapInspectionEngine`, using Recipe ROI and height parameters before Judge.
 - Result persistence now flows through Application `IInspectionResultRepository` and Persistence `SqliteInspectionResultRepository`, storing Judge, defect, timing, Recipe, and correlation metadata after Judge.
 - Artifact generation now flows through Application `IInspectionArtifactWriter` and Persistence `FileSystemInspectionArtifactWriter`, creating deterministic overlay and height-map BMP files during Persist Result.
-- Offline Debug now reads persisted inspection results through Application `IInspectionResultReader` and artifact availability through `IInspectionArtifactReader`, displaying recent result metadata, defect rows, correlation IDs, artifact paths, and artifact metadata state.
+- Offline Debug now reads persisted inspection results through Application `IInspectionResultReader` and artifact metadata/preview pixels through `IInspectionArtifactReader`, displaying recent result metadata, defect rows, correlation IDs, artifact paths, artifact state, overlay preview, and height-map preview.
 - Simulator motion commands now preserve `MachineCommandRequest.CorrelationId` across success, rejected, timeout, cancelled, and stop results.
 - Rich live UI overlay rendering remains a separate follow-up slice.
 
@@ -205,5 +205,5 @@ User Button
 | Real camera | ICameraDevice | GigE/USB camera SDK |
 | Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
 | Native height-map vision | IHeightMapInspectionEngine | 3D sensor SDK/OpenCV DLL |
-| Inspection artifact storage | IInspectionArtifactWriter, IInspectionArtifactReader | PNG/export package writer and preview metadata reader |
+| Inspection artifact storage | IInspectionArtifactWriter, IInspectionArtifactReader | PNG/export package writer and preview/metadata reader |
 | AI classifier | IDefectClassifier | ONNX Runtime |

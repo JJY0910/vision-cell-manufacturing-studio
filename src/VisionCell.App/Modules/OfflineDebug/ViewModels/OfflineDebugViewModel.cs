@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Inspection;
@@ -19,11 +21,15 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         _inspectionResultReader = inspectionResultReader ?? throw new ArgumentNullException(nameof(inspectionResultReader));
         _inspectionArtifactReader = inspectionArtifactReader ?? throw new ArgumentNullException(nameof(inspectionArtifactReader));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
+        LoadSelectedArtifactsCommand = new AsyncRelayCommand(LoadSelectedArtifactsAsync, CanInspectSelectedResult);
+        PrepareReinspectCommand = new RelayCommand(PrepareReinspect, CanInspectSelectedResult);
     }
 
     public ObservableCollection<OfflineInspectionResultItemViewModel> Results { get; } = new();
 
     public IAsyncRelayCommand RefreshResultsCommand { get; }
+    public IAsyncRelayCommand LoadSelectedArtifactsCommand { get; }
+    public IRelayCommand PrepareReinspectCommand { get; }
 
     [ObservableProperty]
     private string _statusText = "Inspection results not loaded";
@@ -48,6 +54,21 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     [ObservableProperty]
     private string _lastRefreshText = "-";
+
+    [ObservableProperty]
+    private string _artifactPreviewStatusText = "Artifact preview not loaded";
+
+    [ObservableProperty]
+    private ImageSource? _overlayPreviewImageSource;
+
+    [ObservableProperty]
+    private ImageSource? _heightMapPreviewImageSource;
+
+    [ObservableProperty]
+    private string _reinspectStatusText = "Re-inspect not prepared";
+
+    [ObservableProperty]
+    private InspectionReinspectPreparation? _preparedReinspect;
 
     public async Task RefreshResultsAsync(CancellationToken cancellationToken)
     {
@@ -98,6 +119,80 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     partial void OnIsBusyChanged(bool value)
     {
         RefreshResultsCommand.NotifyCanExecuteChanged();
+        LoadSelectedArtifactsCommand.NotifyCanExecuteChanged();
+        PrepareReinspectCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedResultChanged(OfflineInspectionResultItemViewModel? value)
+    {
+        OverlayPreviewImageSource = null;
+        HeightMapPreviewImageSource = null;
+        PreparedReinspect = null;
+        ArtifactPreviewStatusText = value is null
+            ? "Select an inspection result to load artifacts"
+            : "Artifact preview not loaded";
+        ReinspectStatusText = value is null
+            ? "Select an inspection result to prepare re-inspect"
+            : "Re-inspect not prepared";
+        LoadSelectedArtifactsCommand.NotifyCanExecuteChanged();
+        PrepareReinspectCommand.NotifyCanExecuteChanged();
+    }
+
+    public async Task LoadSelectedArtifactsAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedResult is null)
+        {
+            ArtifactPreviewStatusText = "Select an inspection result to load artifacts";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var overlay = await _inspectionArtifactReader
+                .ReadPreviewAsync(SelectedResult.OverlayImagePath, cancellationToken)
+                .ConfigureAwait(true);
+            var heightMap = await _inspectionArtifactReader
+                .ReadPreviewAsync(SelectedResult.HeightMapPath, cancellationToken)
+                .ConfigureAwait(true);
+
+            OverlayPreviewImageSource = CreateImageSource(overlay);
+            HeightMapPreviewImageSource = CreateImageSource(heightMap);
+            ArtifactPreviewStatusText = $"Overlay: {overlay.Message} Height Map: {heightMap.Message}";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            ArtifactPreviewStatusText = "Artifact preview load cancelled";
+        }
+        catch (Exception ex)
+        {
+            OverlayPreviewImageSource = null;
+            HeightMapPreviewImageSource = null;
+            ArtifactPreviewStatusText = $"Artifact preview load failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public void PrepareReinspect()
+    {
+        if (SelectedResult is null)
+        {
+            ReinspectStatusText = "Select an inspection result to prepare re-inspect";
+            PreparedReinspect = null;
+            return;
+        }
+
+        PreparedReinspect = new InspectionReinspectPreparation(
+            SelectedResult.Id,
+            SelectedResult.LotId,
+            SelectedResult.RecipeId,
+            SelectedResult.RecipeVersion,
+            SelectedResult.CorrelationId,
+            DateTimeOffset.UtcNow);
+        ReinspectStatusText = $"Re-inspect prepared for {SelectedResult.LotId} / {SelectedResult.RecipeId} v{SelectedResult.RecipeVersion}";
     }
 
     private OfflineInspectionResultItemViewModel? SelectResult(Guid? preferredId)
@@ -112,6 +207,36 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         }
 
         return Results.FirstOrDefault();
+    }
+
+    private bool CanInspectSelectedResult()
+    {
+        return !IsBusy && SelectedResult is not null;
+    }
+
+    private static ImageSource? CreateImageSource(InspectionArtifactPreviewResult preview)
+    {
+        if (!preview.HasImage)
+        {
+            return null;
+        }
+
+        if (preview.PixelFormat != InspectionArtifactPreviewPixelFormat.Bgra32)
+        {
+            throw new NotSupportedException($"Unsupported artifact preview pixel format: {preview.PixelFormat}.");
+        }
+
+        var bitmap = BitmapSource.Create(
+            preview.Width,
+            preview.Height,
+            96,
+            96,
+            PixelFormats.Bgra32,
+            palette: null,
+            preview.Pixels,
+            preview.Stride);
+        bitmap.Freeze();
+        return bitmap;
     }
 }
 
