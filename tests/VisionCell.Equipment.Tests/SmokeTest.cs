@@ -3,6 +3,7 @@ using VisionCell.Core.Commands;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
+using VisionCell.Equipment.Faults;
 using VisionCell.Equipment.Hardware;
 using VisionCell.Equipment.Io;
 using VisionCell.Motion.Axes;
@@ -347,6 +348,65 @@ public sealed class VirtualEquipmentControllerTests
     }
 
     [Fact]
+    public async Task ApplyFaultAsync_Should_Surface_EStop_In_Snapshot_Io_And_Interlocks()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+        var request = CreateFaultRequest(EquipmentFaultKind.EmergencyStop, isActive: true);
+
+        var fault = await controller.ApplyFaultAsync(request, CancellationToken.None);
+        var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+        var servoOn = await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        fault.Status.Should().Be(CommandStatus.Success);
+        fault.CorrelationId.Should().Be(request.CommandRequest.CorrelationId);
+        snapshot.Mode.Should().Be(MachineMode.Alarm);
+        snapshot.Safety.EmergencyStopActive.Should().BeTrue();
+        snapshot.Safety.ServoEnabled.Should().BeFalse();
+        snapshot.Alarm?.ErrorCode.Code.Should().Be("EQP-003");
+        snapshot.Io.Bits.Should().Contain(bit => bit.Name == "DI_ESTOP_ON" && bit.Value && bit.IsForced);
+        servoOn.Status.Should().Be(CommandStatus.Rejected);
+        servoOn.ErrorCode?.Code.Should().Be("EQP-003");
+    }
+
+    [Fact]
+    public async Task ApplyFaultAsync_Should_Surface_Camera_Not_Ready_And_Clear_All()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+
+        await controller.ApplyFaultAsync(CreateFaultRequest(EquipmentFaultKind.CameraNotReady, isActive: true), CancellationToken.None);
+        var faulted = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        await controller.ApplyFaultAsync(CreateFaultRequest(EquipmentFaultKind.ClearAll, isActive: false), CancellationToken.None);
+        var cleared = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        faulted.Camera.IsReady.Should().BeFalse();
+        faulted.Alarm?.ErrorCode.Code.Should().Be("CAM-002");
+        faulted.Io.Bits.Should().Contain(bit => bit.Name == "DI_CAMERA_READY" && !bit.Value && bit.IsForced);
+        cleared.Mode.Should().Be(MachineMode.Manual);
+        cleared.Camera.IsReady.Should().BeTrue();
+        cleared.Alarm.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ApplyFaultAsync_Should_Surface_Servo_Alarm_On_Axes_And_Io()
+    {
+        var controller = new VirtualEquipmentController();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        await controller.ExecuteCommandAsync(CommandKind.ServoOn, ReadyManualContext(), TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        await controller.ApplyFaultAsync(CreateFaultRequest(EquipmentFaultKind.ServoAlarm, isActive: true), CancellationToken.None);
+        var snapshot = await controller.GetSnapshotAsync(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
+        snapshot.Safety.ServoEnabled.Should().BeFalse();
+        snapshot.Axes.Should().OnlyContain(axis => axis.Alarm != null && axis.Alarm.ErrorCode.Code == "MOT-005");
+        snapshot.Io.Bits.Should().Contain(bit => bit.Name == "DI_SERVO_ALARM" && bit.Value && bit.IsForced);
+        snapshot.Alarm?.ErrorCode.Code.Should().Be("MOT-005");
+    }
+
+    [Fact]
     public async Task ExecuteCommandAsync_Should_Preserve_Request_Correlation_For_Success_Result()
     {
         var controller = new VirtualEquipmentController();
@@ -547,6 +607,25 @@ public sealed class VirtualEquipmentControllerTests
             exposureMilliseconds: 5.0,
             gain: 1.0,
             lightIntensity: 80);
+    }
+
+    private static EquipmentFaultInjectionRequest CreateFaultRequest(
+        EquipmentFaultKind kind,
+        bool isActive)
+    {
+        return new EquipmentFaultInjectionRequest(
+            kind,
+            isActive,
+            new MachineCommandRequest(
+                $"Fault {kind}",
+                CorrelationId.New(),
+                TimeSpan.FromSeconds(1),
+                DateTimeOffset.UtcNow,
+                new Dictionary<string, string>
+                {
+                    ["FaultKind"] = kind.ToString(),
+                    ["IsActive"] = isActive.ToString()
+                }));
     }
 
     private sealed class FakeMotionControllerAdapter : IMotionControllerAdapter

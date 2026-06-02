@@ -6,6 +6,7 @@ using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Alarms;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Equipment.Faults;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
@@ -13,7 +14,7 @@ using VisionCell.Motion.Commands;
 
 namespace VisionCell.Simulator;
 
-public sealed class VirtualEquipmentController : IEquipmentController
+public sealed class VirtualEquipmentController : IEquipmentController, IEquipmentFaultInjector
 {
     private static readonly TimeSpan SnapshotLatency = TimeSpan.FromMilliseconds(50);
     private static readonly TimeSpan ServoLatency = TimeSpan.FromMilliseconds(75);
@@ -26,6 +27,12 @@ public sealed class VirtualEquipmentController : IEquipmentController
     private bool _connected;
     private bool _servoEnabled;
     private bool _axisBusy;
+    private bool _doorClosed = true;
+    private bool _emergencyStopActive;
+    private bool _airPressureOk = true;
+    private bool _vacuumOk = true;
+    private bool _cameraReady = true;
+    private bool _servoAlarmActive;
     private MachineMode _mode = MachineMode.Offline;
     private AlarmSnapshot? _alarm;
     private IReadOnlyList<AxisSnapshot> _axes = AxisDefaults.CreatePowerOffAxes();
@@ -199,6 +206,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
                     {
                         _alarm = null;
                         _axes = _axes.Select(axis => axis with { Alarm = null, IsMoving = false }).ToArray();
+                        RefreshAlarmFromFaultsLocked();
                     }
 
                     return "Alarm reset completed.";
@@ -239,6 +247,33 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 request.CorrelationId)),
             _ => throw new ArgumentOutOfRangeException(nameof(command), command, "Unsupported command kind.")
         };
+    }
+
+    public Task<MachineCommandResult> ApplyFaultAsync(
+        EquipmentFaultInjectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var sw = Stopwatch.StartNew();
+        lock (_gate)
+        {
+            if (!_connected)
+            {
+                return Task.FromResult(MachineCommandResult.Rejected(
+                    ErrorCode.ControllerConnectionFailed,
+                    "Fault injection requires a connected virtual controller.",
+                    sw.Elapsed,
+                    request.CommandRequest.CorrelationId));
+            }
+        }
+
+        return RunControllerCommandAsync(
+            request.CommandRequest.CommandName,
+            ServoLatency,
+            request.CommandRequest.Timeout,
+            cancellationToken,
+            request.CommandRequest.CorrelationId,
+            () => ApplyFaultState(request));
     }
 
     private async Task<MachineCommandResult> RunControllerCommandAsync(
@@ -429,13 +464,26 @@ public sealed class VirtualEquipmentController : IEquipmentController
     {
         lock (_gate)
         {
+            var effectiveDoorClosed = context.DoorClosed && _doorClosed;
+            var effectiveEmergencyStop = context.EmergencyStopActive || _emergencyStopActive;
+            var effectiveSafetyOk = context.SafetyOk && !effectiveEmergencyStop && effectiveDoorClosed && _airPressureOk;
+            var effectiveAxisAlarm = context.AxisAlarm || _servoAlarmActive || _axes.Any(axis => axis.Alarm is not null);
+            var effectiveAlarmActive = context.AlarmActive || _alarm is not null || effectiveAxisAlarm;
+
             return context with
             {
                 Connected = context.Connected || _connected,
                 ManualMode = _mode == MachineMode.Manual,
                 AutoMode = _mode == MachineMode.Auto,
                 AxisBusy = context.AxisBusy || _axisBusy,
-                AlarmActive = context.AlarmActive || _alarm is not null
+                EmergencyStopActive = effectiveEmergencyStop,
+                DoorClosed = effectiveDoorClosed,
+                SafetyOk = effectiveSafetyOk,
+                ServoOn = context.ServoOn || _servoEnabled,
+                AxisAlarm = effectiveAxisAlarm,
+                CameraConnected = context.CameraConnected && _cameraReady,
+                IoReady = context.IoReady && _airPressureOk && _vacuumOk,
+                AlarmActive = effectiveAlarmActive
             };
         }
     }
@@ -501,6 +549,7 @@ public sealed class VirtualEquipmentController : IEquipmentController
             _connected = true;
             _mode = MachineMode.Manual;
             _alarm = null;
+            ResetFaultsLocked();
         }
 
         return "Virtual controller connected.";
@@ -516,10 +565,60 @@ public sealed class VirtualEquipmentController : IEquipmentController
             _axisBusy = false;
             _activeMotionCancellation?.Cancel();
             _activeMotionCancellation = null;
+            ResetFaultsLocked();
             _axes = AxisDefaults.CreatePowerOffAxes();
         }
 
         return "Virtual controller disconnected.";
+    }
+
+    private string ApplyFaultState(EquipmentFaultInjectionRequest request)
+    {
+        lock (_gate)
+        {
+            switch (request.Kind)
+            {
+                case EquipmentFaultKind.EmergencyStop:
+                    _emergencyStopActive = request.IsActive;
+                    if (request.IsActive)
+                    {
+                        _servoEnabled = false;
+                    }
+
+                    break;
+                case EquipmentFaultKind.DoorOpen:
+                    _doorClosed = !request.IsActive;
+                    break;
+                case EquipmentFaultKind.AirPressureLow:
+                    _airPressureOk = !request.IsActive;
+                    break;
+                case EquipmentFaultKind.VacuumLoss:
+                    _vacuumOk = !request.IsActive;
+                    break;
+                case EquipmentFaultKind.CameraNotReady:
+                    _cameraReady = !request.IsActive;
+                    break;
+                case EquipmentFaultKind.ServoAlarm:
+                    _servoAlarmActive = request.IsActive;
+                    if (request.IsActive)
+                    {
+                        _servoEnabled = false;
+                    }
+
+                    break;
+                case EquipmentFaultKind.ClearAll:
+                    ResetFaultsLocked();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(request), request.Kind, "Unsupported fault injection kind.");
+            }
+
+            ApplyFaultEffectsLocked();
+        }
+
+        return request.Kind == EquipmentFaultKind.ClearAll
+            ? "All simulator faults cleared."
+            : $"{FormatFault(request.Kind)} fault {(request.IsActive ? "injected" : "cleared")}.";
     }
 
     private string ApplyJogStep(IReadOnlyDictionary<string, string> parameters)
@@ -606,16 +705,37 @@ public sealed class VirtualEquipmentController : IEquipmentController
     {
         bool connected;
         bool servoEnabled;
+        bool doorClosed;
+        bool emergencyStopActive;
+        bool airPressureOk;
+        bool vacuumOk;
+        bool cameraReady;
         AlarmSnapshot? alarm;
         IReadOnlyList<AxisSnapshot> axes;
         lock (_gate)
         {
             connected = _connected;
             servoEnabled = _servoEnabled;
+            doorClosed = _doorClosed;
+            emergencyStopActive = _emergencyStopActive;
+            airPressureOk = _airPressureOk;
+            vacuumOk = _vacuumOk;
+            cameraReady = _cameraReady;
             var mode = connected ? _mode : MachineMode.Offline;
             alarm = _alarm;
             axes = _axes;
-            return CreateSnapshot(timestamp, connected, mode, servoEnabled, alarm, axes);
+            return CreateSnapshot(
+                timestamp,
+                connected,
+                mode,
+                servoEnabled,
+                doorClosed,
+                emergencyStopActive,
+                airPressureOk,
+                vacuumOk,
+                cameraReady,
+                alarm,
+                axes);
         }
     }
 
@@ -624,14 +744,19 @@ public sealed class VirtualEquipmentController : IEquipmentController
         bool connected,
         MachineMode mode,
         bool servoEnabled,
+        bool doorClosed,
+        bool emergencyStopActive,
+        bool airPressureOk,
+        bool vacuumOk,
+        bool cameraReady,
         AlarmSnapshot? alarm,
         IReadOnlyList<AxisSnapshot> axes)
     {
         var safety = new SafetySnapshot(
-            DoorClosed: true,
-            EmergencyStopActive: false,
-            AirPressureOk: true,
-            VacuumOn: false,
+            DoorClosed: doorClosed,
+            EmergencyStopActive: emergencyStopActive,
+            AirPressureOk: airPressureOk,
+            VacuumOn: vacuumOk,
             ServoEnabled: servoEnabled);
 
         return new EquipmentSnapshot(
@@ -639,24 +764,35 @@ public sealed class VirtualEquipmentController : IEquipmentController
             mode,
             safety,
             axes,
-            CreateIoSnapshot(timestamp, servoEnabled),
-            new CameraSnapshot(connected, "Virtual 3D camera", timestamp),
+            CreateIoSnapshot(timestamp, servoEnabled, doorClosed, emergencyStopActive, airPressureOk, vacuumOk, cameraReady, axes),
+            new CameraSnapshot(connected && cameraReady, "Virtual 3D camera", timestamp),
             alarm,
             timestamp);
     }
 
-    private static IoSnapshot CreateIoSnapshot(DateTimeOffset timestamp, bool servoEnabled)
+    private static IoSnapshot CreateIoSnapshot(
+        DateTimeOffset timestamp,
+        bool servoEnabled,
+        bool doorClosed,
+        bool emergencyStopActive,
+        bool airPressureOk,
+        bool vacuumOk,
+        bool cameraReady,
+        IReadOnlyList<AxisSnapshot> axes)
     {
+        var servoAlarm = axes.Any(axis => axis.Alarm?.ErrorCode.Code == ErrorCode.ServoAlarm.Code);
         return new IoSnapshot(
             new[]
             {
-                new IoBitSnapshot("DI_DOOR_CLOSED", "X000", IoBitDirection.Input, true, false),
-                new IoBitSnapshot("DI_ESTOP_ON", "X001", IoBitDirection.Input, false, false),
-                new IoBitSnapshot("DI_AIR_PRESSURE_OK", "X002", IoBitDirection.Input, true, false),
+                new IoBitSnapshot("DI_DOOR_CLOSED", "X000", IoBitDirection.Input, doorClosed, !doorClosed),
+                new IoBitSnapshot("DI_ESTOP_ON", "X001", IoBitDirection.Input, emergencyStopActive, emergencyStopActive),
+                new IoBitSnapshot("DI_AIR_PRESSURE_OK", "X002", IoBitDirection.Input, airPressureOk, !airPressureOk),
                 new IoBitSnapshot("DI_PRODUCT_PRESENT", "X003", IoBitDirection.Input, true, false),
-                new IoBitSnapshot("DI_CAMERA_READY", "X004", IoBitDirection.Input, true, false),
+                new IoBitSnapshot("DI_CAMERA_READY", "X004", IoBitDirection.Input, cameraReady, !cameraReady),
+                new IoBitSnapshot("DI_VACUUM_OK", "X005", IoBitDirection.Input, vacuumOk, !vacuumOk),
+                new IoBitSnapshot("DI_SERVO_ALARM", "X006", IoBitDirection.Input, servoAlarm, servoAlarm),
                 new IoBitSnapshot("DO_SERVO_ENABLE", "Y000", IoBitDirection.Output, servoEnabled, false),
-                new IoBitSnapshot("DO_VACUUM_ON", "Y001", IoBitDirection.Output, false, false),
+                new IoBitSnapshot("DO_VACUUM_ON", "Y001", IoBitDirection.Output, vacuumOk, false),
                 new IoBitSnapshot("DO_RING_LIGHT_ON", "Y002", IoBitDirection.Output, false, false),
                 new IoBitSnapshot("DO_BUZZER_ON", "Y003", IoBitDirection.Output, false, false),
                 new IoBitSnapshot("DO_TOWER_GREEN", "Y004", IoBitDirection.Output, false, false),
@@ -664,6 +800,81 @@ public sealed class VirtualEquipmentController : IEquipmentController
                 new IoBitSnapshot("DO_TOWER_RED", "Y006", IoBitDirection.Output, false, false)
             },
             timestamp);
+    }
+
+    private void ResetFaultsLocked()
+    {
+        _doorClosed = true;
+        _emergencyStopActive = false;
+        _airPressureOk = true;
+        _vacuumOk = true;
+        _cameraReady = true;
+        _servoAlarmActive = false;
+        _alarm = null;
+        _axes = _axes.Select(axis => axis with
+        {
+            Alarm = axis.Alarm?.ErrorCode.Code == ErrorCode.ServoAlarm.Code ? null : axis.Alarm,
+            ServoOn = _servoEnabled
+        }).ToArray();
+    }
+
+    private void ApplyFaultEffectsLocked()
+    {
+        if (_emergencyStopActive || _servoAlarmActive)
+        {
+            _servoEnabled = false;
+        }
+
+        _axes = _axes.Select(axis => axis with
+        {
+            ServoOn = _servoEnabled,
+            Alarm = _servoAlarmActive
+                ? new AxisAlarm(ErrorCode.ServoAlarm, ErrorCode.ServoAlarm.Message, DateTimeOffset.UtcNow)
+                : axis.Alarm?.ErrorCode.Code == ErrorCode.ServoAlarm.Code ? null : axis.Alarm
+        }).ToArray();
+
+        RefreshAlarmFromFaultsLocked();
+        if (_connected)
+        {
+            if (_alarm is not null)
+            {
+                _mode = MachineMode.Alarm;
+            }
+            else if (_mode == MachineMode.Alarm)
+            {
+                _mode = MachineMode.Manual;
+            }
+        }
+    }
+
+    private void RefreshAlarmFromFaultsLocked()
+    {
+        var now = DateTimeOffset.UtcNow;
+        _alarm = true switch
+        {
+            _ when _emergencyStopActive => new AlarmSnapshot(ErrorCode.EmergencyStopActive, "Emergency stop fault is active.", now),
+            _ when _servoAlarmActive => new AlarmSnapshot(ErrorCode.ServoAlarm, "Servo alarm fault is active.", now),
+            _ when !_doorClosed => new AlarmSnapshot(ErrorCode.DoorOpen, "Door open fault is active.", now),
+            _ when !_airPressureOk => new AlarmSnapshot(ErrorCode.AirPressureLow, "Air pressure low fault is active.", now),
+            _ when !_cameraReady => new AlarmSnapshot(ErrorCode.CameraNotReady, "Camera ready signal is off.", now),
+            _ when !_vacuumOk => new AlarmSnapshot(ErrorCode.VacuumLoss, "Vacuum loss fault is active.", now),
+            _ => null
+        };
+    }
+
+    private static string FormatFault(EquipmentFaultKind kind)
+    {
+        return kind switch
+        {
+            EquipmentFaultKind.EmergencyStop => "Emergency Stop",
+            EquipmentFaultKind.DoorOpen => "Door Open",
+            EquipmentFaultKind.AirPressureLow => "Air Pressure Low",
+            EquipmentFaultKind.VacuumLoss => "Vacuum Loss",
+            EquipmentFaultKind.CameraNotReady => "Camera Not Ready",
+            EquipmentFaultKind.ServoAlarm => "Servo Alarm",
+            EquipmentFaultKind.ClearAll => "Clear All",
+            _ => kind.ToString()
+        };
     }
 
     private static string FormatAxis(AxisId axisId)

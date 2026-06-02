@@ -28,6 +28,7 @@ using VisionCell.App.Navigation;
 using VisionCell.App.Shell;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Equipment.Faults;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
@@ -66,7 +67,7 @@ public sealed class DashboardAndShellViewModelTests
             new NavigationService(),
             CreateAlarmViewModel(),
             CreateDashboardViewModel(),
-            new EquipmentViewModel(),
+            CreateEquipmentViewModel(),
             CreateMotionViewModel(),
             CreateTeachingViewModel(),
             CreateRecipeViewModel(),
@@ -81,6 +82,33 @@ public sealed class DashboardAndShellViewModelTests
         shell.CurrentViewModel.Should().BeOfType<MotionViewModel>();
         motionItem.IsSelected.Should().BeTrue();
         shell.NavigationItems.Should().Contain(item => item.Key == "Alarm");
+    }
+
+    [Fact]
+    public async Task Equipment_FaultInjectionAsync_Should_Update_Io_Fault_State_And_Record_Event()
+    {
+        var controller = new VirtualEquipmentController();
+        var alarmRecorder = new FakeEquipmentAlarmRecorder();
+        await controller.ConnectAsync(TimeSpan.FromSeconds(3), CancellationToken.None);
+        var equipment = CreateEquipmentViewModel(controller, alarmRecorder);
+
+        await equipment.RefreshAsync(CancellationToken.None);
+        equipment.InjectEmergencyStopCommand.CanExecute(null).Should().BeTrue();
+
+        await equipment.InjectEmergencyStopCommand.ExecuteAsync(null);
+
+        equipment.ModeStatus.Should().Be("Alarm");
+        equipment.SafetyStatus.Should().Contain("EStop On");
+        equipment.IoBits.Should().Contain(bit => bit.Name == "DI_ESTOP_ON" && bit.Value && bit.IsForced);
+        equipment.Faults.Should().Contain(fault => fault.Name == "EStop" && fault.IsActive);
+        equipment.Events.Should().Contain(systemEvent => systemEvent.EventType == "Fault Injection");
+        alarmRecorder.Failures.Should().ContainSingle(failure => failure.ErrorCode.Code == "EQP-003");
+
+        await equipment.ClearAllFaultsCommand.ExecuteAsync(null);
+
+        equipment.ModeStatus.Should().Be("Manual");
+        equipment.SafetyStatus.Should().Contain("EStop Off");
+        equipment.Faults.Should().Contain(fault => fault.Name == "EStop" && !fault.IsActive);
     }
 
     [Fact]
@@ -160,6 +188,12 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IMotionPanelUseCase>()
                 .Should()
                 .BeOfType<MotionPanelUseCase>();
+            provider.GetRequiredService<IEquipmentFaultInjectionUseCase>()
+                .Should()
+                .BeOfType<EquipmentFaultInjectionUseCase>();
+            provider.GetRequiredService<IEquipmentFaultInjector>()
+                .Should()
+                .BeOfType<VirtualEquipmentController>();
             provider.GetRequiredService<IAlarmCenterUseCase>()
                 .Should()
                 .BeOfType<AlarmCenterUseCase>();
@@ -1076,6 +1110,19 @@ public sealed class DashboardAndShellViewModelTests
             new CommandInterlockService()));
     }
 
+    private static EquipmentViewModel CreateEquipmentViewModel(
+        VirtualEquipmentController? controller = null,
+        FakeEquipmentAlarmRecorder? alarmRecorder = null)
+    {
+        var resolvedController = controller ?? new VirtualEquipmentController();
+        return new EquipmentViewModel(
+            new EquipmentDashboardUseCase(resolvedController, new CommandInterlockService()),
+            new EquipmentFaultInjectionUseCase(
+                resolvedController,
+                resolvedController,
+                alarmRecorder ?? new FakeEquipmentAlarmRecorder()));
+    }
+
     private static AlarmViewModel CreateAlarmViewModel(FakeAlarmCenterUseCase? useCase = null)
     {
         return new AlarmViewModel(useCase ?? new FakeAlarmCenterUseCase());
@@ -1611,6 +1658,29 @@ public sealed class DashboardAndShellViewModelTests
         }
     }
 
+    private sealed class FakeEquipmentAlarmRecorder : IEquipmentAlarmRecorder
+    {
+        public List<EquipmentAlarm> Alarms { get; } = new();
+        public List<(ErrorCode ErrorCode, EquipmentArea Area, string Message, string? CorrelationId)> Failures { get; } = new();
+
+        public Task RecordAsync(EquipmentAlarm alarm, CancellationToken cancellationToken)
+        {
+            Alarms.Add(alarm);
+            return Task.CompletedTask;
+        }
+
+        public Task RecordFailureAsync(
+            ErrorCode errorCode,
+            EquipmentArea area,
+            string message,
+            string? correlationId,
+            CancellationToken cancellationToken)
+        {
+            Failures.Add((errorCode, area, message, correlationId));
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed class FakeInspectionResultReader : IInspectionResultReader
     {
         private readonly IReadOnlyList<InspectionResultRecord> _records;
@@ -1918,7 +1988,7 @@ public sealed class DashboardAndShellViewModelTests
         return new EquipmentSnapshot(
             connected,
             mode ?? (connected ? MachineMode.Manual : MachineMode.Offline),
-            new SafetySnapshot(true, false, true, false, servoOn),
+            new SafetySnapshot(true, false, true, true, servoOn),
             axes,
             io,
             new CameraSnapshot(connected, "Virtual 3D camera", timestamp),

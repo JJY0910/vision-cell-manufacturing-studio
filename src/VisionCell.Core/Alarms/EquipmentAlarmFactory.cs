@@ -44,7 +44,7 @@ public static class EquipmentAlarmFactory
             return EquipmentArea.Database;
         }
 
-        return errorCode.Code is "EQP-003" or "EQP-004"
+        return errorCode.Code is "EQP-003" or "EQP-004" or "EQP-008" or "EQP-009"
             ? EquipmentArea.Safety
             : fallback;
     }
@@ -55,8 +55,11 @@ public static class EquipmentAlarmFactory
         {
             "EQP-003" => EquipmentAlarmSeverity.Critical,
             "EQP-004" => EquipmentAlarmSeverity.Warning,
+            "EQP-008" => EquipmentAlarmSeverity.Critical,
+            "EQP-009" => EquipmentAlarmSeverity.Warning,
             "MOT-001" => EquipmentAlarmSeverity.Warning,
             "MOT-002" => EquipmentAlarmSeverity.Warning,
+            "MOT-005" => EquipmentAlarmSeverity.Critical,
             "VIS-001" => EquipmentAlarmSeverity.Warning,
             _ => EquipmentAlarmSeverity.Error
         };

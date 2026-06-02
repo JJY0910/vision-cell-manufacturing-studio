@@ -57,6 +57,22 @@ public sealed class MachineCommandResultTests
         alarm.Area.Should().Be(EquipmentArea.Safety);
         alarm.Severity.Should().Be(EquipmentAlarmSeverity.Critical);
         alarm.CorrelationId.Should().Be("corr-001");
+
+        var air = EquipmentAlarmFactory.FromFailure(
+            ErrorCode.AirPressureLow,
+            EquipmentArea.Equipment,
+            "Air pressure low.",
+            alarm.OccurredAt);
+        var servo = EquipmentAlarmFactory.FromFailure(
+            ErrorCode.ServoAlarm,
+            EquipmentArea.Equipment,
+            "Servo alarm.",
+            alarm.OccurredAt);
+
+        air.Area.Should().Be(EquipmentArea.Safety);
+        air.Severity.Should().Be(EquipmentAlarmSeverity.Critical);
+        servo.Area.Should().Be(EquipmentArea.Motion);
+        servo.Severity.Should().Be(EquipmentAlarmSeverity.Critical);
     }
 
     [Fact]

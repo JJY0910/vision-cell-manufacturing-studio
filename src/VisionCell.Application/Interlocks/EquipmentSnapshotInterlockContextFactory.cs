@@ -14,6 +14,7 @@ public static class EquipmentSnapshotInterlockContextFactory
         var anyAxisAlarm = snapshot.Axes.Any(axis => axis.Alarm is not null) || snapshot.Alarm is not null;
         var allAxesHomed = snapshot.Axes.Count > 0 && snapshot.Axes.All(axis => axis.IsHomed);
         var servoOn = snapshot.Safety.ServoEnabled || snapshot.Axes.Any(axis => axis.ServoOn);
+        var ioReady = snapshot.Safety.AirPressureOk && snapshot.Safety.VacuumOn;
         var safetyOk = !snapshot.Safety.EmergencyStopActive && snapshot.Safety.DoorClosed && snapshot.Safety.AirPressureOk;
         var withinSoftLimit = snapshot.Axes.All(axis => axis.SoftLimit.Contains(axis.Target));
 
@@ -34,7 +35,7 @@ public static class EquipmentSnapshotInterlockContextFactory
             WithinSoftLimit: withinSoftLimit,
             RecipeLoaded: false,
             CameraConnected: snapshot.Camera.IsReady,
-            IoReady: snapshot.Safety.AirPressureOk,
+            IoReady: ioReady,
             AlarmActive: snapshot.Alarm is not null || snapshot.Mode == MachineMode.Alarm || anyAxisAlarm);
     }
 }

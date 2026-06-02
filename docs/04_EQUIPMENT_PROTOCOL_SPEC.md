@@ -38,6 +38,8 @@ public sealed record EquipmentSnapshot(
 | DI_AIR_PRESSURE_OK | Input | true | Air pressure |
 | DI_PRODUCT_PRESENT | Input | true | Product detect |
 | DI_CAMERA_READY | Input | true | Camera ready |
+| DI_VACUUM_OK | Input | true | Vacuum sensor ready |
+| DI_SERVO_ALARM | Input | false | Servo alarm input |
 | DO_SERVO_ENABLE | Output | false | Servo enable |
 | DO_VACUUM_ON | Output | false | Vacuum output |
 | DO_RING_LIGHT_ON | Output | false | Light output |
@@ -54,10 +56,13 @@ public sealed record EquipmentSnapshot(
 | EQP-002 | Error | Heartbeat lost | Reconnect controller |
 | EQP-003 | Alarm | Emergency stop active | Release EStop and reset |
 | EQP-004 | Warning | Door open | Close door |
+| EQP-008 | Alarm | Air pressure low | Restore air pressure and reset |
+| EQP-009 | Warning | Vacuum loss | Check vacuum line / product pickup |
 | MOT-001 | Alarm | Servo off | Servo on before motion |
 | MOT-002 | Alarm | Axis not homed | Home axis |
 | MOT-003 | Error | Motion timeout | Check soft limit / reset |
 | MOT-004 | Error | Soft limit exceeded | Change target |
+| MOT-005 | Alarm | Servo alarm active | Clear servo drive alarm and reset |
 | CAM-001 | Error | Camera grab timeout | Retry grab |
 | CAM-002 | Error | Camera not ready | Check camera status |
 | CAM-003 | Error | Camera grab failed | Check simulator injection / retry grab |
@@ -75,7 +80,10 @@ Simulator must support:
 - camera grab failure
 - random image defect rate
 - EStop/Door toggles
+- Air pressure, vacuum, camera-ready, and servo-alarm fault injection
 - DB disabled mode for testing UI error path
+
+Current simulator fault injection is exposed through `IEquipmentFaultInjector` and `EquipmentFaultInjectionUseCase`. It is a simulator diagnostics path, not a real PLC or safety relay control path.
 
 ## Hardware Adapter Boundary
 
