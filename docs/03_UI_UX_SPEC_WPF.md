@@ -100,6 +100,12 @@ Required visual:
 - Failure injection
 - Controller diagnostics
 
+Implementation status:
+
+- `EquipmentViewModel` refreshes the simulator equipment snapshot through `IEquipmentDashboardUseCase`.
+- `EquipmentView` displays controller mode, safety/interlock summary, camera/alarm status, I/O monitor rows, fault state rows, and recent fault events.
+- Simulator fault injection for EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, and Clear All flows through `IEquipmentFaultInjectionUseCase`; WPF does not call simulator internals directly.
+
 ### MotionView
 
 - Axis position grid

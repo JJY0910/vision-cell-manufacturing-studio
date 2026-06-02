@@ -1,6 +1,8 @@
 using FluentAssertions;
+using VisionCell.Application.Alarms;
 using VisionCell.Application.Equipment;
 using VisionCell.Application.Interlocks;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Events;
@@ -9,6 +11,7 @@ using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Alarms;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Equipment.Faults;
 using VisionCell.Equipment.Io;
 using VisionCell.Equipment.Safety;
 using VisionCell.Motion.Axes;
@@ -90,6 +93,47 @@ public sealed class EquipmentDashboardUseCaseTests
         availability.DisabledReason.Should().Contain("servo on");
     }
 
+    [Fact]
+    public async Task FaultInjectionUseCase_Should_Record_Alarm_And_Return_Refreshed_Snapshot()
+    {
+        var controller = new FakeEquipmentController(CreateSnapshot(connected: true));
+        var faultInjector = new FakeFaultInjector
+        {
+            Handler = (request, _) =>
+            {
+                controller.Snapshot = CreateSnapshot(
+                    connected: true,
+                    mode: MachineMode.Alarm,
+                    alarm: new AlarmSnapshot(ErrorCode.AirPressureLow, "Air pressure low fault is active.", DateTimeOffset.UtcNow));
+                return Task.FromResult(MachineCommandResult.Success(
+                    "Air Pressure Low fault injected.",
+                    TimeSpan.FromMilliseconds(7),
+                    request.CommandRequest.CorrelationId));
+            }
+        };
+        var alarmRecorder = new FakeEquipmentAlarmRecorder();
+        var useCase = new EquipmentFaultInjectionUseCase(faultInjector, controller, alarmRecorder);
+
+        var result = await useCase.ApplyAsync(
+            new EquipmentFaultInjectionCommand(
+                EquipmentFaultKind.AirPressureLow,
+                isActive: true,
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromMilliseconds(500),
+                "Air pressure input forced low."),
+            CancellationToken.None);
+
+        faultInjector.Requests.Should().ContainSingle();
+        result.Request.Parameters.Should().Contain("FaultKind", "AirPressureLow");
+        result.CommandResult.Status.Should().Be(CommandStatus.Success);
+        result.CommandEvent.EventType.Should().Be("Fault Injection");
+        result.SnapshotResult.Snapshot!.Mode.Should().Be(MachineMode.Alarm);
+        alarmRecorder.Failures.Should().ContainSingle(failure =>
+            failure.ErrorCode.Code == "EQP-008" &&
+            failure.Area == EquipmentArea.Safety &&
+            failure.CorrelationId == result.CommandResult.CorrelationId.ToString());
+    }
+
     private static EquipmentDashboardUseCase CreateUseCase(FakeEquipmentController controller)
     {
         return new EquipmentDashboardUseCase(controller, new CommandInterlockService());
@@ -128,7 +172,7 @@ public sealed class EquipmentDashboardUseCaseTests
         return new EquipmentSnapshot(
             connected,
             connected ? mode : MachineMode.Offline,
-            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: false, ServoEnabled: servoOn),
+            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: true, ServoEnabled: servoOn),
             AxisDefaults.CreatePowerOffAxes().Select(axis => axis with { ServoOn = servoOn }).ToArray(),
             new IoSnapshot(Array.Empty<IoBitSnapshot>(), timestamp),
             new CameraSnapshot(connected, "Virtual 3D camera", timestamp),
@@ -187,6 +231,46 @@ public sealed class EquipmentDashboardUseCaseTests
             return ExecuteHandler is not null
                 ? ExecuteHandler(command, context, timeout, cancellationToken)
                 : Task.FromResult(MachineCommandResult.Success($"{command} completed.", TimeSpan.FromMilliseconds(10), CorrelationId.New()));
+        }
+    }
+
+    private sealed class FakeFaultInjector : IEquipmentFaultInjector
+    {
+        public List<EquipmentFaultInjectionRequest> Requests { get; } = new();
+        public Func<EquipmentFaultInjectionRequest, CancellationToken, Task<MachineCommandResult>>? Handler { get; init; }
+
+        public Task<MachineCommandResult> ApplyFaultAsync(
+            EquipmentFaultInjectionRequest request,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            return Handler is not null
+                ? Handler(request, cancellationToken)
+                : Task.FromResult(MachineCommandResult.Success(
+                    "Fault injection accepted.",
+                    TimeSpan.Zero,
+                    request.CommandRequest.CorrelationId));
+        }
+    }
+
+    private sealed class FakeEquipmentAlarmRecorder : IEquipmentAlarmRecorder
+    {
+        public List<(ErrorCode ErrorCode, EquipmentArea Area, string Message, string? CorrelationId)> Failures { get; } = new();
+
+        public Task RecordAsync(EquipmentAlarm alarm, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RecordFailureAsync(
+            ErrorCode errorCode,
+            EquipmentArea area,
+            string message,
+            string? correlationId,
+            CancellationToken cancellationToken)
+        {
+            Failures.Add((errorCode, area, message, correlationId));
+            return Task.CompletedTask;
         }
     }
 }

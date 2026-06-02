@@ -9,10 +9,13 @@ public readonly record struct ErrorCode(string Code, string Message)
     public static readonly ErrorCode CommandTimeout = new("EQP-005", "Command timed out.");
     public static readonly ErrorCode CommandCancelled = new("EQP-006", "Command was cancelled.");
     public static readonly ErrorCode CommandRejected = new("EQP-007", "Command rejected by interlock.");
+    public static readonly ErrorCode AirPressureLow = new("EQP-008", "Air pressure is low.");
+    public static readonly ErrorCode VacuumLoss = new("EQP-009", "Vacuum is not established.");
     public static readonly ErrorCode ServoOff = new("MOT-001", "Servo is off.");
     public static readonly ErrorCode AxisNotHomed = new("MOT-002", "Axis is not homed.");
     public static readonly ErrorCode MotionTimeout = new("MOT-003", "Motion command timed out.");
     public static readonly ErrorCode SoftLimitExceeded = new("MOT-004", "Target exceeds soft limit.");
+    public static readonly ErrorCode ServoAlarm = new("MOT-005", "Servo alarm is active.");
     public static readonly ErrorCode CameraGrabTimeout = new("CAM-001", "Camera grab timed out.");
     public static readonly ErrorCode CameraNotReady = new("CAM-002", "Camera is not ready.");
     public static readonly ErrorCode CameraGrabFailed = new("CAM-003", "Camera grab failed.");

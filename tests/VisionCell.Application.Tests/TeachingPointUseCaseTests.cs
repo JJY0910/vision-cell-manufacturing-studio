@@ -540,7 +540,7 @@ public sealed class TeachingPointUseCaseTests
                 DoorClosed: true,
                 EmergencyStopActive: false,
                 AirPressureOk: true,
-                VacuumOn: false,
+                VacuumOn: true,
                 ServoEnabled: true),
             axes,
             new IoSnapshot(Array.Empty<IoBitSnapshot>(), timestamp),

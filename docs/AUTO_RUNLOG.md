@@ -454,3 +454,10 @@
 - Validation target: Equipment targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Equipment targeted tests passed with 28 tests. Debug/Release solution build and test passed with 220 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This PR defines adapter contracts only; no real `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, camera trigger, or safety relay validation is performed.
+
+## 2026-06-02 16:02 - Local validation passed
+- Branch: `feature/fr-080-io-monitor-fault-injection`
+- Scope: Add simulator I/O Monitor and Fault Injection baseline for EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, interlock blocking, and alarm recorder integration through Application use cases.
+- Validation target: Core/Equipment/Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Core targeted tests passed with 4 tests; Equipment targeted tests passed with 31 tests; Application targeted tests passed with 84 tests; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: Fault injection is simulator-only; no real PLC, safety relay, EStop circuit, door switch, air/vacuum sensor, camera-ready line, servo drive alarm, or fieldbus path is validated.

@@ -493,7 +493,7 @@ public sealed class InspectionRunUseCaseTests
         return new EquipmentSnapshot(
             connected,
             mode,
-            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: false, ServoEnabled: servoOn),
+            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: true, ServoEnabled: servoOn),
             axes,
             new IoSnapshot(
                 new[]

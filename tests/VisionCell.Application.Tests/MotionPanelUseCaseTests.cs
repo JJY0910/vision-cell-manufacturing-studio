@@ -98,7 +98,7 @@ public sealed class MotionPanelUseCaseTests
         return new EquipmentSnapshot(
             connected,
             connected ? mode : MachineMode.Offline,
-            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: false, ServoEnabled: servoOn),
+            new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: true, ServoEnabled: servoOn),
             AxisDefaults.CreatePowerOffAxes().Select(axis => axis with { ServoOn = servoOn }).ToArray(),
             new IoSnapshot(Array.Empty<IoBitSnapshot>(), timestamp),
             new CameraSnapshot(connected, "Virtual 3D camera", timestamp),

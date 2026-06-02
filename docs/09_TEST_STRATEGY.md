@@ -42,6 +42,7 @@ tests/VisionCell.App.Tests
 - EStop blocks command
 - Door open blocks Auto
 - I/O toggle updates snapshot
+- Fault injection updates EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, I/O forced state, and alarm snapshot
 
 ### Recipe
 
@@ -99,6 +100,7 @@ tests/VisionCell.App.Tests
 - State update after snapshot
 - Error event displayed
 - Navigation updates selected screen
+- Equipment fault injection updates I/O monitor rows, fault state rows, and event status
 - Offline Debug result refresh shows loaded, empty, and repository failure states
 - AlarmView refresh and acknowledgement state updates
 

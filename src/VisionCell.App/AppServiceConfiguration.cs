@@ -22,6 +22,7 @@ using VisionCell.App.Navigation;
 using VisionCell.App.Shell;
 using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
+using VisionCell.Equipment.Faults;
 using VisionCell.Persistence.Alarms;
 using VisionCell.Persistence.Inspection;
 using VisionCell.Persistence.Motion;
@@ -56,7 +57,9 @@ public static class AppServiceConfiguration
             ? Path.Combine(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory, "inspection-artifacts")
             : artifactRootPath;
 
-        services.AddSingleton<IEquipmentController, VirtualEquipmentController>();
+        services.AddSingleton<VirtualEquipmentController>();
+        services.AddSingleton<IEquipmentController>(provider => provider.GetRequiredService<VirtualEquipmentController>());
+        services.AddSingleton<IEquipmentFaultInjector>(provider => provider.GetRequiredService<VirtualEquipmentController>());
         services.AddSingleton<ICameraDevice, VirtualCameraDevice>();
         services.AddSingleton<IVisionInspectionEngine, Deterministic2DInspectionEngine>();
         services.AddSingleton<IHeightMapInspectionEngine, DeterministicHeightMapInspectionEngine>();
@@ -95,6 +98,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<IMotionCommandUseCase, MotionCommandUseCase>();
         services.AddSingleton<IMotionPanelUseCase, MotionPanelUseCase>();
         services.AddSingleton<IEquipmentDashboardUseCase, EquipmentDashboardUseCase>();
+        services.AddSingleton<IEquipmentFaultInjectionUseCase, EquipmentFaultInjectionUseCase>();
         services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
