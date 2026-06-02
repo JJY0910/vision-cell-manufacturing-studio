@@ -492,3 +492,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed with only expected existing docs/test artifact references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice changes WPF I/O row presentation only; no simulator fault behavior, interlock logic, PLC wiring, or real field I/O validation is included.
+
+## 2026-06-02 17:02 - Local validation passed
+- Branch: `feature/fr-221-image-viewport-control`
+- Scope: Add reusable `ImageViewport` and apply it to Inspection last-grab and Offline Debug overlay/height-map preview surfaces.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed with only expected existing docs/test artifact references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice changes WPF image presentation only; no artifact reader expansion, ROI drawing, inspection replay, image format support, or real camera/HMI panel validation is included.

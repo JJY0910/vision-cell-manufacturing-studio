@@ -1,6 +1,7 @@
 <UserControl x:Class="VisionCell.App.Modules.OfflineDebug.Views.OfflineDebugView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <Grid>
       <Grid.RowDefinitions>
@@ -182,24 +183,16 @@
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap" />
             <UniformGrid Grid.Row="1" Columns="2" Margin="0,8,0,0">
-              <StackPanel Margin="0,0,8,0">
-                <TextBlock Text="Overlay Preview" Style="{DynamicResource Text.MetricLabel}" />
-                <Grid MinHeight="160"
-                      Background="{DynamicResource Brush.PanelAlt}">
-                  <Image Source="{Binding OverlayPreviewImageSource}"
-                         Stretch="Uniform"
-                         MinHeight="160" />
-                </Grid>
-              </StackPanel>
-              <StackPanel Margin="8,0,0,0">
-                <TextBlock Text="Height Map Preview" Style="{DynamicResource Text.MetricLabel}" />
-                <Grid MinHeight="160"
-                      Background="{DynamicResource Brush.PanelAlt}">
-                  <Image Source="{Binding HeightMapPreviewImageSource}"
-                         Stretch="Uniform"
-                         MinHeight="160" />
-                </Grid>
-              </StackPanel>
+              <controls:ImageViewport Title="Overlay Preview"
+                                      StatusText="{Binding SelectedResult.OverlayArtifactStatus, TargetNullValue=Overlay: -}"
+                                      ImageSource="{Binding OverlayPreviewImageSource}"
+                                      ViewportMinHeight="160"
+                                      Margin="0,0,8,0" />
+              <controls:ImageViewport Title="Height Map Preview"
+                                      StatusText="{Binding SelectedResult.HeightMapArtifactStatus, TargetNullValue=Height Map: -}"
+                                      ImageSource="{Binding HeightMapPreviewImageSource}"
+                                      ViewportMinHeight="160"
+                                      Margin="8,0,0,0" />
             </UniformGrid>
             <TextBlock Grid.Row="2"
                        Text="{Binding ReinspectStatusText}"
