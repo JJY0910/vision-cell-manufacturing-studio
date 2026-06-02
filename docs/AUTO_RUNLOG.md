@@ -485,3 +485,10 @@
 - Scope: Add reusable `KpiCard` and apply it to Motion, Recipe, and Alarm summary bands for consistent HMI metric cards.
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Risks: This slice changes WPF resource bindings only; no machine behavior or real panel validation is included.
+
+## 2026-06-02 16:52 - Local validation passed
+- Branch: `feature/fr-080-io-bit-indicator-control`
+- Scope: Add reusable `IoBitIndicator` and apply it to Dashboard and Equipment I/O monitor rows for consistent forced/on/off HMI bit state display.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; static blocking/code-behind/artifact checks passed with only expected existing docs/test artifact references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice changes WPF I/O row presentation only; no simulator fault behavior, interlock logic, PLC wiring, or real field I/O validation is included.
