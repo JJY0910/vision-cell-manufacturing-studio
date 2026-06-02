@@ -16,6 +16,7 @@
 - [x] Dashboard shows I/O bit state.
 - [x] Dashboard shows recent system events.
 - [x] Dashboard exposes command interlock availability baseline.
+- [x] Dashboard equipment command orchestration flows through an Application use case.
 - [ ] Dashboard polish review is complete on a real display.
 
 ## Simulator

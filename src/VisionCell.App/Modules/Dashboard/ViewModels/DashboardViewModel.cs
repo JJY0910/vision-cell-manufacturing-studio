@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.Application.Equipment;
 using VisionCell.Application.Interlocks;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Events;
@@ -18,14 +19,12 @@ public sealed partial class DashboardViewModel : ObservableObject
 {
     private static readonly TimeSpan ControllerCommandTimeout = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
-    private readonly IEquipmentController _equipmentController;
-    private readonly ICommandInterlockService _interlockService;
+    private readonly IEquipmentDashboardUseCase _equipmentUseCase;
     private InterlockContext _interlockContext = InterlockContext.Disconnected;
 
-    public DashboardViewModel(IEquipmentController equipmentController, ICommandInterlockService interlockService)
+    public DashboardViewModel(IEquipmentDashboardUseCase equipmentUseCase)
     {
-        _equipmentController = equipmentController;
-        _interlockService = interlockService;
+        _equipmentUseCase = equipmentUseCase ?? throw new ArgumentNullException(nameof(equipmentUseCase));
 
         ConnectCommand = new AsyncRelayCommand(ConnectAsync, () => IsCommandEnabled(CommandKind.Connect));
         DisconnectCommand = new AsyncRelayCommand(DisconnectAsync, () => IsCommandEnabled(CommandKind.Disconnect));
@@ -86,23 +85,25 @@ public sealed partial class DashboardViewModel : ObservableObject
     public CommandAvailabilityViewModel GetCommandAvailability(CommandKind command)
     {
         return CommandAvailabilities.FirstOrDefault(item => item.Command == command)
-            ?? CreateAvailabilityViewModel(_interlockService.Evaluate(command, _interlockContext));
+            ?? CreateAvailabilityViewModel(_equipmentUseCase.GetCommandAvailability(command, _interlockContext));
     }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        var result = await _equipmentController.ConnectAsync(ControllerCommandTimeout, cancellationToken).ConfigureAwait(true);
-        AddEvent(result.ToSystemEvent("Equipment", "Connect"));
-        ControllerLatencyStatus = $"Latency: {result.Elapsed.TotalMilliseconds:0} ms";
-        await RefreshAsync(cancellationToken).ConfigureAwait(true);
+        var result = await _equipmentUseCase
+            .ConnectAsync(ControllerCommandTimeout, SnapshotTimeout, cancellationToken)
+            .ConfigureAwait(true);
+
+        ApplyCommandResult(result);
     }
 
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
-        var result = await _equipmentController.DisconnectAsync(ControllerCommandTimeout, cancellationToken).ConfigureAwait(true);
-        AddEvent(result.ToSystemEvent("Equipment", "Disconnect"));
-        ControllerLatencyStatus = $"Latency: {result.Elapsed.TotalMilliseconds:0} ms";
-        await RefreshAsync(cancellationToken).ConfigureAwait(true);
+        var result = await _equipmentUseCase
+            .DisconnectAsync(ControllerCommandTimeout, SnapshotTimeout, cancellationToken)
+            .ConfigureAwait(true);
+
+        ApplyCommandResult(result);
     }
 
     public Task EnterManualModeAsync(CancellationToken cancellationToken)
@@ -117,20 +118,8 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            var snapshot = await _equipmentController.GetSnapshotAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
-            ApplySnapshot(snapshot);
-            AddEvent(SystemEvent.Create(SystemEventSeverity.Trace, "Equipment", "Snapshot", "Equipment snapshot refreshed."));
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            AddEvent(SystemEvent.Create(SystemEventSeverity.Warning, "Equipment", "SnapshotCancelled", "Snapshot refresh was cancelled."));
-        }
-        catch (OperationCanceledException)
-        {
-            AddEvent(SystemEvent.Create(SystemEventSeverity.Alarm, "Equipment", "SnapshotTimeout", "Snapshot refresh timed out."));
-        }
+        var result = await _equipmentUseCase.RefreshAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
+        ApplySnapshotResult(result);
     }
 
     private void ApplySnapshot(EquipmentSnapshot snapshot)
@@ -204,7 +193,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         CommandAvailabilities.Clear();
         foreach (var command in Enum.GetValues<CommandKind>())
         {
-            CommandAvailabilities.Add(CreateAvailabilityViewModel(_interlockService.Evaluate(command, _interlockContext)));
+            CommandAvailabilities.Add(CreateAvailabilityViewModel(_equipmentUseCase.GetCommandAvailability(command, _interlockContext)));
         }
 
         ConnectCommand.NotifyCanExecuteChanged();
@@ -219,17 +208,33 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     private async Task ExecuteControllerCommandAsync(CommandKind command, CancellationToken cancellationToken)
     {
-        var result = await _equipmentController
-            .ExecuteCommandAsync(command, _interlockContext, ControllerCommandTimeout, cancellationToken)
+        var result = await _equipmentUseCase
+            .ExecuteCommandAsync(command, _interlockContext, ControllerCommandTimeout, SnapshotTimeout, cancellationToken)
             .ConfigureAwait(true);
-        AddEvent(result.ToSystemEvent("Equipment", FormatCommand(command)));
-        ControllerLatencyStatus = $"Latency: {result.Elapsed.TotalMilliseconds:0} ms";
-        await RefreshAsync(cancellationToken).ConfigureAwait(true);
+
+        ApplyCommandResult(result);
     }
 
     private bool IsCommandEnabled(CommandKind command)
     {
-        return _interlockService.Evaluate(command, _interlockContext).IsEnabled;
+        return _equipmentUseCase.GetCommandAvailability(command, _interlockContext).IsEnabled;
+    }
+
+    private void ApplyCommandResult(EquipmentDashboardCommandResult result)
+    {
+        AddEvent(result.CommandEvent);
+        ControllerLatencyStatus = $"Latency: {result.CommandResult.Elapsed.TotalMilliseconds:0} ms";
+        ApplySnapshotResult(result.SnapshotResult);
+    }
+
+    private void ApplySnapshotResult(EquipmentDashboardSnapshotResult result)
+    {
+        if (result.Snapshot is not null)
+        {
+            ApplySnapshot(result.Snapshot);
+        }
+
+        AddEvent(result.Event);
     }
 
     private static CommandAvailabilityViewModel CreateAvailabilityViewModel(CommandAvailability availability)

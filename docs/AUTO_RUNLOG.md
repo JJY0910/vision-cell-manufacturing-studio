@@ -384,3 +384,10 @@
 - Validation target: Equipment targeted tests, full Debug/Release build/test, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Equipment targeted tests passed with 26 tests; Debug/Release solution build and test passed with 193 tests; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice hardens simulator/backend traceability; richer operator-facing motion history filtering remains follow-up work.
+
+## 2026-06-02 10:14 - In progress
+- Branch: `feature/application-equipment-use-cases`
+- Scope: Move Dashboard equipment connect/disconnect/refresh/Manual/Auto orchestration behind Application `IEquipmentDashboardUseCase`, keeping WPF focused on state binding.
+- Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Application targeted tests passed with 72 tests; App targeted tests passed with 38 tests; Debug/Release solution build and test passed with 195 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice cleans Dashboard equipment command orchestration only; Motion, Teaching, Recipe, and Inspection view-model cleanup remain follow-up work.

@@ -3,7 +3,7 @@
 ## P0 Implementation Backlog
 
 - [ ] FR-001 WPF Shell layout
-- [ ] FR-020 Equipment connect/disconnect
+- [ ] FR-020 Equipment connect/disconnect (Dashboard Application use case baseline added; hardware adapter validation pending)
 - [ ] FR-040 Safety interlock baseline
 - [ ] FR-060 Axis state display
 - [ ] FR-061 Axis Home
@@ -48,6 +48,14 @@ Source: Phase 1 WPF Shell / Dashboard implementation
 Problem: FR-004 command enabled conditions now have a Core/Application/Dashboard/backend baseline, but feature-specific Motion/Inspection/Recipe command handlers and hardware adapter validation are still pending.
 Proposed improvement: Extend the baseline command state objects into Motion, Inspection, and Recipe views as those command handlers are implemented, and add adapter-level tests for EStop, Door Open, Servo Off, Auto mode, and active recipe prerequisites.
 Requirement impact: FR-004, FR-040, FR-041, FR-042, FR-083, FR-122, FR-180
+Priority: P1
+Status: Dashboard equipment command availability and execution orchestration now flows through `IEquipmentDashboardUseCase`; feature-specific Motion/Inspection/Recipe handlers and adapter validation remain open.
+
+Date: 2026-06-02
+Source: Dashboard equipment Application use case
+Problem: Dashboard connect/disconnect/refresh/mode commands now use an Application boundary, but Motion, Teaching, Recipe, and Inspection view models still need ongoing review for direct orchestration that should belong in Application use cases.
+Proposed improvement: Continue view-model cleanup in small slices, starting with the highest-risk hardware-like command surfaces that need timeout, cancellation, structured events, and backend validation.
+Requirement impact: FR-020, FR-021, FR-022, FR-061, FR-062, FR-100, FR-120, FR-180, NFR-001, NFR-002, NFR-004
 Priority: P1
 
 Date: 2026-06-01
