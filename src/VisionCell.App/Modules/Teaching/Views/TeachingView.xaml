@@ -14,11 +14,13 @@
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
           <Button Content="Refresh"
                   Command="{Binding RefreshCommand}"
+                  ToolTip="Reload saved teaching points and active recipe context."
                   Height="36"
                   MinWidth="96"
                   Margin="0,0,8,0" />
           <Button Content="Go To"
                   Command="{Binding GoToSelectedCommand}"
+                  ToolTip="Move to the selected teaching point through the Application motion boundary."
                   Height="36"
                   MinWidth="88" />
         </StackPanel>
@@ -39,122 +41,66 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Save Current Position" Style="{DynamicResource Text.CardTitle}" />
-          <Grid Grid.Row="1" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="180" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="150" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="160" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Name"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="1"
-                     Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="2"
-                       Text="Role"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <ComboBox Grid.Column="3"
-                      ItemsSource="{Binding RoleOptions}"
-                      SelectedItem="{Binding SelectedRole}"
-                      Height="32"
-                      Margin="0,0,12,8" />
-            <TextBlock Grid.Column="4"
-                       Text="Active Recipe"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="5"
-                     Text="{Binding ActiveRecipeIdText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="6"
-                       Text="Memo"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="7"
-                     Text="{Binding MemoText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,0,8" />
-          </Grid>
-          <Grid Grid.Row="2" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="88" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Tol X"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="1"
-                     Text="{Binding ToleranceXText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="2"
-                       Text="Tol Y"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="3"
-                     Text="{Binding ToleranceYText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="4"
-                       Text="Tol Z"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="5"
-                     Text="{Binding ToleranceZText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <TextBlock Grid.Column="6"
-                       Text="Tol T"
-                       Style="{DynamicResource Text.MetricLabel}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,8" />
-            <TextBox Grid.Column="7"
-                     Text="{Binding ToleranceThetaText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     Margin="0,0,12,8" />
-            <Button Grid.Column="8"
-                    Content="Save Current"
+          <WrapPanel Grid.Row="1" Margin="0,12,0,0">
+            <StackPanel Width="180" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Name" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="150" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Role" Style="{DynamicResource Text.MetricLabel}" />
+              <ComboBox ItemsSource="{Binding RoleOptions}"
+                        SelectedItem="{Binding SelectedRole}"
+                        Style="{DynamicResource ComboBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="170" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Active Recipe" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ActiveRecipeIdText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="260" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Memo" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding MemoText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+          </WrapPanel>
+          <WrapPanel Grid.Row="2" Margin="0,4,0,0">
+            <StackPanel Width="88" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Tol X" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ToleranceXText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="88" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Tol Y" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ToleranceYText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="88" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Tol Z" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ToleranceZText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <StackPanel Width="88" Style="{DynamicResource Form.Field}">
+              <TextBlock Text="Tol T" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ToleranceThetaText, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{DynamicResource TextBox.HmiInput}" />
+            </StackPanel>
+            <Button Content="Save Current"
                     Command="{Binding SaveCurrentPositionCommand}"
-                    Height="32"
-                    MinWidth="128"
-                    Margin="0,0,8,8" />
-            <Button Grid.Column="9"
-                    Content="Update Selected"
+                    ToolTip="Save the current controller position as a teaching point."
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
+                    MinWidth="128" />
+            <Button Content="Update Selected"
                     Command="{Binding UpdateSelectedCommand}"
-                    Height="32"
-                    MinWidth="132"
-                    Margin="0,0,8,8" />
-            <Button Grid.Column="10"
-                    Content="Delete Selected"
+                    ToolTip="Update the selected teaching point and write a history row."
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
+                    MinWidth="132" />
+            <Button Content="Delete Selected"
                     Command="{Binding DeleteSelectedCommand}"
-                    Height="32"
-                    MinWidth="128"
-                    Margin="0,0,0,8" />
-          </Grid>
+                    ToolTip="Delete the selected teaching point after operator confirmation."
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
+                    MinWidth="128" />
+          </WrapPanel>
           <TextBlock Grid.Row="3"
                      Text="{Binding ActiveRecipeContextText, StringFormat=Recipe Context: {0}}"
                      Style="{DynamicResource Text.Status}"
@@ -177,6 +123,7 @@
                          Margin="0,0,12,0" />
               <Button Content="Refresh History"
                       Command="{Binding RefreshSelectedPointHistoryCommand}"
+                      ToolTip="Reload history for the selected teaching point."
                       Height="32"
                       MinWidth="126" />
             </StackPanel>
@@ -184,9 +131,7 @@
           <ListView Grid.Row="1"
                     ItemsSource="{Binding Points}"
                     SelectedItem="{Binding SelectedPoint}"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
+                    Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
               <GridView>
                 <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
@@ -215,9 +160,7 @@
           </DockPanel>
           <ListView Grid.Row="1"
                     ItemsSource="{Binding SelectedPointHistory}"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
+                    Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
               <GridView>
                 <GridViewColumn Header="Time" DisplayMemberBinding="{Binding CreatedAtText}" Width="150" />

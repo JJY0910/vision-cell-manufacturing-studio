@@ -39,6 +39,7 @@
                   Margin="0,0,8,0" />
           <Button Content="Refresh"
                   Command="{Binding RefreshCommand}"
+                  ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
                   Height="36"
                   MinWidth="86" />
         </StackPanel>
@@ -146,9 +147,7 @@
             <TextBlock Text="I/O Snapshot" Style="{DynamicResource Text.CardTitle}" />
             <ListView Grid.Row="1"
                       ItemsSource="{Binding IoBits}"
-                      Background="{DynamicResource Brush.PanelAlt}"
-                      BorderThickness="0"
-                      Foreground="{DynamicResource Brush.TextPrimary}">
+                      Style="{DynamicResource ListView.HmiGrid}">
               <ListView.View>
                 <GridView>
                   <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="70" />
