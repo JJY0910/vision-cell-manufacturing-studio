@@ -534,3 +534,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests. `git diff --check` passed with CRLF warnings only; blocking scan found only existing simulator/test `Task.Delay` paths; WPF code-behind scan output remained limited to the existing `CommandBar.xaml.cs` dependency-property wrapper false positive; artifact scan found only expected existing docs/test references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice changes WPF Recipe editor composition only; multi-row Recipe editing, import/export, physical HMI panel validation, and production operator acceptance remain follow-up work.
+
+## 2026-06-02 22:36 - Local validation passed
+- Branch: `feature/fr-221-safe-artifact-open-boundary`
+- Scope: Document the safe Offline Debug artifact open boundary before implementation with ADR-0035 and issue seed 008.
+- Validation target: Docs-only full Debug/Release build/test, static checks, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Debug/Release solution build and test passed with 225 tests; `git diff --check` passed with CRLF warnings only; blocking wait scan found only existing simulator/test `Task.Delay` paths; WPF code-behind scan output remained limited to the existing `CommandBar.xaml.cs` dependency-property wrapper false positive; artifact scan found only expected existing docs/test references plus the new safe artifact open issue seed wording; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice adds no runtime open command. OS shell launch, external viewer availability, network shares, customer image formats, and operator confirmation behavior remain unimplemented and unvalidated.
