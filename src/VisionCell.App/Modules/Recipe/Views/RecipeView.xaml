@@ -67,102 +67,102 @@
           </DockPanel>
 
           <WrapPanel Grid.Row="1" Margin="0,4,0,0">
-            <StackPanel Width="180" Margin="0,0,12,8">
-              <TextBlock Text="Recipe ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RecipeIdText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="220" Margin="0,0,12,8">
-              <TextBlock Text="Product Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding ProductNameText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="110" Margin="0,0,12,8">
-              <TextBlock Text="Version" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding VersionText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="120" Margin="0,0,12,8">
-              <TextBlock Text="Exposure ms" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraExposureText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="96" Margin="0,0,12,8">
-              <TextBlock Text="Gain" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraGainText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="96" Margin="0,0,12,8">
-              <TextBlock Text="Light" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding CameraLightText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
+            <controls:RecipeEditorField Label="Recipe ID"
+                                        Text="{Binding RecipeIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="180"
+                                        HelpText="Recipe identifier saved through the Application recipe library."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Product Name"
+                                        Text="{Binding ProductNameText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="220"
+                                        HelpText="Operator-facing product name for the recipe index."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Version"
+                                        Text="{Binding VersionText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="110"
+                                        HelpText="Recipe version written to the JSON document and SQLite index."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Exposure ms"
+                                        Text="{Binding CameraExposureText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="120"
+                                        HelpText="Virtual camera exposure in milliseconds."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Gain"
+                                        Text="{Binding CameraGainText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="96"
+                                        HelpText="Virtual camera gain used by the recipe camera settings."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Light"
+                                        Text="{Binding CameraLightText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="96"
+                                        HelpText="Virtual light intensity percent."
+                                        Margin="0,0,12,8" />
           </WrapPanel>
 
           <WrapPanel Grid.Row="2" Margin="0,4,0,0">
-            <StackPanel Width="150" Margin="0,0,12,8">
-              <TextBlock Text="Teaching ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingPointIdText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="190" Margin="0,0,12,8">
-              <TextBlock Text="Teaching Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingPointNameText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="84" Margin="0,0,12,8">
-              <TextBlock Text="X" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingXText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="84" Margin="0,0,12,8">
-              <TextBlock Text="Y" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingYText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="84" Margin="0,0,12,8">
-              <TextBlock Text="Z" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingZText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="84" Margin="0,0,12,8">
-              <TextBlock Text="Theta" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding TeachingThetaText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
+            <controls:RecipeEditorField Label="Teaching ID"
+                                        Text="{Binding TeachingPointIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="150"
+                                        HelpText="Camera teaching point identifier saved into the recipe motion section."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Teaching Name"
+                                        Text="{Binding TeachingPointNameText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="190"
+                                        HelpText="Camera teaching point display name."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="X"
+                                        Text="{Binding TeachingXText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="84"
+                                        HelpText="Camera teaching X position."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Y"
+                                        Text="{Binding TeachingYText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="84"
+                                        HelpText="Camera teaching Y position."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Z"
+                                        Text="{Binding TeachingZText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="84"
+                                        HelpText="Camera teaching Z position."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Theta"
+                                        Text="{Binding TeachingThetaText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="84"
+                                        HelpText="Camera teaching theta position."
+                                        Margin="0,0,12,8" />
           </WrapPanel>
 
           <WrapPanel Grid.Row="3" Margin="0,4,0,0">
-            <StackPanel Width="120" Margin="0,0,12,8">
-              <TextBlock Text="ROI ID" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiIdText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="160" Margin="0,0,12,8">
-              <TextBlock Text="ROI Name" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiNameText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="76" Margin="0,0,12,8">
-              <TextBlock Text="ROI X" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiXText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="76" Margin="0,0,12,8">
-              <TextBlock Text="ROI Y" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiYText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="76" Margin="0,0,12,8">
-              <TextBlock Text="Width" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiWidthText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
-            <StackPanel Width="76" Margin="0,0,12,8">
-              <TextBlock Text="Height" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBox Text="{Binding RoiHeightText, UpdateSourceTrigger=PropertyChanged}"
-                       Style="{DynamicResource TextBox.HmiInput}" />
-            </StackPanel>
+            <controls:RecipeEditorField Label="ROI ID"
+                                        Text="{Binding RoiIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="120"
+                                        HelpText="ROI identifier saved into the recipe vision section."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="ROI Name"
+                                        Text="{Binding RoiNameText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="160"
+                                        HelpText="ROI display name for operator review."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="ROI X"
+                                        Text="{Binding RoiXText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="76"
+                                        HelpText="ROI left coordinate in image pixels."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="ROI Y"
+                                        Text="{Binding RoiYText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="76"
+                                        HelpText="ROI top coordinate in image pixels."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Width"
+                                        Text="{Binding RoiWidthText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="76"
+                                        HelpText="ROI width in image pixels."
+                                        Margin="0,0,12,8" />
+            <controls:RecipeEditorField Label="Height"
+                                        Text="{Binding RoiHeightText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FieldWidth="76"
+                                        HelpText="ROI height in image pixels."
+                                        Margin="0,0,12,8" />
           </WrapPanel>
         </Grid>
       </Border>
