@@ -57,7 +57,7 @@ Problem: Dashboard connect/disconnect/refresh/mode commands now use an Applicati
 Proposed improvement: Continue view-model cleanup in small slices, starting with the highest-risk hardware-like command surfaces that need timeout, cancellation, structured events, and backend validation.
 Requirement impact: FR-020, FR-021, FR-022, FR-061, FR-062, FR-100, FR-120, FR-180, NFR-001, NFR-002, NFR-004
 Priority: P1
-Status: MotionView snapshot refresh and command availability now flow through `IMotionPanelUseCase`; Teaching Go To snapshot/interlock orchestration and selected history reads now flow through `ITeachingPointUseCase`; Recipe and Inspection cleanup remain open.
+Status: MotionView snapshot refresh and command availability now flow through `IMotionPanelUseCase`; Teaching Go To snapshot/interlock orchestration and selected history reads now flow through `ITeachingPointUseCase`; Recipe list/save/activate now flows through `IRecipeLibraryUseCase`; Inspection cleanup remains open.
 
 Date: 2026-06-01
 Source: Phase 1 Shell status bar
@@ -258,7 +258,7 @@ Problem: RecipeView can list indexed metadata and the App can resolve Recipe lib
 Proposed improvement: Add a RecipeView metadata/camera/Teaching/ROI editor and bind Save Recipe to `IRecipeLibraryUseCase`, refreshing the index after a successful save.
 Requirement impact: FR-120, FR-121, FR-123, FR-124, NFR-004, NFR-006, NFR-008, NFR-TEST-001
 Priority: P0
-Status: Addressed for single-camera-position Recipe save; active Recipe activation and multi-row editors remain open.
+Status: Addressed for single-camera-position Recipe save and Application-bound list/save/activate orchestration; multi-row editors remain open.
 
 Date: 2026-06-01
 Source: FR-122 Active Recipe index selection
@@ -274,7 +274,7 @@ Problem: The Recipe index can mark one row active, but operators still need an H
 Proposed improvement: Bind RecipeView Set Active to `IRecipeIndexRepository.SetActiveAsync`, refresh the list after success, and surface rejected/missing-row paths in `StatusText`.
 Requirement impact: FR-120, FR-122, FR-123, FR-124, NFR-004, NFR-006, NFR-TEST-001
 Priority: P0
-Status: Addressed by RecipeView Set Active command; active context consumption by Teaching/inspection remains open.
+Status: Addressed by RecipeView Set Active command, now routed through `IRecipeLibraryUseCase`; active context consumption by Teaching/inspection remains open.
 
 Date: 2026-06-01
 Source: FR-122 Active Recipe context provider

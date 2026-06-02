@@ -11,14 +11,10 @@ namespace VisionCell.App.Modules.Recipe.ViewModels;
 public sealed partial class RecipeViewModel : ObservableObject
 {
     private const int RecipeIndexLimit = 50;
-    private readonly IRecipeIndexRepository _recipeIndexRepository;
     private readonly IRecipeLibraryUseCase _recipeLibraryUseCase;
 
-    public RecipeViewModel(
-        IRecipeIndexRepository recipeIndexRepository,
-        IRecipeLibraryUseCase recipeLibraryUseCase)
+    public RecipeViewModel(IRecipeLibraryUseCase recipeLibraryUseCase)
     {
-        _recipeIndexRepository = recipeIndexRepository ?? throw new ArgumentNullException(nameof(recipeIndexRepository));
         _recipeLibraryUseCase = recipeLibraryUseCase ?? throw new ArgumentNullException(nameof(recipeLibraryUseCase));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsBusy);
         SaveRecipeCommand = new AsyncRelayCommand(SaveRecipeAsync, () => !IsBusy);
@@ -203,7 +199,7 @@ public sealed partial class RecipeViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var activated = await _recipeIndexRepository.SetActiveAsync(
+            var activated = await _recipeLibraryUseCase.ActivateAsync(
                 recipeId,
                 version,
                 cancellationToken).ConfigureAwait(true);
@@ -264,7 +260,7 @@ public sealed partial class RecipeViewModel : ObservableObject
         string? preferredVersion,
         CancellationToken cancellationToken)
     {
-        var entries = await _recipeIndexRepository.ListRecentAsync(RecipeIndexLimit, cancellationToken).ConfigureAwait(true);
+        var entries = await _recipeLibraryUseCase.ListRecentAsync(RecipeIndexLimit, cancellationToken).ConfigureAwait(true);
         Recipes.Clear();
         foreach (var entry in entries)
         {

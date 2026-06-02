@@ -1001,9 +1001,10 @@ public sealed class DashboardAndShellViewModelTests
         FakeRecipeIndexRepository? repository = null,
         FakeRecipeLibraryUseCase? libraryUseCase = null)
     {
-        return new RecipeViewModel(
-            repository ?? new FakeRecipeIndexRepository(),
-            libraryUseCase ?? new FakeRecipeLibraryUseCase());
+        var resolvedRepository = repository ?? new FakeRecipeIndexRepository();
+        var resolvedLibraryUseCase = libraryUseCase ?? new FakeRecipeLibraryUseCase(resolvedRepository);
+        resolvedLibraryUseCase.IndexRepository ??= resolvedRepository;
+        return new RecipeViewModel(resolvedLibraryUseCase);
     }
 
     private static OfflineDebugViewModel CreateOfflineDebugViewModel(
@@ -1267,9 +1268,22 @@ public sealed class DashboardAndShellViewModelTests
 
     private sealed class FakeRecipeLibraryUseCase : IRecipeLibraryUseCase
     {
+        public FakeRecipeLibraryUseCase(FakeRecipeIndexRepository? indexRepository = null)
+        {
+            IndexRepository = indexRepository;
+        }
+
+        public FakeRecipeIndexRepository? IndexRepository { get; set; }
         public List<RecipeLibrarySaveRequest> SaveRequests { get; } = new();
 
         public Func<RecipeLibrarySaveRequest, CancellationToken, Task<RecipeLibrarySaveResult>>? SaveHandler { get; init; }
+
+        public Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            return (IndexRepository ?? new FakeRecipeIndexRepository()).ListRecentAsync(limit, cancellationToken);
+        }
 
         public Task<RecipeLibrarySaveResult> SaveAsync(
             RecipeLibrarySaveRequest request,
@@ -1290,6 +1304,14 @@ public sealed class DashboardAndShellViewModelTests
                 isValid: true,
                 validationSummary: "Valid",
                 updatedAt: recipe.UpdatedAt)));
+        }
+
+        public Task<bool> ActivateAsync(
+            string recipeId,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            return (IndexRepository ?? new FakeRecipeIndexRepository()).SetActiveAsync(recipeId, version, cancellationToken);
         }
     }
 
