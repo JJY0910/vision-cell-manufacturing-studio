@@ -41,6 +41,12 @@ public sealed class FileSystemInspectionArtifactWriterTests
         ReadHeight(heightMap).Should().Be(8);
         ReadPixel(overlay, 4, 4).Should().Be(((byte)230, (byte)48, (byte)48));
         ReadPixel(overlay, 2, 2).Should().Be(((byte)0, (byte)210, (byte)255));
+
+        var overlayMetadata = await writer.ReadMetadataAsync(result.OverlayImagePath, CancellationToken.None);
+        overlayMetadata.Status.Should().Be(InspectionArtifactMetadataStatus.Available);
+        overlayMetadata.DisplayPath.Should().Be(result.OverlayImagePath);
+        overlayMetadata.SizeBytes.Should().BeGreaterThan(0);
+        overlayMetadata.LastModifiedAt.Should().NotBeNull();
     }
 
     [Fact]
@@ -49,6 +55,42 @@ public sealed class FileSystemInspectionArtifactWriterTests
         var act = () => new FileSystemInspectionArtifactWriter(" ");
 
         act.Should().Throw<ArgumentException>().WithMessage("*Artifact root path*");
+    }
+
+    [Fact]
+    public async Task ReadMetadataAsync_Should_Report_Missing_And_NotRecorded_Artifacts()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var artifactRoot = Path.Combine(directory.Path, "inspection-artifacts");
+        var writer = new FileSystemInspectionArtifactWriter(artifactRoot);
+
+        var missing = await writer.ReadMetadataAsync(
+            "inspection-artifacts/20260601/missing.overlay.bmp",
+            CancellationToken.None);
+        var notRecorded = await writer.ReadMetadataAsync(" ", CancellationToken.None);
+
+        missing.Status.Should().Be(InspectionArtifactMetadataStatus.Missing);
+        missing.DisplayPath.Should().Be("inspection-artifacts/20260601/missing.overlay.bmp");
+        notRecorded.Status.Should().Be(InspectionArtifactMetadataStatus.NotRecorded);
+        notRecorded.DisplayPath.Should().Be("-");
+    }
+
+    [Fact]
+    public async Task ReadMetadataAsync_Should_Reject_Unsafe_Artifact_Paths()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var artifactRoot = Path.Combine(directory.Path, "inspection-artifacts");
+        var writer = new FileSystemInspectionArtifactWriter(artifactRoot);
+
+        var parentTraversal = await writer.ReadMetadataAsync(
+            "inspection-artifacts/../outside.bmp",
+            CancellationToken.None);
+        var rooted = await writer.ReadMetadataAsync(
+            Path.Combine(directory.Path, "outside.bmp"),
+            CancellationToken.None);
+
+        parentTraversal.Status.Should().Be(InspectionArtifactMetadataStatus.UnsafePath);
+        rooted.Status.Should().Be(InspectionArtifactMetadataStatus.UnsafePath);
     }
 
     private static InspectionArtifactWriteRequest CreateRequest(Guid resultId)

@@ -426,3 +426,10 @@
 - Validation target: Application/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Application targeted tests passed with 82 tests; App targeted tests passed with 41 tests. Debug/Release solution build and test passed with 208 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice keeps WPF image-source creation and sequence row formatting in the ViewModel; richer inspection image preview/export polish remains follow-up work.
+
+## 2026-06-02 13:06 - In progress
+- Branch: `feature/fr-221-offline-artifact-metadata`
+- Scope: Add Application/Persistence artifact metadata reader and bind Offline Debug artifact availability status for overlay and height-map paths.
+- Validation target: Persistence/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Persistence targeted tests passed with 35 tests; App targeted tests passed with 41 tests. Debug/Release solution build and test passed with 210 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice reports artifact metadata only; image preview rendering, safe file opening, parameter replay, and re-inspection remain follow-up work.

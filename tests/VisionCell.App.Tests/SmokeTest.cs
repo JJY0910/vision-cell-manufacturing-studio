@@ -133,6 +133,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionArtifactWriter>()
                 .Should()
                 .BeOfType<FileSystemInspectionArtifactWriter>();
+            provider.GetRequiredService<IInspectionArtifactReader>()
+                .Should()
+                .BeOfType<FileSystemInspectionArtifactWriter>();
         }
         finally
         {
@@ -243,6 +246,10 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.SelectedResult.DefectCount.Should().Be(1);
         offlineDebug.SelectedResult.OverlayImagePath.Should().Contain(".overlay.bmp");
         offlineDebug.SelectedResult.HeightMapPath.Should().Contain(".height.bmp");
+        offlineDebug.SelectedResult.OverlayArtifactStatus.Should().Contain("Available");
+        offlineDebug.SelectedResult.HeightMapArtifactStatus.Should().Contain("Available");
+        offlineDebug.SelectedResult.ArtifactStatusSummary.Should().Contain("Overlay");
+        offlineDebug.SelectedResult.ArtifactStatusSummary.Should().Contain("Height Map");
         offlineDebug.SelectedResult.Defects.Should().ContainSingle(defect => defect.Type == "Missing" && defect.RoiId == "ROI-01");
         offlineDebug.FailCount.Should().Be(1);
         offlineDebug.PassCount.Should().Be(0);
@@ -1032,9 +1039,12 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     private static OfflineDebugViewModel CreateOfflineDebugViewModel(
-        FakeInspectionResultReader? resultReader = null)
+        FakeInspectionResultReader? resultReader = null,
+        FakeInspectionArtifactReader? artifactReader = null)
     {
-        return new OfflineDebugViewModel(resultReader ?? new FakeInspectionResultReader());
+        return new OfflineDebugViewModel(
+            resultReader ?? new FakeInspectionResultReader(),
+            artifactReader ?? new FakeInspectionArtifactReader());
     }
 
     private static RecipeIndexEntry CreateRecipeIndexEntry(
@@ -1500,6 +1510,30 @@ public sealed class DashboardAndShellViewModelTests
             }
 
             return Task.FromResult<IReadOnlyList<InspectionResultRecord>>(_records.Take(limit).ToArray());
+        }
+    }
+
+    private sealed class FakeInspectionArtifactReader : IInspectionArtifactReader
+    {
+        private static readonly DateTimeOffset Timestamp = new(2026, 6, 1, 12, 45, 0, TimeSpan.Zero);
+
+        public List<string?> Requests { get; } = new();
+
+        public Func<string?, CancellationToken, Task<InspectionArtifactMetadata>>? ReadHandler { get; init; }
+
+        public Task<InspectionArtifactMetadata> ReadMetadataAsync(
+            string? artifactPath,
+            CancellationToken cancellationToken)
+        {
+            Requests.Add(artifactPath);
+            if (ReadHandler is not null)
+            {
+                return ReadHandler(artifactPath, cancellationToken);
+            }
+
+            return Task.FromResult(string.IsNullOrWhiteSpace(artifactPath)
+                ? InspectionArtifactMetadata.NotRecorded()
+                : InspectionArtifactMetadata.Available(artifactPath, 2048, Timestamp));
         }
     }
 

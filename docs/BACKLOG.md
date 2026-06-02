@@ -370,12 +370,12 @@ Problem: Inspection results and artifact paths are persisted, but Offline Debug 
 Proposed improvement: Bind OfflineDebugView to `IInspectionResultReader` so operators can refresh recent results, select one row, and inspect source/overlay/height-map paths plus defects.
 Requirement impact: FR-202, FR-220, FR-221, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P1
-Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact rendering and re-inspection remain separate follow-up work.
+Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact metadata availability is addressed by ADR-0029; artifact rendering and re-inspection remain separate follow-up work.
 
 Date: 2026-06-01
 Source: FR-221 Offline Debug artifact rendering
-Problem: Offline Debug can display artifact paths, but it does not yet render BMP overlays/height maps or launch a safe file viewer.
-Proposed improvement: Add an artifact resolver/viewer boundary that maps relative artifact paths under the local data root, validates existence, and renders overlay/height-map previews in the Offline Debug workspace.
+Problem: Offline Debug can display artifact paths and live metadata status, but it does not yet render BMP overlays/height maps or launch a safe file viewer.
+Proposed improvement: Extend the artifact reader into a preview/open boundary that maps relative artifact paths under the local data root, validates existence, and renders overlay/height-map previews in the Offline Debug workspace.
 Requirement impact: FR-202, FR-221, FR-222, FR-200, NFR-006, NFR-008, NFR-TEST-001
 Priority: P1
-Status: Open.
+Status: Metadata availability addressed by ADR-0029; preview rendering and safe file opening remain open.

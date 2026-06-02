@@ -71,6 +71,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IInspectionArtifactWriter>(provider => provider.GetRequiredService<FileSystemInspectionArtifactWriter>());
+        services.AddSingleton<IInspectionArtifactReader>(provider => provider.GetRequiredService<FileSystemInspectionArtifactWriter>());
         services.AddSingleton<IInspectionResultRepository>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IInspectionResultReader>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IRecipeIndexRepository>(provider => provider.GetRequiredService<SqliteRecipeIndexRepository>());

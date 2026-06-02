@@ -84,6 +84,7 @@
                 <GridViewColumn Header="Defects" DisplayMemberBinding="{Binding DefectCount}" Width="80" />
                 <GridViewColumn Header="Cycle" DisplayMemberBinding="{Binding CycleTimeText}" Width="90" />
                 <GridViewColumn Header="Overlay" DisplayMemberBinding="{Binding OverlayImagePath}" Width="280" />
+                <GridViewColumn Header="Artifacts" DisplayMemberBinding="{Binding ArtifactStatusSummary}" Width="360" />
               </GridView>
             </ListView.View>
           </ListView>
@@ -130,6 +131,8 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding SelectedResult.SourceImagePath, StringFormat=Source: {0}, TargetNullValue=Source: -}"
                        Style="{DynamicResource Text.Status}"
@@ -141,6 +144,16 @@
                        Margin="0,4,0,0" />
             <TextBlock Grid.Row="2"
                        Text="{Binding SelectedResult.HeightMapPath, StringFormat=Height Map: {0}, TargetNullValue=Height Map: -}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="3"
+                       Text="{Binding SelectedResult.OverlayArtifactStatus, StringFormat=Overlay Status: {0}, TargetNullValue=Overlay Status: -}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="4"
+                       Text="{Binding SelectedResult.HeightMapArtifactStatus, StringFormat=Height Map Status: {0}, TargetNullValue=Height Map Status: -}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
