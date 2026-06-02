@@ -11,11 +11,23 @@
       </Grid.RowDefinitions>
 
       <DockPanel>
-        <Button DockPanel.Dock="Right"
-                Content="Refresh Results"
-                Command="{Binding RefreshResultsCommand}"
-                Height="36"
-                MinWidth="132" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Refresh Results"
+                  Command="{Binding RefreshResultsCommand}"
+                  Height="36"
+                  MinWidth="132"
+                  Margin="8,0,0,0" />
+          <Button Content="Load Artifacts"
+                  Command="{Binding LoadSelectedArtifactsCommand}"
+                  Height="36"
+                  MinWidth="132"
+                  Margin="8,0,0,0" />
+          <Button Content="Prepare Re-inspect"
+                  Command="{Binding PrepareReinspectCommand}"
+                  Height="36"
+                  MinWidth="148"
+                  Margin="8,0,0,0" />
+        </StackPanel>
         <StackPanel>
           <TextBlock Text="Offline Debug" Style="{DynamicResource Text.PageTitle}" />
           <TextBlock Text="{Binding StatusText}"
@@ -98,6 +110,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Selected Result Detail" Style="{DynamicResource Text.CardTitle}" />
 
@@ -159,7 +172,43 @@
                        Margin="0,4,0,0" />
           </Grid>
 
-          <ListView Grid.Row="3"
+          <Grid Grid.Row="3" Margin="0,8,0,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="{Binding ArtifactPreviewStatusText}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap" />
+            <UniformGrid Grid.Row="1" Columns="2" Margin="0,8,0,0">
+              <StackPanel Margin="0,0,8,0">
+                <TextBlock Text="Overlay Preview" Style="{DynamicResource Text.MetricLabel}" />
+                <Grid MinHeight="160"
+                      Background="{DynamicResource Brush.PanelAlt}">
+                  <Image Source="{Binding OverlayPreviewImageSource}"
+                         Stretch="Uniform"
+                         MinHeight="160" />
+                </Grid>
+              </StackPanel>
+              <StackPanel Margin="8,0,0,0">
+                <TextBlock Text="Height Map Preview" Style="{DynamicResource Text.MetricLabel}" />
+                <Grid MinHeight="160"
+                      Background="{DynamicResource Brush.PanelAlt}">
+                  <Image Source="{Binding HeightMapPreviewImageSource}"
+                         Stretch="Uniform"
+                         MinHeight="160" />
+                </Grid>
+              </StackPanel>
+            </UniformGrid>
+            <TextBlock Grid.Row="2"
+                       Text="{Binding ReinspectStatusText}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0" />
+          </Grid>
+
+          <ListView Grid.Row="4"
                     ItemsSource="{Binding SelectedResult.Defects}"
                     MinHeight="120"
                     Margin="0,8,0,0"

@@ -14,6 +14,10 @@ public interface IInspectionArtifactReader
     Task<InspectionArtifactMetadata> ReadMetadataAsync(
         string? artifactPath,
         CancellationToken cancellationToken);
+
+    Task<InspectionArtifactPreviewResult> ReadPreviewAsync(
+        string? artifactPath,
+        CancellationToken cancellationToken);
 }
 
 public sealed record InspectionArtifactWriteRequest(
@@ -123,4 +127,68 @@ public enum InspectionArtifactMetadataStatus
     Missing,
     UnsafePath,
     Unavailable
+}
+
+public sealed record InspectionArtifactPreviewResult(
+    InspectionArtifactMetadataStatus Status,
+    string DisplayPath,
+    int Width,
+    int Height,
+    int Stride,
+    InspectionArtifactPreviewPixelFormat PixelFormat,
+    byte[] Pixels,
+    string Message)
+{
+    public bool HasImage => Status == InspectionArtifactMetadataStatus.Available && Pixels.Length > 0;
+
+    public static InspectionArtifactPreviewResult Available(
+        string displayPath,
+        int width,
+        int height,
+        int stride,
+        InspectionArtifactPreviewPixelFormat pixelFormat,
+        byte[] pixels)
+    {
+        return new InspectionArtifactPreviewResult(
+            InspectionArtifactMetadataStatus.Available,
+            displayPath,
+            width,
+            height,
+            stride,
+            pixelFormat,
+            pixels,
+            "Artifact preview available.");
+    }
+
+    public static InspectionArtifactPreviewResult FromMetadata(InspectionArtifactMetadata metadata)
+    {
+        ArgumentNullException.ThrowIfNull(metadata);
+        return new InspectionArtifactPreviewResult(
+            metadata.Status,
+            metadata.DisplayPath,
+            Width: 0,
+            Height: 0,
+            Stride: 0,
+            InspectionArtifactPreviewPixelFormat.Bgra32,
+            Array.Empty<byte>(),
+            metadata.Message);
+    }
+
+    public static InspectionArtifactPreviewResult Unavailable(string displayPath, string message)
+    {
+        return new InspectionArtifactPreviewResult(
+            InspectionArtifactMetadataStatus.Unavailable,
+            displayPath,
+            Width: 0,
+            Height: 0,
+            Stride: 0,
+            InspectionArtifactPreviewPixelFormat.Bgra32,
+            Array.Empty<byte>(),
+            message);
+    }
+}
+
+public enum InspectionArtifactPreviewPixelFormat
+{
+    Bgra32
 }

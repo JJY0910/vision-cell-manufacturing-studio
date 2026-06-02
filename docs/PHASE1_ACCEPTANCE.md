@@ -43,6 +43,8 @@
 
 - [x] Offline Debug reads result rows through an Application result reader.
 - [x] Offline Debug reads artifact availability metadata through an Application artifact reader.
+- [x] Offline Debug loads overlay/height-map preview pixels through an Application artifact reader.
+- [x] Offline Debug exposes Re-inspect preparation state without claiming real re-run execution.
 
 ## Simulator
 

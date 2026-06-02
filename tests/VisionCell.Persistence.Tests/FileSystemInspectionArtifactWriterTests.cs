@@ -47,6 +47,15 @@ public sealed class FileSystemInspectionArtifactWriterTests
         overlayMetadata.DisplayPath.Should().Be(result.OverlayImagePath);
         overlayMetadata.SizeBytes.Should().BeGreaterThan(0);
         overlayMetadata.LastModifiedAt.Should().NotBeNull();
+
+        var overlayPreview = await writer.ReadPreviewAsync(result.OverlayImagePath, CancellationToken.None);
+        overlayPreview.Status.Should().Be(InspectionArtifactMetadataStatus.Available);
+        overlayPreview.HasImage.Should().BeTrue();
+        overlayPreview.Width.Should().Be(10);
+        overlayPreview.Height.Should().Be(8);
+        overlayPreview.Stride.Should().Be(40);
+        overlayPreview.PixelFormat.Should().Be(InspectionArtifactPreviewPixelFormat.Bgra32);
+        overlayPreview.Pixels.Should().HaveCount(10 * 8 * 4);
     }
 
     [Fact]
@@ -88,9 +97,14 @@ public sealed class FileSystemInspectionArtifactWriterTests
         var rooted = await writer.ReadMetadataAsync(
             Path.Combine(directory.Path, "outside.bmp"),
             CancellationToken.None);
+        var unsafePreview = await writer.ReadPreviewAsync(
+            "inspection-artifacts/../outside.bmp",
+            CancellationToken.None);
 
         parentTraversal.Status.Should().Be(InspectionArtifactMetadataStatus.UnsafePath);
         rooted.Status.Should().Be(InspectionArtifactMetadataStatus.UnsafePath);
+        unsafePreview.Status.Should().Be(InspectionArtifactMetadataStatus.UnsafePath);
+        unsafePreview.HasImage.Should().BeFalse();
     }
 
     private static InspectionArtifactWriteRequest CreateRequest(Guid resultId)
