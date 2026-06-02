@@ -4,7 +4,7 @@ using VisionCell.Vision.Inspection;
 
 namespace VisionCell.Persistence.Inspection;
 
-public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWriter
+public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWriter, IInspectionArtifactReader
 {
     private const string RelativeRoot = "inspection-artifacts";
     private static readonly Rgb Cyan = new(0, 210, 255);
@@ -60,6 +60,45 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
             ToRelativePath(dateSegment, heightMapFileName));
     }
 
+    public Task<InspectionArtifactMetadata> ReadMetadataAsync(
+        string? artifactPath,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(artifactPath) ||
+            string.Equals(artifactPath.Trim(), "-", StringComparison.Ordinal))
+        {
+            return Task.FromResult(InspectionArtifactMetadata.NotRecorded());
+        }
+
+        var displayPath = artifactPath.Trim();
+        if (!TryResolveArtifactPath(displayPath, out var absolutePath))
+        {
+            return Task.FromResult(InspectionArtifactMetadata.UnsafePath(displayPath));
+        }
+
+        try
+        {
+            var info = new FileInfo(absolutePath);
+            if (!info.Exists)
+            {
+                return Task.FromResult(InspectionArtifactMetadata.Missing(displayPath));
+            }
+
+            return Task.FromResult(InspectionArtifactMetadata.Available(
+                displayPath,
+                info.Length,
+                new DateTimeOffset(info.LastWriteTimeUtc)));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return Task.FromResult(InspectionArtifactMetadata.Unavailable(
+                displayPath,
+                $"Artifact metadata unavailable: {ex.Message}"));
+        }
+    }
+
     private string GetSafeDirectory(string dateSegment)
     {
         var directory = Path.GetFullPath(Path.Combine(_rootDirectory, dateSegment));
@@ -74,13 +113,58 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         return path;
     }
 
+    private bool TryResolveArtifactPath(string artifactPath, out string absolutePath)
+    {
+        absolutePath = string.Empty;
+        if (Path.IsPathRooted(artifactPath))
+        {
+            return false;
+        }
+
+        var segments = artifactPath.Split(
+            new[] { '/', '\\' },
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (segments.Length == 0)
+        {
+            return false;
+        }
+
+        var startIndex = string.Equals(segments[0], RelativeRoot, StringComparison.OrdinalIgnoreCase)
+            ? 1
+            : 0;
+        if (startIndex >= segments.Length)
+        {
+            return false;
+        }
+
+        var resolvedPath = _rootDirectory;
+        for (var index = startIndex; index < segments.Length; index++)
+        {
+            var segment = segments[index];
+            if (segment is "." or ".." || segment.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                return false;
+            }
+
+            resolvedPath = Path.Combine(resolvedPath, segment);
+        }
+
+        absolutePath = Path.GetFullPath(resolvedPath);
+        return IsInsideRoot(absolutePath);
+    }
+
     private void EnsureInsideRoot(string path)
     {
-        if (!path.StartsWith(_rootDirectoryWithSeparator, StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(path, _rootDirectory, StringComparison.OrdinalIgnoreCase))
+        if (!IsInsideRoot(path))
         {
             throw new InvalidOperationException("Artifact path resolved outside the configured root.");
         }
+    }
+
+    private bool IsInsideRoot(string path)
+    {
+        return path.StartsWith(_rootDirectoryWithSeparator, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(path, _rootDirectory, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ToRelativePath(string dateSegment, string fileName)

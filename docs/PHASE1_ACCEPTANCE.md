@@ -39,6 +39,11 @@
 - [x] Inspection active Recipe precheck flows through the Inspection Application use case.
 - [x] Inspection run orchestration and timeline state flow through the Inspection Application use case.
 
+## Offline Debug
+
+- [x] Offline Debug reads result rows through an Application result reader.
+- [x] Offline Debug reads artifact availability metadata through an Application artifact reader.
+
 ## Simulator
 
 - [x] Simulator supports Connect.

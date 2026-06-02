@@ -10,10 +10,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 {
     private const int ResultLimit = 50;
     private readonly IInspectionResultReader _inspectionResultReader;
+    private readonly IInspectionArtifactReader _inspectionArtifactReader;
 
-    public OfflineDebugViewModel(IInspectionResultReader inspectionResultReader)
+    public OfflineDebugViewModel(
+        IInspectionResultReader inspectionResultReader,
+        IInspectionArtifactReader inspectionArtifactReader)
     {
         _inspectionResultReader = inspectionResultReader ?? throw new ArgumentNullException(nameof(inspectionResultReader));
+        _inspectionArtifactReader = inspectionArtifactReader ?? throw new ArgumentNullException(nameof(inspectionArtifactReader));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
     }
 
@@ -58,7 +62,13 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             Results.Clear();
             foreach (var record in records)
             {
-                Results.Add(new OfflineInspectionResultItemViewModel(record));
+                var overlayMetadata = await _inspectionArtifactReader
+                    .ReadMetadataAsync(record.OverlayImagePath, cancellationToken)
+                    .ConfigureAwait(true);
+                var heightMapMetadata = await _inspectionArtifactReader
+                    .ReadMetadataAsync(record.HeightMapPath, cancellationToken)
+                    .ConfigureAwait(true);
+                Results.Add(new OfflineInspectionResultItemViewModel(record, overlayMetadata, heightMapMetadata));
             }
 
             HasResults = Results.Count > 0;
@@ -107,9 +117,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
 public sealed class OfflineInspectionResultItemViewModel
 {
-    public OfflineInspectionResultItemViewModel(InspectionResultRecord record)
+    public OfflineInspectionResultItemViewModel(
+        InspectionResultRecord record,
+        InspectionArtifactMetadata overlayMetadata,
+        InspectionArtifactMetadata heightMapMetadata)
     {
         ArgumentNullException.ThrowIfNull(record);
+        ArgumentNullException.ThrowIfNull(overlayMetadata);
+        ArgumentNullException.ThrowIfNull(heightMapMetadata);
 
         Id = record.Id;
         CorrelationId = record.CorrelationId;
@@ -122,6 +137,9 @@ public sealed class OfflineInspectionResultItemViewModel
         SourceImagePath = record.SourceImagePath;
         OverlayImagePath = string.IsNullOrWhiteSpace(record.OverlayImagePath) ? "-" : record.OverlayImagePath;
         HeightMapPath = string.IsNullOrWhiteSpace(record.HeightMapPath) ? "-" : record.HeightMapPath;
+        OverlayArtifactStatus = FormatArtifactStatus("Overlay", overlayMetadata);
+        HeightMapArtifactStatus = FormatArtifactStatus("Height Map", heightMapMetadata);
+        ArtifactStatusSummary = $"{OverlayArtifactStatus} | {HeightMapArtifactStatus}";
         CycleTimeText = $"{record.CycleTime.TotalMilliseconds:0} ms";
         CreatedAtText = record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         DefectCount = record.Defects.Count;
@@ -141,10 +159,39 @@ public sealed class OfflineInspectionResultItemViewModel
     public string SourceImagePath { get; }
     public string OverlayImagePath { get; }
     public string HeightMapPath { get; }
+    public string OverlayArtifactStatus { get; }
+    public string HeightMapArtifactStatus { get; }
+    public string ArtifactStatusSummary { get; }
     public string CycleTimeText { get; }
     public string CreatedAtText { get; }
     public int DefectCount { get; }
     public IReadOnlyList<OfflineInspectionDefectItemViewModel> Defects { get; }
+
+    private static string FormatArtifactStatus(string label, InspectionArtifactMetadata metadata)
+    {
+        return metadata.Status switch
+        {
+            InspectionArtifactMetadataStatus.Available =>
+                $"{label}: Available ({FormatSize(metadata.SizeBytes.GetValueOrDefault())}, {metadata.LastModifiedAt!.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss})",
+            InspectionArtifactMetadataStatus.Missing => $"{label}: Missing",
+            InspectionArtifactMetadataStatus.NotRecorded => $"{label}: Not recorded",
+            InspectionArtifactMetadataStatus.UnsafePath => $"{label}: Unsafe path",
+            _ => $"{label}: Unavailable - {metadata.Message}"
+        };
+    }
+
+    private static string FormatSize(long sizeBytes)
+    {
+        if (sizeBytes < 1024)
+        {
+            return $"{sizeBytes} B";
+        }
+
+        var kib = sizeBytes / 1024.0;
+        return kib < 1024
+            ? $"{kib:0.0} KiB"
+            : $"{kib / 1024.0:0.0} MiB";
+    }
 }
 
 public sealed class OfflineInspectionDefectItemViewModel
