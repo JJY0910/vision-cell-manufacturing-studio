@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using VisionCell.App;
+using VisionCell.Application.Alarms;
 using VisionCell.Application.Equipment;
 using VisionCell.Application.Interlocks;
 using VisionCell.Application.Inspection;
@@ -8,7 +9,9 @@ using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
 using VisionCell.App.Interaction;
+using VisionCell.App.Modules.Alarm.ViewModels;
 using VisionCell.Core.Commands;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
@@ -31,6 +34,7 @@ using VisionCell.Motion.Axes;
 using VisionCell.Motion.Commands;
 using VisionCell.Motion.Teaching;
 using VisionCell.Persistence.Inspection;
+using VisionCell.Persistence.Alarms;
 using VisionCell.Simulator;
 using VisionCell.Vision.Inspection;
 using Xunit;
@@ -60,6 +64,7 @@ public sealed class DashboardAndShellViewModelTests
     {
         var shell = new ShellViewModel(
             new NavigationService(),
+            CreateAlarmViewModel(),
             CreateDashboardViewModel(),
             new EquipmentViewModel(),
             CreateMotionViewModel(),
@@ -75,6 +80,34 @@ public sealed class DashboardAndShellViewModelTests
 
         shell.CurrentViewModel.Should().BeOfType<MotionViewModel>();
         motionItem.IsSelected.Should().BeTrue();
+        shell.NavigationItems.Should().Contain(item => item.Key == "Alarm");
+    }
+
+    [Fact]
+    public async Task Alarm_RefreshAndAcknowledgeAsync_Should_Load_State_And_Save_Recovery_Memo()
+    {
+        var alarm = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "MOT-003",
+            EquipmentAlarmSeverity.Error,
+            EquipmentArea.Motion,
+            "Motion command timed out.",
+            new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero),
+            correlationId: "corr-001");
+        var useCase = new FakeAlarmCenterUseCase(alarm);
+        var viewModel = CreateAlarmViewModel(useCase);
+
+        await viewModel.RefreshAsync(CancellationToken.None);
+        viewModel.ActionMemoText = "Checked soft limit and reset axis.";
+        await viewModel.AcknowledgeSelectedAsync(CancellationToken.None);
+
+        viewModel.Alarms.Should().ContainSingle();
+        viewModel.ActiveCount.Should().Be(0);
+        viewModel.AcknowledgedCount.Should().Be(1);
+        viewModel.SelectedAlarm!.StateText.Should().Be("Acknowledged");
+        viewModel.SelectedAlarm.ActionMemo.Should().Be("Checked soft limit and reset axis.");
+        viewModel.StatusText.Should().Contain("acknowledged");
+        useCase.Acknowledged.Should().ContainSingle(item => item.AlarmId == alarm.Id);
     }
 
     [Fact]
@@ -127,6 +160,15 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IMotionPanelUseCase>()
                 .Should()
                 .BeOfType<MotionPanelUseCase>();
+            provider.GetRequiredService<IAlarmCenterUseCase>()
+                .Should()
+                .BeOfType<AlarmCenterUseCase>();
+            provider.GetRequiredService<IEquipmentAlarmRepository>()
+                .Should()
+                .BeOfType<SqliteEquipmentAlarmRepository>();
+            provider.GetRequiredService<IEquipmentAlarmRecorder>()
+                .Should()
+                .BeOfType<EquipmentAlarmRecorder>();
             provider.GetRequiredService<IInspectionResultRepository>()
                 .Should()
                 .BeOfType<SqliteInspectionResultRepository>();
@@ -1034,6 +1076,11 @@ public sealed class DashboardAndShellViewModelTests
             new CommandInterlockService()));
     }
 
+    private static AlarmViewModel CreateAlarmViewModel(FakeAlarmCenterUseCase? useCase = null)
+    {
+        return new AlarmViewModel(useCase ?? new FakeAlarmCenterUseCase());
+    }
+
     private static MotionViewModel CreateMotionViewModel(
         FakeMotionCommandHistoryReader? historyReader = null,
         FakeMotionCommandUseCase? commandUseCase = null,
@@ -1521,6 +1568,46 @@ public sealed class DashboardAndShellViewModelTests
         public Task<IReadOnlyList<MotionCommandHistoryRecord>> ListRecentAsync(int limit, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<MotionCommandHistoryRecord>>(_records.Take(limit).ToArray());
+        }
+    }
+
+    private sealed class FakeAlarmCenterUseCase : IAlarmCenterUseCase
+    {
+        private readonly List<EquipmentAlarm> _alarms;
+
+        public FakeAlarmCenterUseCase(params EquipmentAlarm[] alarms)
+        {
+            _alarms = alarms.ToList();
+        }
+
+        public List<(Guid AlarmId, string? ActionMemo)> Acknowledged { get; } = new();
+
+        public Task<IReadOnlyList<EquipmentAlarm>> ListRecentAsync(
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<EquipmentAlarm>>(
+                _alarms
+                    .OrderByDescending(alarm => alarm.OccurredAt)
+                    .Take(limit)
+                    .ToArray());
+        }
+
+        public Task AcknowledgeAsync(
+            Guid alarmId,
+            string? actionMemo,
+            CancellationToken cancellationToken)
+        {
+            var index = _alarms.FindIndex(alarm => alarm.Id == alarmId);
+            if (index >= 0)
+            {
+                _alarms[index] = _alarms[index].Acknowledge(
+                    new DateTimeOffset(2026, 6, 1, 12, 10, 0, TimeSpan.Zero),
+                    actionMemo);
+            }
+
+            Acknowledged.Add((alarmId, actionMemo));
+            return Task.CompletedTask;
         }
     }
 

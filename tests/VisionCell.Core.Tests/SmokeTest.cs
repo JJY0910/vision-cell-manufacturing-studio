@@ -1,4 +1,5 @@
 using FluentAssertions;
+using VisionCell.Core.Alarms;
 using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Events;
@@ -40,5 +41,40 @@ public sealed class MachineCommandResultTests
             CorrelationId.New());
 
         result.ToSystemEvent("Equipment", "Connect").Severity.Should().Be(SystemEventSeverity.Alarm);
+    }
+
+    [Fact]
+    public void EquipmentAlarmFactory_Should_Map_ErrorCode_To_Area_And_Severity()
+    {
+        var alarm = EquipmentAlarmFactory.FromFailure(
+            ErrorCode.EmergencyStopActive,
+            EquipmentArea.Equipment,
+            "Emergency stop is active.",
+            new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero),
+            "corr-001");
+
+        alarm.Code.Should().Be("EQP-003");
+        alarm.Area.Should().Be(EquipmentArea.Safety);
+        alarm.Severity.Should().Be(EquipmentAlarmSeverity.Critical);
+        alarm.CorrelationId.Should().Be("corr-001");
+    }
+
+    [Fact]
+    public void Acknowledge_Should_Return_Acknowledged_Alarm_With_Memo()
+    {
+        var alarm = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "CAM-001",
+            EquipmentAlarmSeverity.Error,
+            EquipmentArea.Camera,
+            "Camera grab timed out.",
+            new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
+
+        var acknowledged = alarm.Acknowledge(
+            new DateTimeOffset(2026, 6, 1, 12, 5, 0, TimeSpan.Zero),
+            "Checked camera trigger.");
+
+        acknowledged.IsAcknowledged.Should().BeTrue();
+        acknowledged.ActionMemo.Should().Be("Checked camera trigger.");
     }
 }

@@ -16,5 +16,7 @@ public readonly record struct ErrorCode(string Code, string Message)
     public static readonly ErrorCode CameraGrabTimeout = new("CAM-001", "Camera grab timed out.");
     public static readonly ErrorCode CameraNotReady = new("CAM-002", "Camera is not ready.");
     public static readonly ErrorCode CameraGrabFailed = new("CAM-003", "Camera grab failed.");
+    public static readonly ErrorCode RecipeValidationFailed = new("VIS-001", "Recipe validation failed.");
+    public static readonly ErrorCode InspectionFailed = new("VIS-002", "Inspection failed.");
     public static readonly ErrorCode PersistenceFailed = new("DB-001", "Persistence failed.");
 }

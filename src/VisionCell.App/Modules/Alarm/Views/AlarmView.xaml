@@ -1,0 +1,152 @@
+<UserControl x:Class="VisionCell.App.Modules.Alarm.Views.AlarmView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <DockPanel>
+        <Button DockPanel.Dock="Right"
+                Content="Refresh Alarms"
+                Command="{Binding RefreshCommand}"
+                Height="36"
+                MinWidth="132" />
+        <StackPanel>
+          <TextBlock Text="Alarm / Fault / Recovery" Style="{DynamicResource Text.PageTitle}" />
+          <TextBlock Text="{Binding StatusText}"
+                     Style="{DynamicResource Text.Status}"
+                     Margin="0,4,0,0" />
+        </StackPanel>
+      </DockPanel>
+
+      <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Total Records" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding Alarms.Count}" Style="{DynamicResource Text.MetricValue}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Active" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding ActiveCount}" Style="{DynamicResource Text.MetricValue}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Critical" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding CriticalCount}" Style="{DynamicResource Text.MetricValue}" />
+          </StackPanel>
+        </Border>
+        <Border Style="{DynamicResource Card.Panel}">
+          <StackPanel>
+            <TextBlock Text="Last Refresh" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock Text="{Binding LastRefreshText}"
+                       Style="{DynamicResource Text.MetricValue}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </UniformGrid>
+
+      <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <DockPanel>
+            <TextBlock Text="Alarm Records" Style="{DynamicResource Text.CardTitle}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding AcknowledgedCount, StringFormat={}{0} acknowledged}"
+                       Style="{DynamicResource Text.Status}" />
+          </DockPanel>
+          <ListView Grid.Row="1"
+                    ItemsSource="{Binding Alarms}"
+                    SelectedItem="{Binding SelectedAlarm}"
+                    MinHeight="300"
+                    Background="{DynamicResource Brush.PanelAlt}"
+                    BorderThickness="0"
+                    Foreground="{DynamicResource Brush.TextPrimary}">
+            <ListView.View>
+              <GridView>
+                <GridViewColumn Header="State" DisplayMemberBinding="{Binding StateText}" Width="118" />
+                <GridViewColumn Header="Time" DisplayMemberBinding="{Binding OccurredAtText}" Width="150" />
+                <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="90" />
+                <GridViewColumn Header="Severity" DisplayMemberBinding="{Binding Severity}" Width="94" />
+                <GridViewColumn Header="Area" DisplayMemberBinding="{Binding Area}" Width="110" />
+                <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="420" />
+                <GridViewColumn Header="Correlation" DisplayMemberBinding="{Binding CorrelationId}" Width="260" />
+                <GridViewColumn Header="Acknowledged" DisplayMemberBinding="{Binding AcknowledgedAtText}" Width="150" />
+              </GridView>
+            </ListView.View>
+          </ListView>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,8,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <DockPanel>
+            <Button DockPanel.Dock="Right"
+                    Content="Acknowledge"
+                    Command="{Binding AcknowledgeCommand}"
+                    Height="32"
+                    MinWidth="112" />
+            <TextBlock Text="Recovery Detail" Style="{DynamicResource Text.CardTitle}" />
+          </DockPanel>
+          <UniformGrid Grid.Row="1" Columns="4" Margin="0,8,0,0">
+            <StackPanel Margin="0,0,16,8">
+              <TextBlock Text="Alarm ID" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBlock Text="{Binding SelectedAlarm.Id, TargetNullValue=-}"
+                         Style="{DynamicResource Text.StatusStrong}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8">
+              <TextBlock Text="Area" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBlock Text="{Binding SelectedAlarm.Area, TargetNullValue=-}"
+                         Style="{DynamicResource Text.StatusStrong}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8">
+              <TextBlock Text="Code" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBlock Text="{Binding SelectedAlarm.Code, TargetNullValue=-}"
+                         Style="{DynamicResource Text.StatusStrong}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,0,8">
+              <TextBlock Text="State" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBlock Text="{Binding SelectedAlarm.StateText, TargetNullValue=-}"
+                         Style="{DynamicResource Text.StatusStrong}" />
+            </StackPanel>
+          </UniformGrid>
+          <Grid Grid.Row="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Action Memo" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBox Text="{Binding ActionMemoText, UpdateSourceTrigger=PropertyChanged}"
+                       MinHeight="72"
+                       TextWrapping="Wrap"
+                       AcceptsReturn="True" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="16,0,0,0">
+              <TextBlock Text="Previous Memo" Style="{DynamicResource Text.MetricLabel}" />
+              <TextBlock Text="{Binding SelectedAlarm.ActionMemo, TargetNullValue=-}"
+                         Style="{DynamicResource Text.Status}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>
