@@ -419,3 +419,11 @@ Proposed improvement: Extract `RecipeEditorField` as a shared WPF control and re
 Requirement impact: FR-006, FR-120, NFR-009, NFR-010
 Priority: P1
 Status: Addressed for single-row Recipe editor fields; multi-row Recipe editing remains follow-up work.
+
+Date: 2026-06-03
+Source: UI QA startup and shell layout
+Problem: The WPF shell could launch as a smaller centered window and Dashboard command buttons were arranged in a fixed right-side row that could clip or feel detached from the operator workspace at constrained resolutions.
+Proposed improvement: Maximize `ShellWindow` on startup, keep the 1366x768 minimum, constrain the workspace/nav regions, and move Dashboard commands into a wrapping row below the page title.
+Requirement impact: FR-001, FR-003, FR-006, NFR-001, NFR-009, NFR-010
+Priority: P1
+Status: Addressed by the startup/layout QA slice; broader multi-screen HMI theme and empty-state polish remains follow-up work.

@@ -28,6 +28,8 @@
         Title="VisionCell Manufacturing Studio"
         Width="1600"
         Height="960"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         MinWidth="1366"
         MinHeight="768"
         Background="{DynamicResource Brush.AppBackground}">
@@ -65,18 +67,26 @@
   </Window.Resources>
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="64" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
-      <RowDefinition Height="180" />
+      <RowDefinition Height="168" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="248" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.TopBar}" Padding="20,0">
-      <DockPanel LastChildFill="False">
-        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+    <Border Grid.Row="0"
+            Grid.ColumnSpan="2"
+            Background="{DynamicResource Brush.TopBar}"
+            MinHeight="64"
+            Padding="20,8">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock Text="VISIONCELL" Style="{DynamicResource Text.Logo}" VerticalAlignment="Center" />
           <Border Style="{DynamicResource TopBar.StatusChip}"
                   MinWidth="148"
@@ -89,7 +99,10 @@
             </StackPanel>
           </Border>
         </StackPanel>
-        <WrapPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
+        <WrapPanel Grid.Column="1"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Right"
+                   Margin="16,0,0,0">
           <Border Style="{DynamicResource TopBar.StatusChip}" ToolTip="Current machine mode.">
             <StackPanel>
               <TextBlock Text="MODE" Style="{DynamicResource Text.TopBarLabel}" />
@@ -126,27 +139,40 @@
             </StackPanel>
           </Border>
         </WrapPanel>
-      </DockPanel>
+      </Grid>
     </Border>
 
     <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource Brush.SideNav}" Padding="12">
-      <StackPanel>
-        <TextBlock Text="Navigation" Style="{DynamicResource Text.SectionHeader}" Margin="8" />
-        <ItemsControl ItemsSource="{Binding NavigationItems}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Button Content="{Binding Title}"
-                      Command="{Binding NavigateCommand}"
-                      ToolTip="{Binding Title}"
-                      Style="{DynamicResource Button.Nav}" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
+      <DockPanel LastChildFill="True">
+        <TextBlock DockPanel.Dock="Top"
+                   Text="Navigation"
+                   Style="{DynamicResource Text.SectionHeader}"
+                   Margin="8" />
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding NavigationItems}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Content="{Binding Title}"
+                        Command="{Binding NavigateCommand}"
+                        ToolTip="{Binding Title}"
+                        Style="{DynamicResource Button.Nav}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
     </Border>
 
-    <Border Grid.Row="1" Grid.Column="1" Padding="20" Background="{DynamicResource Brush.Workspace}">
-      <ContentControl Content="{Binding CurrentViewModel}" />
+    <Border Grid.Row="1"
+            Grid.Column="1"
+            Padding="16"
+            Background="{DynamicResource Brush.Workspace}"
+            MinWidth="0"
+            ClipToBounds="True">
+      <ContentControl Content="{Binding CurrentViewModel}"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Stretch" />
     </Border>
 
     <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{DynamicResource Brush.EventLog}" Padding="16">
