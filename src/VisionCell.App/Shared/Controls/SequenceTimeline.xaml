@@ -1,0 +1,33 @@
+<UserControl x:Class="VisionCell.App.Shared.Controls.SequenceTimeline"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ItemsControl ItemsSource="{Binding}">
+    <ItemsControl.ItemTemplate>
+      <DataTemplate>
+        <Border Style="{DynamicResource Card.Panel}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="170" />
+              <ColumnDefinition Width="110" />
+              <ColumnDefinition Width="90" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Name}"
+                       Style="{DynamicResource Text.CardTitle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Status}"
+                       Style="{DynamicResource Text.StatusStrong}" />
+            <TextBlock Grid.Column="2"
+                       Text="{Binding ElapsedText}"
+                       Style="{DynamicResource Text.Status}" />
+            <TextBlock Grid.Column="3"
+                       Text="{Binding Detail}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap" />
+          </Grid>
+        </Border>
+      </DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ItemsControl>
+</UserControl>

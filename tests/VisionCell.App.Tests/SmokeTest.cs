@@ -54,6 +54,8 @@ public sealed class DashboardAndShellViewModelTests
         dashboard.IsConnected.Should().BeTrue();
         dashboard.ConnectionStatus.Should().Be("Connected");
         dashboard.Axes.Should().HaveCount(4);
+        dashboard.Axes[0].PositionText.Should().Contain("Pos");
+        dashboard.Axes[0].MotionState.Should().Be("Idle");
         dashboard.IoBits.Should().Contain(bit => bit.Name == "DI_ESTOP_ON");
         dashboard.Events.Should().Contain(systemEvent => systemEvent.EventType == "Connect");
         dashboard.GetCommandAvailability(CommandKind.Connect).IsEnabled.Should().BeFalse();

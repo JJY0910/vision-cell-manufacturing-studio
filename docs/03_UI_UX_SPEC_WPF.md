@@ -62,6 +62,13 @@ File: `src/VisionCell.App/Themes/DesignTokens.xaml`
 | ErrorBanner | Shared/Controls/ErrorBanner.xaml | alarm/error 표시 |
 | CommandBar | Shared/Controls/CommandBar.xaml | 화면별 primary commands |
 
+Implementation status:
+
+- `StatusPill` and `EventLogGrid` are implemented as shared controls.
+- `AxisCard` is implemented and reused by Dashboard and Motion axis snapshots.
+- `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
+- `KpiCard`, `IoBitIndicator`, `ImageViewport`, `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
+
 ## Screens
 
 ### DashboardView
