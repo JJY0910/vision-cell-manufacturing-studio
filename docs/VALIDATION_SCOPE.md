@@ -8,12 +8,14 @@
 - Equipment behavior is validated against `VirtualEquipmentController`, virtual camera, deterministic 2D/3D vision engines, SQLite repositories, and local file-system artifact storage.
 - Offline Debug validation covers SQLite result reads, relative artifact metadata checks, deterministic BMP preview decoding, and Re-inspect preparation state.
 - Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, and WPF AlarmView ViewModel state against simulator/Application failure paths.
+- Hardware Adapter Boundary validation covers interface contracts and fake adapter tests only.
 
 ## Not Yet Validated
 
 - No real Pemtron, PLC, motion controller, camera, light controller, or 3D sensor hardware has been connected.
 - No real fieldbus, serial, Ethernet, vendor SDK, trigger timing, encoder, servo alarm, or safety relay path has been validated.
 - Alarm rows are produced from simulator/Application paths only; no real PLC/vendor alarm source or safety relay acknowledgement has been validated.
+- Hardware adapter contracts are defined, but no `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, or camera trigger implementation has been validated.
 - No production calibration, metrology accuracy, takt-time, thermal, vibration, EMI, or long-duration burn-in validation has been performed.
 - Offline Debug Re-inspect currently prepares context only; it does not replay a real inspection sequence.
 - Artifact preview currently supports the deterministic uncompressed 24-bit BMP files produced by this project, not arbitrary customer image formats.

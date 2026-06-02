@@ -3,6 +3,9 @@ using VisionCell.Core.Commands;
 using VisionCell.Core.Interlocks;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Cameras;
+using VisionCell.Equipment.Hardware;
+using VisionCell.Equipment.Io;
+using VisionCell.Motion.Axes;
 using VisionCell.Motion.Commands;
 using VisionCell.Simulator;
 using Xunit;
@@ -461,6 +464,42 @@ public sealed class VirtualEquipmentControllerTests
         result.Frame.Should().BeNull();
     }
 
+    [Fact]
+    public async Task HardwareAdapterContracts_Should_Surface_Status_Axes_Camera_And_Io_Boundaries()
+    {
+        var motion = new FakeMotionControllerAdapter();
+        var camera = new FakeCameraAdapter();
+        var plc = new FakePlcIoAdapter();
+        var request = CreateRequest("Adapter Move", TimeSpan.FromSeconds(1), new Dictionary<string, string>());
+
+        var motionStatus = await motion.GetStatusAsync(TimeSpan.FromSeconds(1), CancellationToken.None);
+        var axes = await motion.ReadAxesAsync(TimeSpan.FromSeconds(1), CancellationToken.None);
+        var cameraStatus = await camera.GetCameraSnapshotAsync(TimeSpan.FromSeconds(1), CancellationToken.None);
+        var io = await plc.ReadIoAsync(TimeSpan.FromSeconds(1), CancellationToken.None);
+        var write = await plc.WriteOutputAsync("DO_TOWER_RED", true, request, CancellationToken.None);
+
+        motionStatus.AdapterName.Should().Be("Fake Motion");
+        axes.Should().HaveCount(4);
+        cameraStatus.IsReady.Should().BeTrue();
+        io.Bits.Should().Contain(bit => bit.Name == "DO_TOWER_RED" && bit.Direction == IoBitDirection.Output);
+        write.Status.Should().Be(CommandStatus.Success);
+        write.CorrelationId.Should().Be(request.CorrelationId);
+    }
+
+    [Fact]
+    public void HardwareAdapterStatus_Should_Reject_Missing_Identity()
+    {
+        var act = () => new HardwareAdapterStatus(
+            "",
+            isConnected: false,
+            isReady: false,
+            "tcp://127.0.0.1:5000",
+            "Disconnected.",
+            DateTimeOffset.UtcNow);
+
+        act.Should().Throw<ArgumentException>().WithMessage("*Adapter name*");
+    }
+
     private static InterlockContext ReadyManualContext()
     {
         return new InterlockContext(
@@ -508,5 +547,106 @@ public sealed class VirtualEquipmentControllerTests
             exposureMilliseconds: 5.0,
             gain: 1.0,
             lightIntensity: 80);
+    }
+
+    private sealed class FakeMotionControllerAdapter : IMotionControllerAdapter
+    {
+        public string AdapterName => "Fake Motion";
+
+        public Task<HardwareAdapterStatus> GetStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new HardwareAdapterStatus(
+                AdapterName,
+                isConnected: true,
+                isReady: true,
+                "virtual-motion://stage",
+                "Motion adapter ready.",
+                DateTimeOffset.UtcNow));
+        }
+
+        public Task<IReadOnlyList<AxisSnapshot>> ReadAxesAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IReadOnlyList<AxisSnapshot>>(AxisDefaults.CreatePowerOffAxes());
+        }
+
+        public Task<MachineCommandResult> ExecuteMotionAsync(
+            CommandKind command,
+            InterlockContext context,
+            MachineCommandRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(MachineCommandResult.Success("Adapter motion accepted.", TimeSpan.Zero, request.CorrelationId));
+        }
+    }
+
+    private sealed class FakeCameraAdapter : ICameraAdapter
+    {
+        public string AdapterName => "Fake Camera";
+
+        public Task<HardwareAdapterStatus> GetStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new HardwareAdapterStatus(
+                AdapterName,
+                isConnected: true,
+                isReady: true,
+                "virtual-camera://top",
+                "Camera adapter ready.",
+                DateTimeOffset.UtcNow));
+        }
+
+        public Task<CameraSnapshot> GetCameraSnapshotAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new CameraSnapshot(true, "Fake Camera", DateTimeOffset.UtcNow));
+        }
+
+        public Task<CameraGrabResult> GrabAsync(CameraGrabRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(CameraGrabResult.Timeout("No real camera connected.", TimeSpan.Zero, request.CorrelationId));
+        }
+    }
+
+    private sealed class FakePlcIoAdapter : IPlcIoAdapter
+    {
+        public string AdapterName => "Fake PLC I/O";
+
+        public Task<HardwareAdapterStatus> GetStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new HardwareAdapterStatus(
+                AdapterName,
+                isConnected: true,
+                isReady: true,
+                "virtual-plc://io",
+                "PLC I/O adapter ready.",
+                DateTimeOffset.UtcNow));
+        }
+
+        public Task<IoSnapshot> ReadIoAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new IoSnapshot(
+                new[]
+                {
+                    new IoBitSnapshot("DI_ESTOP_ON", "X000", IoBitDirection.Input, false, false),
+                    new IoBitSnapshot("DO_TOWER_RED", "Y004", IoBitDirection.Output, false, false)
+                },
+                DateTimeOffset.UtcNow));
+        }
+
+        public Task<MachineCommandResult> WriteOutputAsync(
+            string bitName,
+            bool value,
+            MachineCommandRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(MachineCommandResult.Success($"{bitName} set to {value}.", TimeSpan.Zero, request.CorrelationId));
+        }
     }
 }

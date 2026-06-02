@@ -203,8 +203,9 @@ User Button
 | Extension | Interface | Future Implementation |
 |---|---|---|
 | Real controller | IEquipmentController | TCP/Serial/PLC driver |
-| Real motion | IAxisController | Vendor SDK wrapper |
-| Real camera | ICameraDevice | GigE/USB camera SDK |
+| Real motion | IMotionControllerAdapter | Vendor SDK wrapper |
+| Real camera | ICameraAdapter, ICameraDevice | GigE/USB camera SDK |
+| Real PLC/I/O | IPlcIoAdapter | PLC or remote I/O driver |
 | Native vision | IVisionInspectionEngine | C++ OpenCV DLL/CLI |
 | Native height-map vision | IHeightMapInspectionEngine | 3D sensor SDK/OpenCV DLL |
 | Inspection artifact storage | IInspectionArtifactWriter, IInspectionArtifactReader | PNG/export package writer and preview/metadata reader |
