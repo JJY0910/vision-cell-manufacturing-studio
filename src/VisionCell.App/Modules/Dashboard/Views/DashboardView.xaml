@@ -135,7 +135,13 @@
                   <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="70" />
                   <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="170" />
                   <GridViewColumn Header="Dir" DisplayMemberBinding="{Binding Direction}" Width="56" />
-                  <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}" Width="58" />
+                  <GridViewColumn Header="State" Width="112">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <controls:IoBitIndicator />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
             </ListView>

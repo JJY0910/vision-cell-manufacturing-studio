@@ -1,6 +1,7 @@
 <UserControl x:Class="VisionCell.App.Modules.Equipment.Views.EquipmentView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <Grid>
       <Grid.RowDefinitions>
@@ -100,9 +101,7 @@
             <TextBlock Text="Fault State" Style="{DynamicResource Text.CardTitle}" />
             <ListView Grid.Row="1"
                       ItemsSource="{Binding Faults}"
-                      Background="{DynamicResource Brush.PanelAlt}"
-                      BorderThickness="0"
-                      Foreground="{DynamicResource Brush.TextPrimary}">
+                      Style="{DynamicResource ListView.HmiGrid}">
               <ListView.View>
                 <GridView>
                   <GridViewColumn Header="Signal" DisplayMemberBinding="{Binding Name}" Width="132" />
@@ -129,16 +128,19 @@
             <TextBlock Text="I/O Monitor" Style="{DynamicResource Text.CardTitle}" />
             <ListView Grid.Row="1"
                       ItemsSource="{Binding IoBits}"
-                      Background="{DynamicResource Brush.PanelAlt}"
-                      BorderThickness="0"
-                      Foreground="{DynamicResource Brush.TextPrimary}">
+                      Style="{DynamicResource ListView.HmiGrid}">
               <ListView.View>
                 <GridView>
                   <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="78" />
                   <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="180" />
                   <GridViewColumn Header="Direction" DisplayMemberBinding="{Binding Direction}" Width="84" />
-                  <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}" Width="70" />
-                  <GridViewColumn Header="Forced" DisplayMemberBinding="{Binding IsForced}" Width="72" />
+                  <GridViewColumn Header="State" Width="124">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <controls:IoBitIndicator />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
             </ListView>
@@ -154,9 +156,7 @@
             <TextBlock Text="Fault Events" Style="{DynamicResource Text.CardTitle}" />
             <ListView Grid.Row="1"
                       ItemsSource="{Binding Events}"
-                      Background="{DynamicResource Brush.PanelAlt}"
-                      BorderThickness="0"
-                      Foreground="{DynamicResource Brush.TextPrimary}">
+                      Style="{DynamicResource ListView.HmiGrid}">
               <ListView.View>
                 <GridView>
                   <GridViewColumn Header="Time" DisplayMemberBinding="{Binding CreatedAt, StringFormat={}{0:HH:mm:ss}}" Width="72" />
