@@ -380,6 +380,14 @@ Requirement impact: FR-022, FR-043, FR-067, FR-141, FR-184, FR-201, FR-241, NFR-
 Priority: P1
 Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; real hardware source integration remains follow-up work.
 
+Date: 2026-06-02
+Source: Priority 3 Hardware Adapter Boundary
+Problem: Adapter contracts now define future Motion/Camera/PLC I/O boundaries, but no real hardware adapter has been implemented or validated.
+Proposed improvement: Implement a bench-only `RealEquipmentController` behind `IEquipmentController` after endpoint/profile settings and vendor SDK details are confirmed.
+Requirement impact: FR-020, FR-021, FR-022, FR-080, FR-140, FR-141, FR-240, NFR-002, NFR-004, NFR-007
+Priority: P1
+Status: Adapter contract and integration plan baseline addressed by ADR-0032; real hardware implementation remains follow-up work.
+
 Date: 2026-06-01
 Source: FR-221 Offline Debug artifact rendering
 Problem: Offline Debug can display artifact paths, live metadata status, and deterministic BMP previews, but it does not yet launch a safe file viewer or replay inspection parameters.

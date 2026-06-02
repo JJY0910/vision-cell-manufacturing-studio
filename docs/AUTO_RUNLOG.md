@@ -447,3 +447,10 @@
 - Validation target: Core/Application/Persistence/App targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: Core targeted tests passed with 4 tests; Application targeted tests passed with 83 tests; Persistence targeted tests passed with 38 tests; App targeted tests passed with 43 tests. Debug/Release solution build and test passed with 218 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: Alarm records are generated from simulator/Application failure paths only; no real PLC, motion controller, camera, fieldbus, or safety relay alarm source is validated.
+
+## 2026-06-02 15:28 - Local validation passed
+- Branch: `feature/fr-020-hardware-adapter-boundary`
+- Scope: Add Hardware Adapter Boundary contracts for future Motion/Camera/PLC I/O adapters and document the non-implemented real hardware integration plan.
+- Validation target: Equipment targeted tests, full Debug/Release build/test, static blocking/code-behind checks, artifact scan, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Equipment targeted tests passed with 28 tests. Debug/Release solution build and test passed with 220 tests; static blocking/code-behind/artifact checks passed; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This PR defines adapter contracts only; no real `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, camera trigger, or safety relay validation is performed.

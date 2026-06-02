@@ -77,6 +77,17 @@ Simulator must support:
 - EStop/Door toggles
 - DB disabled mode for testing UI error path
 
+## Hardware Adapter Boundary
+
+Future real hardware integration must stay behind `IEquipmentController` and the adapter contracts in `VisionCell.Equipment.Hardware`.
+
+- `IMotionControllerAdapter`: reads axis snapshots and executes Servo/Home/Jog/Move/Stop commands.
+- `ICameraAdapter`: reads camera readiness and executes frame acquisition.
+- `IPlcIoAdapter`: reads digital I/O and writes allowed outputs.
+- `HardwareAdapterStatus`: reports adapter connected/ready/endpoint state.
+
+No vendor SDK object, PLC frame, raw fieldbus payload, or camera buffer handle may cross into WPF or Application use cases.
+
 ## Snapshot Update Policy
 
 - UI refresh target: 250ms~1000ms
