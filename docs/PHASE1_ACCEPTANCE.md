@@ -29,6 +29,11 @@
 - [x] Teaching Go To snapshot/interlock orchestration flows through an Application use case.
 - [x] Teaching selected-point history reads flow through an Application use case.
 
+## Recipe
+
+- [x] Recipe list, save, and activation workflows flow through an Application use case.
+- [x] RecipeView avoids direct Recipe index repository orchestration.
+
 ## Simulator
 
 - [x] Simulator supports Connect.

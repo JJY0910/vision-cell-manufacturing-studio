@@ -53,7 +53,7 @@ VisionCell.Telemetry implements logging/event sinks.
 ### VisionCell.Application
 
 - UseCases: ConnectEquipment, HomeAxis, JogAxis, SaveTeachingPoint, RunInspectionSequence
-- Recipe workflows: validate and save Recipe documents, update Recipe index metadata, resolve active Recipe context
+- Recipe workflows: validate and save Recipe documents, list/update Recipe index metadata, activate selected Recipes, resolve active Recipe context
 - Sequence orchestration
 - DTO mapping
 - Application-level validation
@@ -104,6 +104,7 @@ VisionCell.Telemetry implements logging/event sinks.
 - Command binding
 - User feedback
 - App service composition for simulator, Application use cases, SQLite repositories, and Recipe document storage
+- RecipeView binds Recipe list/save/activate workflows through `IRecipeLibraryUseCase`; it does not inject the Recipe index repository directly.
 
 ## Command Model
 

@@ -26,6 +26,18 @@ public sealed class RecipeLibraryUseCase : IRecipeLibraryUseCase
         _idFactory = idFactory ?? Guid.NewGuid;
     }
 
+    public async Task<IReadOnlyList<RecipeIndexEntry>> ListRecentAsync(
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        if (limit <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "Recipe index list limit must be greater than zero.");
+        }
+
+        return await _indexRepository.ListRecentAsync(limit, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<RecipeLibrarySaveResult> SaveAsync(
         RecipeLibrarySaveRequest request,
         CancellationToken cancellationToken)
@@ -68,6 +80,26 @@ public sealed class RecipeLibraryUseCase : IRecipeLibraryUseCase
         }
 
         return RecipeLibrarySaveResult.Success(entry);
+    }
+
+    public async Task<bool> ActivateAsync(
+        string recipeId,
+        string version,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(recipeId))
+        {
+            throw new ArgumentException("Recipe id is required.", nameof(recipeId));
+        }
+
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            throw new ArgumentException("Recipe version is required.", nameof(version));
+        }
+
+        return await _indexRepository
+            .SetActiveAsync(recipeId.Trim(), version.Trim(), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static RecipeLibrarySaveResult MapDocumentFailure(RecipeDocumentSaveResult result)

@@ -105,6 +105,84 @@ public sealed class RecipeLibraryUseCaseTests
         indexRepository.SavedEntries.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task ListRecentAsync_Should_Delegate_To_Index_With_Limit()
+    {
+        var newest = CreateRecipeIndexEntry(
+            "PKG-NEW",
+            "1.1.0",
+            updatedAt: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero));
+        var oldest = CreateRecipeIndexEntry(
+            "PKG-OLD",
+            "1.0.0",
+            updatedAt: new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        var indexRepository = new FakeRecipeIndexRepository();
+        indexRepository.SavedEntries.AddRange(new[] { newest, oldest });
+        var useCase = new RecipeLibraryUseCase(
+            new FakeRecipeDocumentStore(RecipeDocumentSaveResult.Success("unused.recipe.json")),
+            indexRepository);
+
+        var entries = await useCase.ListRecentAsync(1, CancellationToken.None);
+
+        entries.Should().ContainSingle().Which.Should().Be(newest);
+        indexRepository.ListLimits.Should().ContainSingle().Which.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ListRecentAsync_Should_Reject_NonPositive_Limit()
+    {
+        var useCase = new RecipeLibraryUseCase(
+            new FakeRecipeDocumentStore(RecipeDocumentSaveResult.Success("unused.recipe.json")),
+            new FakeRecipeIndexRepository());
+
+        var act = () => useCase.ListRecentAsync(0, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
+            .WithParameterName("limit");
+    }
+
+    [Fact]
+    public async Task ActivateAsync_Should_Trim_And_Delegate_To_Index()
+    {
+        var inactive = CreateRecipeIndexEntry(
+            "PKG-A",
+            "1.0.0",
+            isActive: false);
+        var active = CreateRecipeIndexEntry(
+            "PKG-B",
+            "2.0.0",
+            isActive: true);
+        var indexRepository = new FakeRecipeIndexRepository();
+        indexRepository.SavedEntries.AddRange(new[] { inactive, active });
+        var useCase = new RecipeLibraryUseCase(
+            new FakeRecipeDocumentStore(RecipeDocumentSaveResult.Success("unused.recipe.json")),
+            indexRepository);
+
+        var activated = await useCase.ActivateAsync(" PKG-A ", " 1.0.0 ", CancellationToken.None);
+
+        activated.Should().BeTrue();
+        indexRepository.ActivateRequests.Should().ContainSingle()
+            .Which.Should().Be(("PKG-A", "1.0.0"));
+        indexRepository.SavedEntries.Single(entry => entry.RecipeId == "PKG-A").IsActive.Should().BeTrue();
+        indexRepository.SavedEntries.Single(entry => entry.RecipeId == "PKG-B").IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ActivateAsync_Should_Reject_Blank_Recipe_Identity()
+    {
+        var useCase = new RecipeLibraryUseCase(
+            new FakeRecipeDocumentStore(RecipeDocumentSaveResult.Success("unused.recipe.json")),
+            new FakeRecipeIndexRepository());
+
+        var missingId = () => useCase.ActivateAsync(" ", "1.0.0", CancellationToken.None);
+        var missingVersion = () => useCase.ActivateAsync("PKG-A", " ", CancellationToken.None);
+
+        await missingId.Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("recipeId");
+        await missingVersion.Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("version");
+    }
+
     private static RecipeDefinition CreateValidRecipe()
     {
         return new RecipeDefinition(
@@ -129,6 +207,27 @@ public sealed class RecipeLibraryUseCaseTests
             TeachingRole.Camera,
             new Position4D(10.0, 25.0, 8.0, 0.0),
             new PositionTolerance(0.05, 0.05, 0.02, 0.1));
+    }
+
+    private static RecipeIndexEntry CreateRecipeIndexEntry(
+        string recipeId,
+        string version,
+        bool isActive = false,
+        DateTimeOffset? updatedAt = null)
+    {
+        var timestamp = updatedAt ?? DateTimeOffset.UtcNow;
+        return new RecipeIndexEntry(
+            Guid.NewGuid(),
+            recipeId,
+            version,
+            $"{recipeId} Product",
+            $@"local-data\recipes\{recipeId}.v{version}.recipe.json",
+            "0123456789abcdef",
+            isActive,
+            IsValid: true,
+            ValidationSummary: "Valid",
+            timestamp.AddMinutes(-5),
+            timestamp);
     }
 
     private sealed class FakeRecipeDocumentStore : IRecipeDocumentStore
@@ -162,6 +261,8 @@ public sealed class RecipeLibraryUseCaseTests
     private sealed class FakeRecipeIndexRepository : IRecipeIndexRepository
     {
         public List<RecipeIndexEntry> SavedEntries { get; } = new();
+        public List<int> ListLimits { get; } = new();
+        public List<(string RecipeId, string Version)> ActivateRequests { get; } = new();
 
         public Func<RecipeIndexEntry, CancellationToken, Task>? SaveHandler { get; init; }
 
@@ -198,6 +299,7 @@ public sealed class RecipeLibraryUseCaseTests
             string version,
             CancellationToken cancellationToken)
         {
+            ActivateRequests.Add((recipeId, version));
             var hasTarget = SavedEntries.Any(entry =>
                 string.Equals(entry.RecipeId, recipeId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase));
@@ -223,7 +325,12 @@ public sealed class RecipeLibraryUseCaseTests
             int limit,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<RecipeIndexEntry>>(SavedEntries.Take(limit).ToArray());
+            ListLimits.Add(limit);
+            return Task.FromResult<IReadOnlyList<RecipeIndexEntry>>(
+                SavedEntries
+                    .OrderByDescending(entry => entry.UpdatedAt)
+                    .Take(limit)
+                    .ToArray());
         }
     }
 }
