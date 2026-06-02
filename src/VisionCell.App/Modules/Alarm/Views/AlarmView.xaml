@@ -11,23 +11,18 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <DockPanel>
-        <Button DockPanel.Dock="Right"
-                Content="Refresh Alarms"
-                Command="{Binding RefreshCommand}"
-                ToolTip="Reload recent alarm and recovery records from SQLite."
-                Height="36"
-                MinWidth="132" />
-        <StackPanel>
-          <TextBlock Text="Alarm / Fault / Recovery" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding StatusText}"
-                     Style="{DynamicResource Text.Status}"
-                     Margin="0,4,0,0" />
-          <controls:ErrorBanner Message="{Binding AlertMessage}"
-                                IsOpen="{Binding HasAlert}"
-                                Margin="0,8,0,0" />
-        </StackPanel>
-      </DockPanel>
+      <controls:CommandBar Title="Alarm / Fault / Recovery"
+                           StatusText="{Binding StatusText}"
+                           AlertMessage="{Binding AlertMessage}"
+                           HasAlert="{Binding HasAlert}">
+        <controls:CommandBar.CommandContent>
+          <Button Content="Refresh Alarms"
+                  Command="{Binding RefreshCommand}"
+                  ToolTip="Reload recent alarm and recovery records from SQLite."
+                  Height="36"
+                  MinWidth="132" />
+        </controls:CommandBar.CommandContent>
+      </controls:CommandBar>
 
       <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
         <controls:KpiCard Title="Total Records"

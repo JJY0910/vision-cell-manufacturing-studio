@@ -11,34 +11,30 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-          <Button Content="Refresh Results"
-                  Command="{Binding RefreshResultsCommand}"
-                  Height="36"
-                  MinWidth="132"
-                  Margin="8,0,0,0" />
-          <Button Content="Load Artifacts"
-                  Command="{Binding LoadSelectedArtifactsCommand}"
-                  Height="36"
-                  MinWidth="132"
-                  Margin="8,0,0,0" />
-          <Button Content="Prepare Re-inspect"
-                  Command="{Binding PrepareReinspectCommand}"
-                  Height="36"
-                  MinWidth="148"
-                  Margin="8,0,0,0" />
-        </StackPanel>
-        <StackPanel>
-          <TextBlock Text="Offline Debug" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding StatusText}"
-                     Style="{DynamicResource Text.Status}"
-                     Margin="0,4,0,0" />
-          <controls:ErrorBanner Message="{Binding AlertMessage}"
-                                IsOpen="{Binding HasAlert}"
-                                Margin="0,8,0,0" />
-        </StackPanel>
-      </DockPanel>
+      <controls:CommandBar Title="Offline Debug"
+                           StatusText="{Binding StatusText}"
+                           AlertMessage="{Binding AlertMessage}"
+                           HasAlert="{Binding HasAlert}">
+        <controls:CommandBar.CommandContent>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Refresh Results"
+                    Command="{Binding RefreshResultsCommand}"
+                    Height="36"
+                    MinWidth="132"
+                    Margin="8,0,0,0" />
+            <Button Content="Load Artifacts"
+                    Command="{Binding LoadSelectedArtifactsCommand}"
+                    Height="36"
+                    MinWidth="132"
+                    Margin="8,0,0,0" />
+            <Button Content="Prepare Re-inspect"
+                    Command="{Binding PrepareReinspectCommand}"
+                    Height="36"
+                    MinWidth="148"
+                    Margin="8,0,0,0" />
+          </StackPanel>
+        </controls:CommandBar.CommandContent>
+      </controls:CommandBar>
 
       <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
         <Border Style="{DynamicResource Card.Panel}">
