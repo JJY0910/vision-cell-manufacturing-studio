@@ -403,3 +403,11 @@ Proposed improvement: Extend the artifact reader into a safe open/replay boundar
 Requirement impact: FR-202, FR-221, FR-222, FR-200, NFR-006, NFR-008, NFR-TEST-001
 Priority: P1
 Status: Metadata availability addressed by ADR-0029 and preview rendering/preparation addressed by ADR-0030; safe file opening and actual re-inspection remain open.
+
+Date: 2026-06-02
+Source: UI QA reusable controls
+Problem: `ImageViewport` can show images, but ROI and defect overlays still need a reusable, read-only WPF boundary before any edit or re-inspection interaction is added.
+Proposed improvement: Implement `RoiOverlayCanvas` as a presentation-only shared control that consumes ViewModel-projected image-space overlay items and reuses it in Inspection/Offline Debug.
+Requirement impact: FR-006, FR-140, FR-160, FR-162, FR-221, NFR-009, NFR-010
+Priority: P1
+Status: Planned by ADR-0034 and issue seed 007; not implemented in the planning PR.

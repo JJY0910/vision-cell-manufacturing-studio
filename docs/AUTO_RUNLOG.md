@@ -513,3 +513,10 @@
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Local validation: App Debug build passed; App targeted tests passed with 44 tests. Debug/Release solution build and test passed with 225 tests; blocking wait scan passed; WPF code-behind scan output was limited to the new `CommandBar.xaml.cs` dependency-property wrapper and reviewed as no business logic; artifact scan found only expected existing docs/test references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
 - Risks: This slice changes WPF header layout composition only; existing command bindings remain unchanged and no equipment, recipe, alarm, or inspection behavior is altered.
+
+## 2026-06-02 17:29 - Local validation passed
+- Branch: `feature/fr-006-roi-overlay-canvas-plan`
+- Scope: Document the `RoiOverlayCanvas` boundary before implementation via ADR, backlog entry, and issue seed.
+- Validation target: Docs-only full Debug/Release build/test, static checks, WPF launch smoke, GitHub Actions after PR creation.
+- Local validation: Debug/Release solution build and test passed with 225 tests; blocking wait scan passed; WPF code-behind scan output was limited to the already-merged `CommandBar.xaml.cs` dependency-property wrapper false positive; artifact scan found only expected existing docs/test references; WPF hidden launch smoke passed by starting `VisionCell.App.exe` for 5 seconds.
+- Risks: This slice implements no runtime overlay behavior; actual read-only ROI/defect rendering remains a follow-up PR.
