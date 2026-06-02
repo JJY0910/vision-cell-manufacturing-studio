@@ -479,3 +479,9 @@
 - Scope: Extract reusable `AxisCard` and `SequenceTimeline` controls, reuse them in Dashboard, Motion, and Inspection screens, and add Dashboard axis display text regression coverage.
 - Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
 - Risks: This slice changes WPF binding surfaces only; no motion, inspection sequence, or hardware behavior changes are included.
+
+## 2026-06-02 16:43 - In progress
+- Branch: `feature/fr-006-kpi-card-control`
+- Scope: Add reusable `KpiCard` and apply it to Motion, Recipe, and Alarm summary bands for consistent HMI metric cards.
+- Validation target: App targeted tests, full Debug/Release build/test, static blocking/code-behind/artifact scans, WPF launch smoke, GitHub Actions after PR creation.
+- Risks: This slice changes WPF resource bindings only; no machine behavior or real panel validation is included.

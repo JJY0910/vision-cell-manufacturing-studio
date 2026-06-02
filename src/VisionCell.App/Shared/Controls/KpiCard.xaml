@@ -1,0 +1,20 @@
+<UserControl x:Class="VisionCell.App.Shared.Controls.KpiCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+  <Border Style="{DynamicResource Card.Panel}"
+          MinHeight="112"
+          ToolTip="{Binding Detail, ElementName=Root}">
+    <StackPanel>
+      <TextBlock Text="{Binding Title, ElementName=Root}"
+                 Style="{DynamicResource Text.CardTitle}" />
+      <TextBlock Text="{Binding Value, ElementName=Root}"
+                 Style="{DynamicResource Text.MetricValue}"
+                 TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Detail, ElementName=Root}"
+                 Style="{DynamicResource Text.Status}"
+                 TextWrapping="Wrap"
+                 Margin="0,6,0,0" />
+    </StackPanel>
+  </Border>
+</UserControl>

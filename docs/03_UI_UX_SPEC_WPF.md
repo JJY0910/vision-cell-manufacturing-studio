@@ -65,9 +65,10 @@ File: `src/VisionCell.App/Themes/DesignTokens.xaml`
 Implementation status:
 
 - `StatusPill` and `EventLogGrid` are implemented as shared controls.
+- `KpiCard` is implemented and reused by Motion, Recipe, and Alarm summary bands.
 - `AxisCard` is implemented and reused by Dashboard and Motion axis snapshots.
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
-- `KpiCard`, `IoBitIndicator`, `ImageViewport`, `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
+- `IoBitIndicator`, `ImageViewport`, `RoiOverlayCanvas`, `ErrorBanner`, and `CommandBar` remain follow-up reusable control extractions.
 
 ## Screens
 
