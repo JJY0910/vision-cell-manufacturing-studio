@@ -2,8 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <Grid>
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid MinWidth="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
@@ -11,45 +12,50 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-          <Button Content="Connect"
-                  Command="{Binding ConnectCommand}"
-                  ToolTip="{Binding ConnectDisabledReason}"
-                  Height="36"
-                  MinWidth="92"
-                  Margin="0,0,8,0" />
-          <Button Content="Disconnect"
-                  Command="{Binding DisconnectCommand}"
-                  ToolTip="{Binding DisconnectDisabledReason}"
-                  Height="36"
-                  MinWidth="104"
-                  Margin="0,0,8,0" />
-          <Button Content="Manual"
-                  Command="{Binding EnterManualModeCommand}"
-                  ToolTip="{Binding EnterManualModeDisabledReason}"
-                  Height="36"
-                  MinWidth="82"
-                  Margin="0,0,8,0" />
-          <Button Content="Auto"
-                  Command="{Binding EnterAutoModeCommand}"
-                  ToolTip="{Binding EnterAutoModeDisabledReason}"
-                  Height="36"
-                  MinWidth="72"
-                  Margin="0,0,8,0" />
-          <Button Content="Refresh"
-                  Command="{Binding RefreshCommand}"
-                  ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
-                  Height="36"
-                  MinWidth="86" />
-        </StackPanel>
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <StackPanel>
           <TextBlock Text="Dashboard" Style="{DynamicResource Text.PageTitle}" />
           <TextBlock Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />
         </StackPanel>
-      </DockPanel>
+        <WrapPanel Grid.Row="1" Margin="0,12,-8,0">
+          <Button Content="Connect"
+                  Command="{Binding ConnectCommand}"
+                  ToolTip="{Binding ConnectDisabledReason}"
+                  Height="36"
+                  MinWidth="92"
+                  Margin="0,0,8,8" />
+          <Button Content="Disconnect"
+                  Command="{Binding DisconnectCommand}"
+                  ToolTip="{Binding DisconnectDisabledReason}"
+                  Height="36"
+                  MinWidth="104"
+                  Margin="0,0,8,8" />
+          <Button Content="Manual"
+                  Command="{Binding EnterManualModeCommand}"
+                  ToolTip="{Binding EnterManualModeDisabledReason}"
+                  Height="36"
+                  MinWidth="82"
+                  Margin="0,0,8,8" />
+          <Button Content="Auto"
+                  Command="{Binding EnterAutoModeCommand}"
+                  ToolTip="{Binding EnterAutoModeDisabledReason}"
+                  Height="36"
+                  MinWidth="72"
+                  Margin="0,0,8,8" />
+          <Button Content="Refresh"
+                  Command="{Binding RefreshCommand}"
+                  ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
+                  Height="36"
+                  MinWidth="86"
+                  Margin="0,0,8,8" />
+        </WrapPanel>
+      </Grid>
 
       <ItemsControl Grid.Row="1" ItemsSource="{Binding StatusPills}" Margin="0,20,0,8">
         <ItemsControl.ItemsPanel>

@@ -9,6 +9,7 @@
 - Main window: `ShellWindow.xaml`
 - 기본 해상도: 1920x1080
 - 최소 해상도: 1366x768
+- Startup behavior: `WindowStartupLocation=CenterScreen`, `WindowState=Maximized`, `MinWidth=1366`, `MinHeight=768`.
 - Layout: Grid with TopBar / SideNav / Workspace / EventLog
 
 ```text
@@ -223,6 +224,7 @@ Implementation status:
 - InspectionView now has vertical scrolling so sequence timeline and image evidence remain reachable in smaller windows.
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
 - Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
+- Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard commands in a wrapping command row below the page title.
 - Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.
 - This pass is a local WPF layout quality slice. It does not claim final shop-floor monitor, touch-panel, or real equipment HMI acceptance.
 
