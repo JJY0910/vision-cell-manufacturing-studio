@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Recipes;
 using VisionCell.Core.Primitives;
 using VisionCell.Motion.Teaching;
@@ -28,6 +29,9 @@ public sealed partial class RecipeViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusText = "Recipe index not loaded";
+
+    [ObservableProperty]
+    private string? _alertMessage;
 
     [ObservableProperty]
     private RecipeIndexItemViewModel? _selectedRecipe;
@@ -106,6 +110,8 @@ public sealed partial class RecipeViewModel : ObservableObject
 
     [ObservableProperty]
     private string _roiHeightText = "88";
+
+    public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
@@ -243,6 +249,16 @@ public sealed partial class RecipeViewModel : ObservableObject
         RefreshCommand.NotifyCanExecuteChanged();
         SaveRecipeCommand.NotifyCanExecuteChanged();
         ActivateRecipeCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnStatusTextChanged(string value)
+    {
+        AlertMessage = OperatorAlertClassifier.GetAlertMessage(value);
+    }
+
+    partial void OnAlertMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasAlert));
     }
 
     partial void OnSelectedRecipeChanged(RecipeIndexItemViewModel? value)

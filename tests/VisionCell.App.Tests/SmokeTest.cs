@@ -138,6 +138,8 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.SelectedAlarm!.StateText.Should().Be("Acknowledged");
         viewModel.SelectedAlarm.ActionMemo.Should().Be("Checked soft limit and reset axis.");
         viewModel.StatusText.Should().Contain("acknowledged");
+        viewModel.HasAlert.Should().BeFalse();
+        viewModel.AlertMessage.Should().BeNull();
         useCase.Acknowledged.Should().ContainSingle(item => item.AlarmId == alarm.Id);
     }
 
@@ -363,6 +365,8 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.PreparedReinspect!.SourceResultId.Should().Be(result.Id);
         offlineDebug.PreparedReinspect.RecipeId.Should().Be(result.RecipeId);
         offlineDebug.ReinspectStatusText.Should().Contain(result.LotId);
+        offlineDebug.HasAlert.Should().BeFalse();
+        offlineDebug.AlertMessage.Should().BeNull();
 
         offlineDebug.SelectedResult = null;
 
@@ -396,6 +400,8 @@ public sealed class DashboardAndShellViewModelTests
         await offlineDebug.RefreshResultsAsync(CancellationToken.None);
 
         offlineDebug.StatusText.Should().Contain("result store unavailable");
+        offlineDebug.HasAlert.Should().BeTrue();
+        offlineDebug.AlertMessage.Should().Contain("result store unavailable");
         offlineDebug.HasResults.Should().BeFalse();
         offlineDebug.Results.Should().BeEmpty();
     }
@@ -773,6 +779,8 @@ public sealed class DashboardAndShellViewModelTests
         inspection.LastGrabImageSource.Should().NotBeNull();
         inspection.LastRunCorrelationId.Should().NotBe("-");
         inspection.LastCheckText.Should().NotBe("-");
+        inspection.HasAlert.Should().BeFalse();
+        inspection.AlertMessage.Should().BeNull();
     }
 
     [Fact]
@@ -788,6 +796,8 @@ public sealed class DashboardAndShellViewModelTests
         inspection.ActiveRecipeText.Should().Be("-");
         inspection.StatusText.Should().Contain("Run inspection rejected");
         inspection.StatusText.Should().Contain("No active recipe");
+        inspection.HasAlert.Should().BeTrue();
+        inspection.AlertMessage.Should().Contain("Run inspection rejected");
     }
 
     [Fact]
@@ -827,6 +837,8 @@ public sealed class DashboardAndShellViewModelTests
         inspection.PrecheckStatusText.Should().Contain("RCP-PRECHECK");
         inspection.StatusText.Should().Be("Inspection precheck ready");
         inspection.LastCheckText.Should().NotBe("-");
+        inspection.HasAlert.Should().BeFalse();
+        inspection.AlertMessage.Should().BeNull();
     }
 
     [Fact]
@@ -844,6 +856,8 @@ public sealed class DashboardAndShellViewModelTests
         inspection.ActiveRecipeText.Should().Be("-");
         inspection.PrecheckStatusText.Should().Contain("recipe index unavailable");
         inspection.StatusText.Should().Contain("Inspection precheck blocked");
+        inspection.HasAlert.Should().BeTrue();
+        inspection.AlertMessage.Should().Contain("Inspection precheck blocked");
     }
 
     [Fact]
@@ -880,6 +894,8 @@ public sealed class DashboardAndShellViewModelTests
             .ValidationSummaryText.Should().Contain("Missing inspection");
         recipe.StatusText.Should().Be("2 recipe index records loaded");
         recipe.LastRefreshText.Should().NotBe("-");
+        recipe.HasAlert.Should().BeFalse();
+        recipe.AlertMessage.Should().BeNull();
     }
 
     [Fact]
@@ -911,6 +927,8 @@ public sealed class DashboardAndShellViewModelTests
 
         recipe.Recipes.Should().BeEmpty();
         recipe.StatusText.Should().Contain("recipe index unavailable");
+        recipe.HasAlert.Should().BeTrue();
+        recipe.AlertMessage.Should().Contain("recipe index unavailable");
         recipe.RefreshCommand.CanExecute(null).Should().BeTrue();
     }
 
@@ -955,6 +973,8 @@ public sealed class DashboardAndShellViewModelTests
         recipe.SelectedRecipe.Should().NotBeNull();
         recipe.SelectedRecipe!.RecipeId.Should().Be("PKG-NEW");
         recipe.StatusText.Should().Be("Saved recipe 'PKG-NEW' v1.2.3");
+        recipe.HasAlert.Should().BeFalse();
+        recipe.AlertMessage.Should().BeNull();
     }
 
     [Fact]
@@ -968,6 +988,8 @@ public sealed class DashboardAndShellViewModelTests
 
         library.SaveRequests.Should().BeEmpty();
         recipe.StatusText.Should().Contain("Camera exposure must be a finite number");
+        recipe.HasAlert.Should().BeTrue();
+        recipe.AlertMessage.Should().Contain("Recipe input rejected");
     }
 
     [Fact]
@@ -987,6 +1009,8 @@ public sealed class DashboardAndShellViewModelTests
 
         library.SaveRequests.Should().ContainSingle();
         recipe.StatusText.Should().Contain("Recipe version must use major.minor.patch format");
+        recipe.HasAlert.Should().BeTrue();
+        recipe.AlertMessage.Should().Contain("Recipe save rejected");
         recipe.Recipes.Should().BeEmpty();
     }
 
@@ -1018,6 +1042,8 @@ public sealed class DashboardAndShellViewModelTests
         recipe.SelectedRecipe!.RecipeId.Should().Be("PKG-B");
         recipe.Recipes.Single(entry => entry.RecipeId == "PKG-A").IsActive.Should().BeFalse();
         recipe.StatusText.Should().Be("Activated recipe 'PKG-B' v2.0.0");
+        recipe.HasAlert.Should().BeFalse();
+        recipe.AlertMessage.Should().BeNull();
     }
 
     [Fact]
@@ -1083,6 +1109,8 @@ public sealed class DashboardAndShellViewModelTests
 
         recipe.StatusText.Should().Contain("index refresh failed");
         recipe.StatusText.Should().Contain("recipe index unavailable");
+        recipe.HasAlert.Should().BeTrue();
+        recipe.AlertMessage.Should().Contain("index refresh failed");
     }
 
     [Fact]

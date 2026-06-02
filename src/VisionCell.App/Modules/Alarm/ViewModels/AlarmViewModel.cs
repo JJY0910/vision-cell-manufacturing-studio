@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Alarms;
 using VisionCell.Core.Alarms;
 
@@ -28,6 +29,9 @@ public sealed partial class AlarmViewModel : ObservableObject
     private string _statusText = "Alarm records not loaded";
 
     [ObservableProperty]
+    private string? _alertMessage;
+
+    [ObservableProperty]
     private AlarmItemViewModel? _selectedAlarm;
 
     [ObservableProperty]
@@ -39,6 +43,7 @@ public sealed partial class AlarmViewModel : ObservableObject
     public int ActiveCount => Alarms.Count(alarm => !alarm.Alarm.IsAcknowledged);
     public int AcknowledgedCount => Alarms.Count(alarm => alarm.Alarm.IsAcknowledged);
     public int CriticalCount => Alarms.Count(alarm => alarm.Alarm.Severity == EquipmentAlarmSeverity.Critical);
+    public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
@@ -116,6 +121,16 @@ public sealed partial class AlarmViewModel : ObservableObject
     {
         RefreshCommand.NotifyCanExecuteChanged();
         AcknowledgeCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnStatusTextChanged(string value)
+    {
+        AlertMessage = OperatorAlertClassifier.GetAlertMessage(value);
+    }
+
+    partial void OnAlertMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasAlert));
     }
 
     partial void OnSelectedAlarmChanged(AlarmItemViewModel? value)

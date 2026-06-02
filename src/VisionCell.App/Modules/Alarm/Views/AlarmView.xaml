@@ -23,6 +23,9 @@
           <TextBlock Text="{Binding StatusText}"
                      Style="{DynamicResource Text.Status}"
                      Margin="0,4,0,0" />
+          <controls:ErrorBanner Message="{Binding AlertMessage}"
+                                IsOpen="{Binding HasAlert}"
+                                Margin="0,8,0,0" />
         </StackPanel>
       </DockPanel>
 
