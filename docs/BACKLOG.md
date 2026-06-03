@@ -49,7 +49,7 @@ Problem: EquipmentView can display simulator I/O and inject EStop, Door, AirPres
 Proposed improvement: Add a bench-only PLC adapter validation checklist after `RealEquipmentController` endpoint/profile details are confirmed.
 Requirement impact: FR-044, FR-080, FR-081, FR-082, FR-083, FR-084, FR-184, FR-201, NFR-004, NFR-007
 Priority: P1
-Status: Simulator fault injection, WPF monitor baseline, active fault/forced I/O summaries, simulator I/O transition persistence, and read-only transition history display are implemented. Real hardware validation remains follow-up work.
+Status: Simulator fault injection, WPF monitor baseline, active fault/forced I/O summaries, simulator I/O transition persistence, read-only transition history display, and bench PLC I/O checklist are implemented. Real hardware validation remains follow-up work.
 
 Date: 2026-06-01
 Source: Phase 1 WPF Shell / Dashboard implementation
