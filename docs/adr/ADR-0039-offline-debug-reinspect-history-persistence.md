@@ -7,7 +7,7 @@ Date: 2026-06-03
 
 ADR-0038 added an Offline Debug metadata comparison for a prepared Re-inspect context, but the result was shown only in the current WPF ViewModel session. This left the operator without a persisted audit trail for previous-vs-replayed metadata comparisons.
 
-The project still has no real equipment or source-image replay runner. Persisting the metadata comparison must not imply that a live camera, motion, PLC, vision sequence, customer image replay, or new `inspection_results` row has been executed.
+The project still has no real equipment or source-image replay runner. Persisting the metadata comparison must not imply that a live camera, motion, PLC, vision sequence, customer image replay execution, or new `inspection_results` row has been executed.
 
 ## Decision
 
@@ -16,13 +16,13 @@ The project still has no real equipment or source-image replay runner. Persistin
 - Register `SqliteInspectionReinspectComparisonRepository` in WPF composition.
 - Let `InspectionReinspectUseCase` persist metadata comparison results when a repository is configured.
 - Add a read-only Re-inspect History section in Offline Debug.
-- Keep source-image replay, current-vs-historical replay execution, and new inspection-result persistence out of scope.
+- Keep source-image replay execution, current-vs-historical replay execution, and new inspection-result persistence out of scope.
 
 ## Consequences
 
 - Offline Debug now has a persisted metadata comparison history that is CI-testable without real hardware.
 - The history is stored separately from `inspection_results` so it does not claim a new inspection run was executed.
-- Operators can distinguish a persisted metadata comparison from unimplemented source-image replay or real sequence execution.
+- Operators can distinguish a persisted metadata comparison from source-image replay readiness, unimplemented source-image replay execution, or real sequence execution.
 
 ## Requirement Coverage
 

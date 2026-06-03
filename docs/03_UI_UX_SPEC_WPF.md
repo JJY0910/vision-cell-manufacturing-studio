@@ -200,11 +200,11 @@ Implementation status:
 Implementation status:
 
 - `OfflineDebugViewModel` loads recent persisted inspection result rows through `IInspectionResultReader` and artifact availability/preview/open-preparation data through `IInspectionArtifactReader`.
-- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, safe operator-confirmed overlay/height-map open commands, read-only defect overlays, Re-inspect preparation status, active-vs-historical Recipe policy metadata, metadata comparison results, persisted metadata comparison history, and selected defect rows.
-- The Re-inspect panel shows read-only readiness rows for metadata comparison, source-image replay, Recipe policy metadata, metadata history persistence, and real sequence execution so unimplemented or unvalidated replay boundaries remain operator-visible.
+- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, safe operator-confirmed overlay/height-map open commands, read-only defect overlays, Re-inspect preparation status, source-image replay readiness, active-vs-historical Recipe policy metadata, metadata comparison results, persisted metadata comparison history, and selected defect rows.
+- The Re-inspect panel shows read-only readiness rows for metadata comparison, source-image replay readiness, Recipe policy metadata, metadata history persistence, and real sequence execution so unimplemented or unvalidated replay boundaries remain operator-visible.
 - External artifact open commands require an injected confirmation service and artifact viewer service; WPF code-behind does not resolve paths or launch processes.
 - `InspectionReinspectPreparation` carries source lot/Recipe/judgment/cycle/defect/artifact context for the selected result.
-- Source-image replay, current-vs-historical replay execution, new inspection-result replay persistence, and actual camera/motion/vision sequence execution remain follow-up work.
+- Source-image replay readiness is classified during preparation, but source pixel archival, source-image replay execution, current-vs-historical replay execution, new inspection-result replay persistence, and actual camera/motion/vision sequence execution remain follow-up work.
 
 ### AlarmView
 

@@ -5,7 +5,7 @@ Date: 2026-06-03
 
 ## Context
 
-Offline Debug can prepare a historical result context, run a metadata comparison, and persist comparison history. The remaining FR-222 gap is that operators need to understand whether the selected historical result uses the same Recipe as the current active Recipe before any future replay path is considered.
+Offline Debug can prepare a historical result context, classify source-image replay readiness, run a metadata comparison, and persist comparison history. The remaining FR-222 gap is that operators need to understand whether the selected historical result uses the same Recipe as the current active Recipe before any future replay path is considered.
 
 The project still has no source-image replay runner or real equipment. Recipe policy visibility must not call the live inspection sequence or imply that current-vs-historical replay execution is validated.
 
