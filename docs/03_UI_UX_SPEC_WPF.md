@@ -213,7 +213,7 @@ Implementation status:
 
 - `AlarmViewModel` loads recent persisted alarm rows through `IAlarmCenterUseCase`.
 - `AlarmView` shows active/critical/acknowledged counts, recent alarm rows, selected alarm detail, and recovery action memo input.
-- Acknowledge writes `acknowledgedAt` and `actionMemo` through the Application use case.
+- Acknowledge writes `acknowledgedAt` and `actionMemo` through the Application use case, exposes a disabled reason when no active alarm is selected or the selected alarm is already acknowledged, and locks action memo editing when the memo cannot be saved.
 - Hardware reset remains separate from AlarmView acknowledgement.
 
 ### UI QA / HMI Polish

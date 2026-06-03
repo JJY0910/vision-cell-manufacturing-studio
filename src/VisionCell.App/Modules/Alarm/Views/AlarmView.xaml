@@ -96,7 +96,7 @@
             <Button DockPanel.Dock="Right"
                     Content="Acknowledge"
                     Command="{Binding AcknowledgeCommand}"
-                    ToolTip="Store the recovery memo and mark the selected alarm acknowledged."
+                    ToolTip="{Binding AcknowledgeDisabledReason}"
                     Height="32"
                     MinWidth="112" />
             <TextBlock Text="Recovery Detail" Style="{DynamicResource Text.CardTitle}" />
@@ -132,6 +132,8 @@
             <StackPanel>
               <TextBlock Text="Action Memo" Style="{DynamicResource Text.MetricLabel}" />
               <TextBox Text="{Binding ActionMemoText, UpdateSourceTrigger=PropertyChanged}"
+                       IsEnabled="{Binding IsActionMemoEditable}"
+                       ToolTip="{Binding AcknowledgeDisabledReason}"
                        MinHeight="72"
                        TextWrapping="Wrap"
                        AcceptsReturn="True" />

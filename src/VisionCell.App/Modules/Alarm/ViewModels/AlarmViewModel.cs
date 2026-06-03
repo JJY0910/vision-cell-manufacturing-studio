@@ -45,6 +45,26 @@ public sealed partial class AlarmViewModel : ObservableObject
     public int CriticalCount => Alarms.Count(alarm => alarm.Alarm.Severity == EquipmentAlarmSeverity.Critical);
     public bool HasAlarms => Alarms.Count > 0;
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
+    public bool IsActionMemoEditable => !IsBusy && SelectedAlarm is not null && !SelectedAlarm.Alarm.IsAcknowledged;
+    public string AcknowledgeDisabledReason
+    {
+        get
+        {
+            if (IsBusy)
+            {
+                return "Alarm command is busy.";
+            }
+
+            if (SelectedAlarm is null)
+            {
+                return "Select an alarm to acknowledge.";
+            }
+
+            return SelectedAlarm.Alarm.IsAcknowledged
+                ? "Selected alarm is already acknowledged."
+                : "Store the recovery memo and mark the selected alarm acknowledged.";
+        }
+    }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
@@ -121,7 +141,7 @@ public sealed partial class AlarmViewModel : ObservableObject
     partial void OnIsBusyChanged(bool value)
     {
         RefreshCommand.NotifyCanExecuteChanged();
-        AcknowledgeCommand.NotifyCanExecuteChanged();
+        NotifyAcknowledgeStateChanged();
     }
 
     partial void OnStatusTextChanged(string value)
@@ -137,7 +157,14 @@ public sealed partial class AlarmViewModel : ObservableObject
     partial void OnSelectedAlarmChanged(AlarmItemViewModel? value)
     {
         ActionMemoText = value?.Alarm.ActionMemo ?? string.Empty;
+        NotifyAcknowledgeStateChanged();
+    }
+
+    private void NotifyAcknowledgeStateChanged()
+    {
         AcknowledgeCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(IsActionMemoEditable));
+        OnPropertyChanged(nameof(AcknowledgeDisabledReason));
     }
 
     private bool CanAcknowledgeSelected()

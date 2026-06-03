@@ -82,6 +82,10 @@ public sealed class HmiVisualQaXamlTests
 
         var equipment = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Equipment", "Views", "EquipmentView.xaml"));
         equipment.Should().Contain("ToolTip=\"{Binding InjectionStatus}\"");
+
+        var alarm = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Alarm", "Views", "AlarmView.xaml"));
+        alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");
+        alarm.Should().Contain("IsEnabled=\"{Binding IsActionMemoEditable}\"");
     }
 
     [Fact]
