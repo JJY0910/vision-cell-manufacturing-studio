@@ -116,7 +116,7 @@ tests/VisionCell.App.Tests
 - Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
 - Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, and artifact context; `Run Re-inspect` executes an Application metadata comparison without live camera/motion/vision sequence replay
 - Offline Debug Re-inspect readiness rows keep metadata comparison, source-image replay, Recipe policy, replay persistence, and real sequence execution boundaries visible in XAML/ViewModel tests.
-- AlarmView refresh, acknowledgement state updates, disabled acknowledge reason, selected alarm recovery hint, and recovery memo edit locking
+- AlarmView refresh, acknowledgement state updates, disabled acknowledge reason, selected alarm recovery hint, recovery memo edit locking, and read-only recovery boundary rows
 
 ## Manual UI Acceptance
 

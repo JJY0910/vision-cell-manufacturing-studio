@@ -59,6 +59,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Acknowledge command remains bound through the ViewModel.
 - [x] Acknowledge command exposes a disabled reason and the action memo editor locks when the selected alarm cannot be acknowledged.
 - [x] Recovery action memo remains visible in the detail panel.
+- [x] Recovery boundary rows keep acknowledgement, memo, hardware reset, PLC/vendor source, and safety relay limits visible.
 
 ## Offline Debug
 
