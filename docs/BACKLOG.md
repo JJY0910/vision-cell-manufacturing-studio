@@ -402,7 +402,7 @@ Problem: Offline Debug can display artifact paths, live metadata status, and det
 Proposed improvement: Extend the artifact reader into a safe open/replay boundary that maps relative artifact paths under the local data root, validates existence, and connects prepared Re-inspect context to a future sequence runner.
 Requirement impact: FR-202, FR-221, FR-222, FR-200, NFR-006, NFR-008, NFR-TEST-001
 Priority: P1
-Status: Metadata availability addressed by ADR-0029, preview rendering/preparation addressed by ADR-0030, and safe operator-confirmed artifact open commands addressed by ADR-0035/issue seed 008. Actual re-inspection remains open.
+Status: Metadata availability addressed by ADR-0029, preview rendering/preparation addressed by ADR-0030, safe operator-confirmed artifact open commands addressed by ADR-0035/issue seed 008, and richer disabled Re-inspect execution boundary addressed by ADR-0036. Actual replay execution, previous-vs-new comparison, and result persistence remain open.
 
 Date: 2026-06-02
 Source: UI QA reusable controls

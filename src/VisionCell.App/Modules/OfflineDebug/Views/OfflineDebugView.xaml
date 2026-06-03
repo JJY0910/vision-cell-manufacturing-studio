@@ -48,6 +48,12 @@
                     Height="36"
                     MinWidth="148"
                     Margin="0,0,8,8" />
+            <Button Content="Run Re-inspect"
+                    Command="{Binding RunReinspectCommand}"
+                    ToolTip="{Binding ReinspectRunDisabledReason}"
+                    Height="36"
+                    MinWidth="136"
+                    Margin="0,0,8,8" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
@@ -205,6 +211,9 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding ArtifactPreviewStatusText}"
                        Style="{DynamicResource Text.Status}"
@@ -234,6 +243,21 @@
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,8,0,0" />
+            <TextBlock Grid.Row="4"
+                       Text="{Binding PreparedReinspectSummary}"
+                       Style="{DynamicResource Text.StatusStrong}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="5"
+                       Text="{Binding PreparedReinspectArtifactSummary}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="6"
+                       Text="{Binding ReinspectRunDisabledReason, StringFormat=Run Re-inspect: {0}}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
           </Grid>
 
           <Grid Grid.Row="4" Margin="0,8,0,0">

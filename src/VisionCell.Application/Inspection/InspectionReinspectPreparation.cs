@@ -5,5 +5,13 @@ public sealed record InspectionReinspectPreparation(
     string LotId,
     string RecipeId,
     string RecipeVersion,
+    string PreviousJudgment,
+    TimeSpan PreviousCycleTime,
+    int PreviousDefectCount,
     string SourceCorrelationId,
-    DateTimeOffset PreparedAt);
+    string SourceImagePath,
+    string OverlayImagePath,
+    string HeightMapPath,
+    DateTimeOffset PreparedAt,
+    bool CanRunInspection,
+    string DisabledReason);

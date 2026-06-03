@@ -47,7 +47,7 @@ public sealed class HmiVisualQaXamlTests
         {
             ["Modules/Teaching/Views/TeachingView.xaml"] = new[] { "No Teaching Points", "No Selected Point History" },
             ["Modules/Recipe/Views/RecipeView.xaml"] = new[] { "No Recipe Index Records" },
-            ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows" },
+            ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect" },
             ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events" },
@@ -82,6 +82,25 @@ public sealed class HmiVisualQaXamlTests
 
         var equipment = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Equipment", "Views", "EquipmentView.xaml"));
         equipment.Should().Contain("ToolTip=\"{Binding InjectionStatus}\"");
+    }
+
+    [Fact]
+    public void OfflineDebug_Should_Separate_Prepare_And_Run_Reinspect_Commands()
+    {
+        var offlineDebug = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "OfflineDebug", "Views", "OfflineDebugView.xaml"));
+
+        var prepareButton = offlineDebug
+            .Descendants(Wpf + "Button")
+            .Single(button => button.Attribute("Content")?.Value == "Prepare Re-inspect");
+        var runButton = offlineDebug
+            .Descendants(Wpf + "Button")
+            .Single(button => button.Attribute("Content")?.Value == "Run Re-inspect");
+
+        prepareButton.Attribute("Command")?.Value.Should().Be("{Binding PrepareReinspectCommand}");
+        runButton.Attribute("Command")?.Value.Should().Be("{Binding RunReinspectCommand}");
+        runButton.Attribute("ToolTip")?.Value.Should().Be("{Binding ReinspectRunDisabledReason}");
+        offlineDebug.ToString().Should().Contain("PreparedReinspectSummary");
+        offlineDebug.ToString().Should().Contain("PreparedReinspectArtifactSummary");
     }
 
     private static string GetRepoPath(params string[] segments)
