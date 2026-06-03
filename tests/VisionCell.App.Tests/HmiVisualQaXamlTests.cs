@@ -50,7 +50,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect", "Re-inspect Readiness", "Re-inspect History", "No Re-inspect History" },
             ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records", "Recovery Boundary" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
-            ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
+            ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions", "Interlock Impact", "InterlockImpacts" },
             ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured", "FR-203", "FR-204" },
             ["Modules/Settings/Views/SettingsView.xaml"] = new[] { "Runtime Scope", "Adapter Boundary Matrix", "AdapterBoundaryItems", "Real Hardware Readiness Gate", "ReadinessGateItems" }
         };

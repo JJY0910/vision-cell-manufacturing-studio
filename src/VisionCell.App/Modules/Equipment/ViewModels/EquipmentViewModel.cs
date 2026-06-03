@@ -2,8 +2,11 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VisionCell.Application.Equipment;
+using VisionCell.Application.Interlocks;
+using VisionCell.Core.Commands;
 using VisionCell.Core.Errors;
 using VisionCell.Core.Events;
+using VisionCell.Core.Interlocks;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Faults;
 using VisionCell.Equipment.Io;
@@ -15,6 +18,17 @@ public sealed partial class EquipmentViewModel : ObservableObject
 {
     private static readonly TimeSpan FaultCommandTimeout = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
+    private static readonly CommandKind[] InterlockImpactCommands =
+    [
+        CommandKind.ServoOn,
+        CommandKind.Home,
+        CommandKind.Jog,
+        CommandKind.MoveAbsolute,
+        CommandKind.EnterAutoMode,
+        CommandKind.RunInspection,
+        CommandKind.ResetAlarm
+    ];
+
     private readonly IEquipmentDashboardUseCase _dashboardUseCase;
     private readonly IEquipmentFaultInjectionUseCase _faultInjectionUseCase;
     private readonly IEquipmentIoTransitionRepository _ioTransitionRepository;
@@ -51,6 +65,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
     public ObservableCollection<EquipmentFaultStatusViewModel> Faults { get; } = new();
     public ObservableCollection<SystemEvent> Events { get; } = new();
     public ObservableCollection<IoTransitionItemViewModel> IoTransitions { get; } = new();
+    public ObservableCollection<EquipmentInterlockImpactViewModel> InterlockImpacts { get; } = new();
 
     public IAsyncRelayCommand RefreshCommand { get; }
     public IAsyncRelayCommand RefreshIoTransitionHistoryCommand { get; }
@@ -99,6 +114,9 @@ public sealed partial class EquipmentViewModel : ObservableObject
     private string _ioSummaryText = "I/O forced: 0 / 0";
 
     [ObservableProperty]
+    private string _interlockImpactSummaryText = "Interlock blocked: 0 / 0";
+
+    [ObservableProperty]
     private string _ioTransitionStatus = "No I/O transition history";
 
     [ObservableProperty]
@@ -107,6 +125,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
     public bool HasIoBits => IoBits.Count > 0;
     public bool HasEvents => Events.Count > 0;
     public bool HasIoTransitions => IoTransitions.Count > 0;
+    public bool HasInterlockImpacts => InterlockImpacts.Count > 0;
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
@@ -195,6 +214,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
 
     private void ApplySnapshot(EquipmentSnapshot snapshot)
     {
+        var interlockContext = EquipmentSnapshotInterlockContextFactory.Create(snapshot);
         IsConnected = snapshot.IsConnected;
         ConnectionStatus = snapshot.IsConnected ? "Connected" : "Disconnected";
         ModeStatus = snapshot.Mode.ToString();
@@ -224,6 +244,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
         Faults.Add(new EquipmentFaultStatusViewModel("Servo Alarm", HasServoAlarm(snapshot) ? "Active" : "Clear", HasServoAlarm(snapshot)));
 
         FaultSummaryText = FormatFaultSummary();
+        ApplyInterlockImpacts(interlockContext);
         NotifyFaultCommands();
     }
 
@@ -239,7 +260,21 @@ public sealed partial class EquipmentViewModel : ObservableObject
         FaultInjectionDisabledReason = "Connect the simulator before injecting faults.";
         FaultSummaryText = FormatFaultSummary();
         IoSummaryText = FormatIoSummary();
+        ApplyInterlockImpacts(InterlockContext.Disconnected);
         NotifyFaultCommands();
+    }
+
+    private void ApplyInterlockImpacts(InterlockContext context)
+    {
+        InterlockImpacts.Clear();
+        foreach (var command in InterlockImpactCommands)
+        {
+            var availability = _dashboardUseCase.GetCommandAvailability(command, context);
+            InterlockImpacts.Add(EquipmentInterlockImpactViewModel.FromAvailability(availability));
+        }
+
+        InterlockImpactSummaryText = $"Interlock blocked: {InterlockImpacts.Count(impact => !impact.IsEnabled)} / {InterlockImpacts.Count}";
+        OnPropertyChanged(nameof(HasInterlockImpacts));
     }
 
     private string FormatFaultSummary()
@@ -295,5 +330,38 @@ public sealed partial class EquipmentViewModel : ObservableObject
         InjectServoAlarmCommand.NotifyCanExecuteChanged();
         ClearServoAlarmCommand.NotifyCanExecuteChanged();
         ClearAllFaultsCommand.NotifyCanExecuteChanged();
+    }
+}
+
+public sealed record EquipmentInterlockImpactViewModel(
+    CommandKind Command,
+    string CommandName,
+    bool IsEnabled,
+    string State,
+    string Reason)
+{
+    public static EquipmentInterlockImpactViewModel FromAvailability(CommandAvailability availability)
+    {
+        ArgumentNullException.ThrowIfNull(availability);
+
+        return new EquipmentInterlockImpactViewModel(
+            availability.Command,
+            FormatCommand(availability.Command),
+            availability.IsEnabled,
+            availability.IsEnabled ? "Ready" : "Blocked",
+            availability.IsEnabled ? "Ready" : availability.DisabledReason);
+    }
+
+    private static string FormatCommand(CommandKind command)
+    {
+        return command switch
+        {
+            CommandKind.ServoOn => "Servo On",
+            CommandKind.MoveAbsolute => "Move Absolute",
+            CommandKind.EnterAutoMode => "Enter Auto",
+            CommandKind.RunInspection => "Run Inspection",
+            CommandKind.ResetAlarm => "Reset Alarm",
+            _ => command.ToString()
+        };
     }
 }

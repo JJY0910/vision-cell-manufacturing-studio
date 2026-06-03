@@ -111,6 +111,7 @@ tests/VisionCell.App.Tests
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
 - Equipment fault injection buttons use the shared compact HMI command style and avoid one-off height/margin values.
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
+- Equipment fault injection projects interlock impact rows from the latest snapshot through the Application interlock service so injected faults show blocked Servo On/Reset Alarm behavior without WPF duplicating interlock rules.
 - EquipmentView reads recent I/O transition history through the Application repository port and displays empty/non-empty states, status text, and a manual refresh action
 - Bench PLC I/O validation uses `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as a manual evidence gate for future adapter work; automated tests do not prove real PLC wiring, safety relay behavior, or output-write safety.
 - SettingsView displays the read-only adapter boundary matrix from `HardwareAdapterBoundaryCatalog` and keeps real hardware evidence gaps visible.
