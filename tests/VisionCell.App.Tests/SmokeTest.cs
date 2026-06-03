@@ -328,6 +328,25 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public void SettingsViewModel_Should_Surface_ReadOnly_Runtime_And_RealHardware_Gate()
+    {
+        var settings = new SettingsViewModel();
+
+        settings.RuntimeStatusText.Should().Contain("read-only");
+        settings.RuntimeScopeItems.Should().Contain(item =>
+            item.Name == "Equipment Mode" &&
+            item.Value == "VirtualEquipmentController");
+        settings.RuntimeScopeItems.Should().Contain(item =>
+            item.Name == "Validation Scope" &&
+            item.Value == "docs/VALIDATION_SCOPE.md");
+        settings.ReadinessSummary.Should().Contain("RealHardware profile remains blocked");
+        settings.ReadinessGateItems.Should().HaveCount(6);
+        settings.ReadinessGateItems.Should().Contain(item => item.Name == "RealEquipmentController implementation");
+        settings.ReadinessGateItems.Should().Contain(item => item.Name == "PLC I/O adapter bench validation");
+        settings.ReadinessGateItems.Should().OnlyContain(item => item.Value == "Missing");
+    }
+
+    [Fact]
     public void AppServiceConfiguration_Should_Register_Virtual_Equipment_Runtime_Profile_By_Default()
     {
         var services = new ServiceCollection();

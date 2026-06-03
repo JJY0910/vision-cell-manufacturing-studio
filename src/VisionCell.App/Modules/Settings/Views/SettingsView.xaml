@@ -8,10 +8,11 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
       <controls:CommandBar Title="Settings"
-                           StatusText="Runtime settings are currently read-only; simulator and virtual camera boundaries remain explicit." />
+                           StatusText="{Binding RuntimeStatusText}" />
 
       <Border Grid.Row="1" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
         <Grid>
@@ -20,20 +21,67 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Runtime Scope" Style="{DynamicResource Text.CardTitle}" />
-          <UniformGrid Grid.Row="1" Columns="3" Margin="0,4,0,0">
-            <StackPanel Margin="0,0,16,8">
-              <TextBlock Text="Equipment Mode" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBlock Text="Simulator only" Style="{DynamicResource Text.StatusStrong}" />
-            </StackPanel>
-            <StackPanel Margin="0,0,16,8">
-              <TextBlock Text="Camera Mode" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBlock Text="Virtual camera only" Style="{DynamicResource Text.StatusStrong}" />
-            </StackPanel>
-            <StackPanel Margin="0,0,0,8">
-              <TextBlock Text="Hardware Validation" Style="{DynamicResource Text.MetricLabel}" />
-              <TextBlock Text="Not connected to real equipment" Style="{DynamicResource Text.StatusStrong}" TextWrapping="Wrap" />
-            </StackPanel>
-          </UniformGrid>
+          <ItemsControl Grid.Row="1" ItemsSource="{Binding RuntimeScopeItems}" Margin="0,4,0,0">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="2" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Margin="0,0,16,10">
+                  <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.MetricLabel}" />
+                  <TextBlock Text="{Binding Value}" Style="{DynamicResource Text.StatusStrong}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Detail}" Style="{DynamicResource Text.EmptyStateDetail}" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Real Hardware Readiness Gate" Style="{DynamicResource Text.CardTitle}" />
+          <TextBlock Grid.Row="1"
+                     Text="{Binding ReadinessSummary}"
+                     Style="{DynamicResource Text.EmptyStateDetail}"
+                     Margin="0,0,0,10" />
+          <ListView Grid.Row="2"
+                    ItemsSource="{Binding ReadinessGateItems}"
+                    Style="{DynamicResource ListView.HmiGrid}"
+                    MinHeight="160">
+            <ListView.View>
+              <GridView>
+                <GridViewColumn Header="Evidence" Width="260">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Name}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.StatusStrong}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="State"
+                                DisplayMemberBinding="{Binding Value}"
+                                Width="100" />
+                <GridViewColumn Header="Operator Note" Width="460">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Detail}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+              </GridView>
+            </ListView.View>
+          </ListView>
         </Grid>
       </Border>
     </Grid>

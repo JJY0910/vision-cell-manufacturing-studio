@@ -52,7 +52,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
             ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured", "FR-203", "FR-204" },
-            ["Modules/Settings/Views/SettingsView.xaml"] = new[] { "Runtime Scope" }
+            ["Modules/Settings/Views/SettingsView.xaml"] = new[] { "Runtime Scope", "Real Hardware Readiness Gate", "ReadinessGateItems" }
         };
 
         foreach (var (relativePath, markers) in expected)

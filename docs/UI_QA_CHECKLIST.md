@@ -78,6 +78,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 
 - [x] Settings is no longer blank.
 - [x] Settings clearly states simulator-only equipment, virtual-camera mode, and real hardware not connected.
+- [x] Settings surfaces the read-only Real Hardware readiness gate and missing evidence list.
 
 ## General
 
