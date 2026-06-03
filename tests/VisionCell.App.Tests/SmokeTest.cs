@@ -279,6 +279,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionReinspectComparisonReader>()
                 .Should()
                 .BeOfType<SqliteInspectionReinspectComparisonRepository>();
+            provider.GetRequiredService<IInspectionReinspectRecipePolicyUseCase>()
+                .Should()
+                .BeOfType<InspectionReinspectRecipePolicyUseCase>();
             provider.GetRequiredService<IInspectionArtifactWriter>()
                 .Should()
                 .BeOfType<FileSystemInspectionArtifactWriter>();
@@ -530,7 +533,7 @@ public sealed class DashboardAndShellViewModelTests
 
         await offlineDebug.RefreshResultsAsync(CancellationToken.None);
         await offlineDebug.LoadSelectedArtifactsAsync(CancellationToken.None);
-        offlineDebug.PrepareReinspect();
+        await offlineDebug.PrepareReinspectAsync(CancellationToken.None);
 
         artifactReader.PreviewRequests.Should().HaveCount(2);
         offlineDebug.OverlayPreviewImageSource.Should().NotBeNull();
@@ -563,12 +566,19 @@ public sealed class DashboardAndShellViewModelTests
             item.Step == "Source-image replay" &&
             item.State == "Not implemented");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
+            item.Step == "Recipe policy" &&
+            item.State == "Available");
+        offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
             item.Step == "Metadata history persistence" &&
             item.State == "Available");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
             item.Step == "Real sequence execution" &&
             item.State == "Not validated");
         offlineDebug.RunReinspectCommand.CanExecute(null).Should().BeTrue();
+        offlineDebug.ReinspectRecipePolicy.Should().NotBeNull();
+        offlineDebug.ReinspectRecipePolicy!.Status.Should().Be(InspectionReinspectRecipePolicyStatus.ActiveMatchesHistorical);
+        offlineDebug.ReinspectRecipePolicySummary.Should().Contain("Current and historical Recipe match");
+        offlineDebug.ReinspectRecipePolicyDetail.Should().Contain("Metadata comparison");
         await offlineDebug.RunReinspectAsync(CancellationToken.None);
         offlineDebug.ReinspectComparison.Should().NotBeNull();
         offlineDebug.ReinspectComparison!.Status.Should().Be(InspectionReinspectComparisonStatus.Matched);
@@ -587,6 +597,7 @@ public sealed class DashboardAndShellViewModelTests
 
         offlineDebug.PreparedReinspect.Should().BeNull();
         offlineDebug.ReinspectComparison.Should().BeNull();
+        offlineDebug.ReinspectRecipePolicy.Should().BeNull();
         offlineDebug.OverlayPreviewImageSource.Should().BeNull();
         offlineDebug.OverlayImagePixelWidth.Should().Be(0);
         offlineDebug.OverlayImagePixelHeight.Should().Be(0);
@@ -1445,6 +1456,7 @@ public sealed class DashboardAndShellViewModelTests
         FakeInspectionResultReader? resultReader = null,
         FakeInspectionArtifactReader? artifactReader = null,
         FakeInspectionReinspectComparisonReader? reinspectComparisonReader = null,
+        FakeInspectionReinspectRecipePolicyUseCase? reinspectRecipePolicyUseCase = null,
         FakeUserConfirmationService? confirmationService = null,
         FakeArtifactViewerService? artifactViewerService = null)
     {
@@ -1455,6 +1467,7 @@ public sealed class DashboardAndShellViewModelTests
                 () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             reinspectComparisonReader ?? new FakeInspectionReinspectComparisonReader(),
+            reinspectRecipePolicyUseCase ?? new FakeInspectionReinspectRecipePolicyUseCase(),
             confirmationService ?? new FakeUserConfirmationService(true),
             artifactViewerService ?? new FakeArtifactViewerService());
     }
@@ -2051,6 +2064,19 @@ public sealed class DashboardAndShellViewModelTests
             CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<InspectionReinspectComparisonResult>>(_records.Take(limit).ToArray());
+        }
+    }
+
+    private sealed class FakeInspectionReinspectRecipePolicyUseCase : IInspectionReinspectRecipePolicyUseCase
+    {
+        public Task<InspectionReinspectRecipePolicyResult> ResolveAsync(
+            InspectionReinspectPreparation preparation,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(InspectionReinspectRecipePolicyResult.ActiveMatchesHistorical(
+                preparation,
+                preparation.RecipeId,
+                preparation.RecipeVersion));
         }
     }
 
