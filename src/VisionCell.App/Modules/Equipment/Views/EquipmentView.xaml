@@ -55,8 +55,8 @@
 
       <Grid Grid.Row="2" Margin="0,8,0,0">
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="3*" />
           <ColumnDefinition Width="2*" />
-          <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Border Style="{DynamicResource Card.Panel}" Margin="0,0,8,0">
           <Grid>
@@ -98,7 +98,10 @@
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
-              <RowDefinition Height="*" />
+              <RowDefinition Height="150" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="180" />
             </Grid.RowDefinitions>
             <TextBlock Text="Fault State" Style="{DynamicResource Text.CardTitle}" />
             <ListView Grid.Row="1"
@@ -109,6 +112,41 @@
                   <GridViewColumn Header="Signal" DisplayMemberBinding="{Binding Name}" Width="132" />
                   <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}" Width="96" />
                   <GridViewColumn Header="Active" DisplayMemberBinding="{Binding IsActive}" Width="64" />
+                </GridView>
+              </ListView.View>
+            </ListView>
+            <TextBlock Grid.Row="2"
+                       Text="Interlock Impact"
+                       Style="{DynamicResource Text.CardTitle}"
+                       Margin="0,14,0,0" />
+            <TextBlock Grid.Row="3"
+                       Text="{Binding InterlockImpactSummaryText}"
+                       Style="{DynamicResource Text.Status}"
+                       Margin="0,0,0,8" />
+            <ListView Grid.Row="4"
+                      ItemsSource="{Binding InterlockImpacts}"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Command" Width="110">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding CommandName}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.StatusStrong}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                  <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}" Width="68" />
+                  <GridViewColumn Header="Reason" Width="220">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Reason}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
             </ListView>

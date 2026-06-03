@@ -102,6 +102,11 @@ public sealed class DashboardAndShellViewModelTests
         equipment.FaultInjectionDisabledReason.Should().Contain("available");
         equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
         equipment.IoSummaryText.Should().Contain("I/O forced: 0 /");
+        equipment.HasInterlockImpacts.Should().BeTrue();
+        equipment.InterlockImpacts.Should().Contain(impact =>
+            impact.Command == CommandKind.ServoOn &&
+            impact.IsEnabled &&
+            impact.State == "Ready");
 
         await equipment.InjectEmergencyStopCommand.ExecuteAsync(null);
 
@@ -113,6 +118,16 @@ public sealed class DashboardAndShellViewModelTests
         equipment.IoSummaryText.Should().Contain("I/O forced: 1 /");
         equipment.Events.Should().Contain(systemEvent => systemEvent.EventType == "Fault Injection");
         alarmRecorder.Failures.Should().ContainSingle(failure => failure.ErrorCode.Code == "EQP-003");
+        equipment.InterlockImpactSummaryText.Should().Contain("Interlock blocked:");
+        equipment.InterlockImpacts.Should().Contain(impact =>
+            impact.Command == CommandKind.ServoOn &&
+            !impact.IsEnabled &&
+            impact.State == "Blocked" &&
+            impact.Reason.Contains("emergency stop released"));
+        equipment.InterlockImpacts.Should().Contain(impact =>
+            impact.Command == CommandKind.ResetAlarm &&
+            !impact.IsEnabled &&
+            impact.Reason.Contains("emergency stop released"));
 
         await equipment.ClearAllFaultsCommand.ExecuteAsync(null);
 
@@ -127,6 +142,10 @@ public sealed class DashboardAndShellViewModelTests
             transition.Name == "DI_ESTOP_ON" &&
             transition.PreviousState == "Off" &&
             transition.CurrentState == "On / Forced");
+        equipment.InterlockImpacts.Should().Contain(impact =>
+            impact.Command == CommandKind.ServoOn &&
+            impact.IsEnabled &&
+            impact.Reason == "Ready");
     }
 
     [Fact]
@@ -139,6 +158,8 @@ public sealed class DashboardAndShellViewModelTests
         equipment.FaultInjectionDisabledReason.Should().Be("Connect the simulator before injecting faults.");
         equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
         equipment.IoSummaryText.Should().Be("I/O forced: 0 / 0");
+        equipment.InterlockImpactSummaryText.Should().Be("Interlock blocked: 7 / 7");
+        equipment.InterlockImpacts.Should().OnlyContain(impact => !impact.IsEnabled);
     }
 
     [Fact]
