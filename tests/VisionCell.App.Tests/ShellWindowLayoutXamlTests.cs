@@ -41,9 +41,13 @@ public sealed class ShellWindowLayoutXamlTests
     public void DashboardView_Should_Wrap_Command_Buttons_Below_Title()
     {
         var dashboard = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "Dashboard", "Views", "DashboardView.xaml"));
+        var commandBar = dashboard
+            .Descendants()
+            .Single(element => element.Name.LocalName == "CommandBar" &&
+                element.Attribute("Title")?.Value == "Dashboard");
         var commandWrapPanel = dashboard
             .Descendants(Wpf + "WrapPanel")
-            .Single(element => element.Attribute("Grid.Row")?.Value == "1" &&
+            .Single(element => element.Ancestors().Contains(commandBar) &&
                 element.Elements(Wpf + "Button").Any(button => button.Attribute("Content")?.Value == "Connect"));
 
         commandWrapPanel.Elements(Wpf + "Button").Should().HaveCount(5);

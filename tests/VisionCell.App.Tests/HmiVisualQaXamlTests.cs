@@ -67,6 +67,29 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Priority_Hmi_Screens_Should_Use_Shared_CommandBar()
+    {
+        var expectedTitles = new Dictionary<string, string>
+        {
+            ["Modules/Dashboard/Views/DashboardView.xaml"] = "Dashboard",
+            ["Modules/Motion/Views/MotionView.xaml"] = "Motion",
+            ["Modules/Teaching/Views/TeachingView.xaml"] = "Teaching",
+            ["Modules/Recipe/Views/RecipeView.xaml"] = "Recipe",
+            ["Modules/Inspection/Views/InspectionView.xaml"] = "Inspection",
+            ["Modules/Alarm/Views/AlarmView.xaml"] = "Alarm / Fault / Recovery"
+        };
+
+        foreach (var (relativePath, title) in expectedTitles)
+        {
+            var xaml = File.ReadAllText(GetRepoPath(new[] { "src", "VisionCell.App" }
+                .Concat(relativePath.Split('/')).ToArray()));
+
+            xaml.Should().Contain("<controls:CommandBar", $"'{relativePath}' should use the shared HMI command surface");
+            xaml.Should().Contain($"Title=\"{title}\"", $"'{relativePath}' should expose the expected operator title");
+        }
+    }
+
+    [Fact]
     public void Disabled_Operator_Commands_Should_Expose_Tooltips()
     {
         var offlineDebug = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "OfflineDebug", "Views", "OfflineDebugView.xaml"));
