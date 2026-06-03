@@ -173,6 +173,8 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding SelectedResult.SourceImagePath, StringFormat=Source: {0}, TargetNullValue=Source: -}"
                        Style="{DynamicResource Text.Status}"
@@ -249,6 +251,16 @@
                        Margin="0,4,0,0" />
             <TextBlock Grid.Row="6"
                        Text="{Binding ReinspectRunDisabledReason, StringFormat=Run Re-inspect: {0}}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="7"
+                       Text="{Binding ReinspectComparisonSummary}"
+                       Style="{DynamicResource Text.StatusStrong}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="8"
+                       Text="{Binding ReinspectComparisonDetail}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />

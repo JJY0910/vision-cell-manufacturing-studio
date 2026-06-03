@@ -473,19 +473,27 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.PreparedReinspect.SourceImagePath.Should().Be(result.SourceImagePath);
         offlineDebug.PreparedReinspect.OverlayImagePath.Should().Be(result.OverlayImagePath);
         offlineDebug.PreparedReinspect.HeightMapPath.Should().Be(result.HeightMapPath);
-        offlineDebug.PreparedReinspect.CanRunInspection.Should().BeFalse();
-        offlineDebug.PreparedReinspect.DisabledReason.Should().Contain("replay runner");
+        offlineDebug.PreparedReinspect.CanRunInspection.Should().BeTrue();
+        offlineDebug.PreparedReinspect.DisabledReason.Should().Contain("metadata comparison");
         offlineDebug.ReinspectStatusText.Should().Contain(result.LotId);
         offlineDebug.PreparedReinspectSummary.Should().Contain(result.LotId);
         offlineDebug.PreparedReinspectArtifactSummary.Should().Contain(result.OverlayImagePath);
-        offlineDebug.ReinspectRunDisabledReason.Should().Contain("replay runner");
-        offlineDebug.RunReinspectCommand.CanExecute(null).Should().BeFalse();
+        offlineDebug.ReinspectRunDisabledReason.Should().Contain("metadata comparison");
+        offlineDebug.RunReinspectCommand.CanExecute(null).Should().BeTrue();
+        await offlineDebug.RunReinspectAsync(CancellationToken.None);
+        offlineDebug.ReinspectComparison.Should().NotBeNull();
+        offlineDebug.ReinspectComparison!.Status.Should().Be(InspectionReinspectComparisonStatus.Matched);
+        offlineDebug.ReinspectComparison.PreviousJudgment.Should().Be(result.Judgment.ToString());
+        offlineDebug.ReinspectComparison.ReplayedJudgment.Should().Be(result.Judgment.ToString());
+        offlineDebug.ReinspectComparisonSummary.Should().Contain("Matched");
+        offlineDebug.ReinspectComparisonDetail.Should().Contain("Not persisted");
         offlineDebug.HasAlert.Should().BeFalse();
         offlineDebug.AlertMessage.Should().BeNull();
 
         offlineDebug.SelectedResult = null;
 
         offlineDebug.PreparedReinspect.Should().BeNull();
+        offlineDebug.ReinspectComparison.Should().BeNull();
         offlineDebug.OverlayPreviewImageSource.Should().BeNull();
         offlineDebug.OverlayImagePixelWidth.Should().Be(0);
         offlineDebug.OverlayImagePixelHeight.Should().Be(0);
@@ -1349,6 +1357,9 @@ public sealed class DashboardAndShellViewModelTests
         return new OfflineDebugViewModel(
             resultReader ?? new FakeInspectionResultReader(),
             artifactReader ?? new FakeInspectionArtifactReader(),
+            new InspectionReinspectUseCase(
+                () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
+                () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             confirmationService ?? new FakeUserConfirmationService(true),
             artifactViewerService ?? new FakeArtifactViewerService());
     }

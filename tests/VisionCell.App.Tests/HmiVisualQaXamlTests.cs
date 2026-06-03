@@ -211,6 +211,8 @@ public sealed class HmiVisualQaXamlTests
         runButton.Attribute("ToolTip")?.Value.Should().Be("{Binding ReinspectRunDisabledReason}");
         offlineDebug.ToString().Should().Contain("PreparedReinspectSummary");
         offlineDebug.ToString().Should().Contain("PreparedReinspectArtifactSummary");
+        offlineDebug.ToString().Should().Contain("ReinspectComparisonSummary");
+        offlineDebug.ToString().Should().Contain("ReinspectComparisonDetail");
     }
 
     private static string GetRepoPath(params string[] segments)

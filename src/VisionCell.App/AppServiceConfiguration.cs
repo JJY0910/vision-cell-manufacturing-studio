@@ -112,6 +112,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<IEquipmentDashboardUseCase, EquipmentDashboardUseCase>();
         services.AddSingleton<IEquipmentFaultInjectionUseCase, EquipmentFaultInjectionUseCase>();
         services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
+        services.AddSingleton<IInspectionReinspectUseCase, InspectionReinspectUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
         services.AddSingleton<IArtifactViewerService, ShellArtifactViewerService>();

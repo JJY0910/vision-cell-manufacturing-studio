@@ -91,7 +91,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
     }
 
     [Fact]
-    public async Task RunReinspect_Should_Surface_Disabled_Replay_Boundary()
+    public async Task RunReinspectAsync_Should_Surface_Metadata_Comparison()
     {
         var result = CreateResultRecord();
         var viewModel = CreateViewModel(
@@ -102,13 +102,19 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
 
         await viewModel.RefreshResultsAsync(CancellationToken.None);
         viewModel.PrepareReinspect();
-        viewModel.RunReinspect();
+        await viewModel.RunReinspectAsync(CancellationToken.None);
 
         viewModel.PreparedReinspect.Should().NotBeNull();
-        viewModel.PreparedReinspect!.CanRunInspection.Should().BeFalse();
-        viewModel.PreparedReinspect.DisabledReason.Should().Contain("replay runner");
-        viewModel.RunReinspectCommand.CanExecute(null).Should().BeFalse();
-        viewModel.ReinspectStatusText.Should().Contain("Run Re-inspect unavailable");
+        viewModel.PreparedReinspect!.CanRunInspection.Should().BeTrue();
+        viewModel.PreparedReinspect.DisabledReason.Should().Contain("metadata comparison");
+        viewModel.RunReinspectCommand.CanExecute(null).Should().BeTrue();
+        viewModel.ReinspectStatusText.Should().Contain("comparison completed");
+        viewModel.ReinspectComparison.Should().NotBeNull();
+        viewModel.ReinspectComparison!.PreviousJudgment.Should().Be(result.Judgment.ToString());
+        viewModel.ReinspectComparison.ReplayedJudgment.Should().Be(result.Judgment.ToString());
+        viewModel.ReinspectComparison.Status.Should().Be(InspectionReinspectComparisonStatus.Matched);
+        viewModel.ReinspectComparisonSummary.Should().Contain("Matched");
+        viewModel.ReinspectComparisonDetail.Should().Contain("Not persisted");
         viewModel.PreparedReinspectSummary.Should().Contain(result.RecipeId);
         viewModel.PreparedReinspectArtifactSummary.Should().Contain(result.HeightMapPath);
     }
@@ -122,6 +128,9 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
         return new OfflineDebugViewModel(
             new FakeInspectionResultReader(result),
             artifactReader,
+            new InspectionReinspectUseCase(
+                () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
+                () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             confirmation,
             viewer);
     }

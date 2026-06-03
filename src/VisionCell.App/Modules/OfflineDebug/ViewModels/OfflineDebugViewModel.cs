@@ -13,21 +13,24 @@ namespace VisionCell.App.Modules.OfflineDebug.ViewModels;
 public sealed partial class OfflineDebugViewModel : ObservableObject
 {
     private const int ResultLimit = 50;
-    private const string ReinspectReplayDisabledReason =
-        "Historical re-inspect replay runner is not implemented; prepare context only.";
+    private const string ReinspectMetadataReadyReason =
+        "Ready for metadata comparison; live camera, motion, and vision sequence replay are not executed.";
     private readonly IInspectionResultReader _inspectionResultReader;
     private readonly IInspectionArtifactReader _inspectionArtifactReader;
+    private readonly IInspectionReinspectUseCase _inspectionReinspectUseCase;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IArtifactViewerService _artifactViewerService;
 
     public OfflineDebugViewModel(
         IInspectionResultReader inspectionResultReader,
         IInspectionArtifactReader inspectionArtifactReader,
+        IInspectionReinspectUseCase inspectionReinspectUseCase,
         IUserConfirmationService confirmationService,
         IArtifactViewerService artifactViewerService)
     {
         _inspectionResultReader = inspectionResultReader ?? throw new ArgumentNullException(nameof(inspectionResultReader));
         _inspectionArtifactReader = inspectionArtifactReader ?? throw new ArgumentNullException(nameof(inspectionArtifactReader));
+        _inspectionReinspectUseCase = inspectionReinspectUseCase ?? throw new ArgumentNullException(nameof(inspectionReinspectUseCase));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         _artifactViewerService = artifactViewerService ?? throw new ArgumentNullException(nameof(artifactViewerService));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
@@ -35,7 +38,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OpenOverlayArtifactCommand = new AsyncRelayCommand(OpenSelectedOverlayArtifactAsync, CanInspectSelectedResult);
         OpenHeightMapArtifactCommand = new AsyncRelayCommand(OpenSelectedHeightMapArtifactAsync, CanInspectSelectedResult);
         PrepareReinspectCommand = new RelayCommand(PrepareReinspect, CanInspectSelectedResult);
-        RunReinspectCommand = new RelayCommand(RunReinspect, CanRunPreparedReinspect);
+        RunReinspectCommand = new AsyncRelayCommand(RunReinspectAsync, CanRunPreparedReinspect);
     }
 
     public ObservableCollection<OfflineInspectionResultItemViewModel> Results { get; } = new();
@@ -45,7 +48,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     public IAsyncRelayCommand OpenOverlayArtifactCommand { get; }
     public IAsyncRelayCommand OpenHeightMapArtifactCommand { get; }
     public IRelayCommand PrepareReinspectCommand { get; }
-    public IRelayCommand RunReinspectCommand { get; }
+    public IAsyncRelayCommand RunReinspectCommand { get; }
 
     [ObservableProperty]
     private string _statusText = "Inspection results not loaded";
@@ -98,6 +101,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     [ObservableProperty]
     private InspectionReinspectPreparation? _preparedReinspect;
 
+    [ObservableProperty]
+    private InspectionReinspectComparisonResult? _reinspectComparison;
+
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
     public string ReinspectRunDisabledReason
     {
@@ -114,7 +120,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             }
 
             return PreparedReinspect.CanRunInspection
-                ? "Ready to run re-inspect."
+                ? ReinspectMetadataReadyReason
                 : PreparedReinspect.DisabledReason;
         }
     }
@@ -126,6 +132,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     public string PreparedReinspectArtifactSummary => PreparedReinspect is null
         ? "Artifacts not mapped for re-inspect."
         : $"Source: {PreparedReinspect.SourceImagePath} | Overlay: {PreparedReinspect.OverlayImagePath} | Height Map: {PreparedReinspect.HeightMapPath}";
+
+    public string ReinspectComparisonSummary => ReinspectComparison is null
+        ? "No re-inspect comparison executed."
+        : $"{ReinspectComparison.Status}: previous {ReinspectComparison.PreviousJudgment} vs replay {ReinspectComparison.ReplayedJudgment}; defects {ReinspectComparison.PreviousDefectCount} -> {ReinspectComparison.ReplayedDefectCount}; cycle {ReinspectComparison.PreviousCycleTime.TotalMilliseconds:0} ms -> {ReinspectComparison.ReplayedCycleTime.TotalMilliseconds:0} ms";
+
+    public string ReinspectComparisonDetail => ReinspectComparison is null
+        ? "Run Re-inspect performs a simulator metadata comparison only."
+        : $"{ReinspectComparison.ReplayCorrelationId} | {ReinspectComparison.PersistenceStatus} | {ReinspectComparison.Message}";
 
     public string DefectListStatusText
     {
@@ -203,10 +217,17 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     partial void OnPreparedReinspectChanged(InspectionReinspectPreparation? value)
     {
+        ReinspectComparison = null;
         RunReinspectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ReinspectRunDisabledReason));
         OnPropertyChanged(nameof(PreparedReinspectSummary));
         OnPropertyChanged(nameof(PreparedReinspectArtifactSummary));
+    }
+
+    partial void OnReinspectComparisonChanged(InspectionReinspectComparisonResult? value)
+    {
+        OnPropertyChanged(nameof(ReinspectComparisonSummary));
+        OnPropertyChanged(nameof(ReinspectComparisonDetail));
     }
 
     partial void OnStatusTextChanged(string value)
@@ -241,6 +262,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OverlayImagePixelHeight = 0;
         HeightMapPreviewImageSource = null;
         PreparedReinspect = null;
+        ReinspectComparison = null;
         ArtifactPreviewStatusText = value is null
             ? "Select an inspection result to load artifacts"
             : "Artifact preview not loaded";
@@ -258,6 +280,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OnPropertyChanged(nameof(ReinspectRunDisabledReason));
         OnPropertyChanged(nameof(PreparedReinspectSummary));
         OnPropertyChanged(nameof(PreparedReinspectArtifactSummary));
+        OnPropertyChanged(nameof(ReinspectComparisonSummary));
+        OnPropertyChanged(nameof(ReinspectComparisonDetail));
         OnPropertyChanged(nameof(DefectListStatusText));
     }
 
@@ -402,12 +426,12 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             SelectedResult.OverlayImagePath,
             SelectedResult.HeightMapPath,
             DateTimeOffset.UtcNow,
-            false,
-            ReinspectReplayDisabledReason);
-        ReinspectStatusText = $"Re-inspect prepared for {SelectedResult.LotId} / {SelectedResult.RecipeId} v{SelectedResult.RecipeVersion}; run is disabled until replay execution is implemented.";
+            true,
+            ReinspectMetadataReadyReason);
+        ReinspectStatusText = $"Re-inspect prepared for {SelectedResult.LotId} / {SelectedResult.RecipeId} v{SelectedResult.RecipeVersion}; metadata comparison is ready.";
     }
 
-    public void RunReinspect()
+    public async Task RunReinspectAsync(CancellationToken cancellationToken)
     {
         if (PreparedReinspect is null)
         {
@@ -421,7 +445,26 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             return;
         }
 
-        ReinspectStatusText = "Run Re-inspect execution is waiting for the replay runner boundary.";
+        IsBusy = true;
+        try
+        {
+            ReinspectComparison = await _inspectionReinspectUseCase
+                .RunAsync(PreparedReinspect, cancellationToken)
+                .ConfigureAwait(true);
+            ReinspectStatusText = $"Run Re-inspect comparison completed for {ReinspectComparison.LotId}: {ReinspectComparison.Status}.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            ReinspectStatusText = "Run Re-inspect comparison cancelled";
+        }
+        catch (Exception ex)
+        {
+            ReinspectStatusText = $"Run Re-inspect comparison failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private OfflineInspectionResultItemViewModel? SelectResult(Guid? preferredId)
