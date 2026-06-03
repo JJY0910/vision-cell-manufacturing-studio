@@ -84,6 +84,7 @@ tests/VisionCell.App.Tests
 - Camera, 2D/3D inspection, controller start, and result persistence failure paths record alarm candidates through `IEquipmentAlarmRecorder`.
 - App composition registers the virtual equipment runtime profile and rejects real-hardware runtime profiles until hardware validation exists.
 - Real-hardware runtime profile rejection lists missing readiness evidence through `RealHardwareReadinessGate`.
+- Hardware adapter boundary catalog tests confirm Motion Controller, Camera, and PLC I/O roles map to the expected future adapter contracts and bench-validation evidence without enabling real hardware.
 
 ### Persistence
 
@@ -112,6 +113,7 @@ tests/VisionCell.App.Tests
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
 - EquipmentView reads recent I/O transition history through the Application repository port and displays empty/non-empty states, status text, and a manual refresh action
 - Bench PLC I/O validation uses `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as a manual evidence gate for future adapter work; automated tests do not prove real PLC wiring, safety relay behavior, or output-write safety.
+- SettingsView displays the read-only adapter boundary matrix from `HardwareAdapterBoundaryCatalog` and keeps real hardware evidence gaps visible.
 - Offline Debug result refresh shows loaded, empty, and repository failure states
 - Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
 - Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, artifact context, source-image replay readiness, and active-vs-historical Recipe policy; `Run Re-inspect` executes and persists an Application metadata comparison without live camera/motion/vision sequence replay

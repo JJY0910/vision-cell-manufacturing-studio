@@ -1,4 +1,5 @@
 using VisionCell.App.Configuration;
+using VisionCell.Equipment.Hardware;
 
 namespace VisionCell.App.Modules.Settings.ViewModels;
 
@@ -35,6 +36,15 @@ public sealed class SettingsViewModel
                 "Required before the RealHardware runtime profile can be enabled."))
             .ToArray();
 
+        AdapterBoundaryItems = HardwareAdapterBoundaryCatalog.RequiredAdapters
+            .Select(adapter => new SettingsAdapterBoundaryItemViewModel(
+                adapter.RoleName,
+                $"{adapter.InterfaceName} -> {adapter.PlannedAdapterName}",
+                adapter.CurrentProvider,
+                $"Missing: {adapter.RequiredEvidence}",
+                adapter.BoundaryNotes))
+            .ToArray();
+
         ReadinessSummary = readiness.CanEnableRealHardware
             ? "RealHardware profile can be enabled after reviewed evidence."
             : $"RealHardware profile remains blocked: {readiness.MissingEvidence.Count} missing evidence items.";
@@ -48,9 +58,18 @@ public sealed class SettingsViewModel
     public string ReadinessSummary { get; }
 
     public IReadOnlyList<SettingsScopeItemViewModel> ReadinessGateItems { get; }
+
+    public IReadOnlyList<SettingsAdapterBoundaryItemViewModel> AdapterBoundaryItems { get; }
 }
 
 public sealed record SettingsScopeItemViewModel(
     string Name,
     string Value,
+    string Detail);
+
+public sealed record SettingsAdapterBoundaryItemViewModel(
+    string Name,
+    string Contract,
+    string CurrentScope,
+    string Readiness,
     string Detail);

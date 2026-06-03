@@ -214,3 +214,5 @@ User Button
 | Inspection artifact storage | IInspectionArtifactWriter, IInspectionArtifactReader | PNG/export package writer and preview/metadata reader |
 | Alarm persistence | IEquipmentAlarmRepository, IEquipmentAlarmRecorder | PLC/vendor alarm adapter and recovery workflow |
 | AI classifier | IDefectClassifier | ONNX Runtime |
+
+`HardwareAdapterBoundaryCatalog` keeps the Motion, Camera, and PLC I/O adapter roles aligned with the read-only Settings adapter matrix and `docs/HARDWARE_INTEGRATION_PLAN.md`. The catalog is an evidence/readiness boundary only; it does not register or enable a real controller.
