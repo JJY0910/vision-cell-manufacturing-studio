@@ -26,6 +26,18 @@ The `VisionCell.Equipment.Hardware` namespace defines future real-hardware adapt
 
 These contracts preserve timeout, cancellation, explicit result paths, and correlation IDs. Vendor-specific SDK objects must not cross these interfaces.
 
+## Adapter Boundary Matrix
+
+`HardwareAdapterBoundaryCatalog` lists the three required adapter boundaries that must remain visible before any future `RealHardware` profile can be considered. The Settings screen displays this matrix as read-only evidence guidance; it does not enable real hardware.
+
+| Adapter role | Interface | Current provider | Future adapter name | Required evidence |
+|---|---|---|---|---|
+| Motion Controller | `IMotionControllerAdapter` | `VirtualEquipmentController` motion simulator | `MotionControllerAdapter` | Motion adapter bench validation |
+| Camera | `ICameraAdapter` | `VirtualCameraDevice` | `CameraAdapter` | Camera adapter bench validation |
+| PLC I/O | `IPlcIoAdapter` | `VirtualEquipmentController` simulator I/O | `PlcIoAdapter` | PLC I/O adapter bench validation |
+
+Every future adapter row must preserve timeout, cancellation, explicit `MachineCommandResult` or acquisition result paths, and correlation IDs. Any change to the row set or required evidence must update this plan, the Settings adapter matrix, and the readiness tests together.
+
 ## Future RealEquipmentController Shape
 
 ```text

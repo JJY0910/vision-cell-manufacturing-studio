@@ -9,6 +9,7 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
       <controls:CommandBar Title="Settings"
@@ -41,6 +42,67 @@
       </Border>
 
       <Border Grid.Row="2" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Adapter Boundary Matrix" Style="{DynamicResource Text.CardTitle}" />
+          <ListView Grid.Row="1"
+                    ItemsSource="{Binding AdapterBoundaryItems}"
+                    Style="{DynamicResource ListView.HmiGrid}"
+                    MinHeight="140"
+                    Margin="0,8,0,0">
+            <ListView.View>
+              <GridView>
+                <GridViewColumn Header="Adapter" Width="150">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Name}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.StatusStrong}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="Boundary Contract" Width="240">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Contract}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="Current Scope" Width="230">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding CurrentScope}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="Required Evidence" Width="360">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <StackPanel>
+                        <TextBlock Text="{Binding Readiness}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.StatusStrong}" />
+                        <TextBlock Text="{Binding Detail}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.EmptyStateDetail}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+              </GridView>
+            </ListView.View>
+          </ListView>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="3" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

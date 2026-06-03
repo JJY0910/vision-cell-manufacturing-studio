@@ -262,6 +262,7 @@ Implementation status:
 Implementation status:
 
 - `SettingsView` currently shows read-only runtime scope for simulator-only equipment and virtual-camera mode instead of a blank page.
+- `SettingsView` shows a read-only adapter boundary matrix for Motion Controller, Camera, and PLC I/O roles so the current simulator provider, future adapter contract, and missing bench evidence stay visible.
 - `SettingsView` shows a read-only Real Hardware readiness gate with missing adapter/bench evidence surfaced from the same runtime guard that blocks `RealHardware` profile selection.
 - Persisted path/profile/retention settings remain the dedicated FR-240 Settings MVP follow-up.
 

@@ -560,6 +560,34 @@ public sealed class VirtualEquipmentControllerTests
         act.Should().Throw<ArgumentException>().WithMessage("*Adapter name*");
     }
 
+    [Fact]
+    public void HardwareAdapterBoundaryCatalog_Should_List_Required_RealHardware_Adapter_Boundaries()
+    {
+        var requirements = HardwareAdapterBoundaryCatalog.RequiredAdapters;
+
+        requirements.Should().HaveCount(3);
+        requirements.Should().Contain(adapter =>
+            adapter.Role == HardwareAdapterRole.MotionController &&
+            adapter.RoleName == "Motion Controller" &&
+            adapter.InterfaceName == nameof(IMotionControllerAdapter) &&
+            adapter.PlannedAdapterName == "MotionControllerAdapter" &&
+            adapter.RequiredEvidence == "motion adapter bench validation");
+        requirements.Should().Contain(adapter =>
+            adapter.Role == HardwareAdapterRole.Camera &&
+            adapter.InterfaceName == nameof(ICameraAdapter) &&
+            adapter.PlannedAdapterName == "CameraAdapter" &&
+            adapter.RequiredEvidence == "camera adapter bench validation");
+        requirements.Should().Contain(adapter =>
+            adapter.Role == HardwareAdapterRole.PlcIo &&
+            adapter.RoleName == "PLC I/O" &&
+            adapter.InterfaceName == nameof(IPlcIoAdapter) &&
+            adapter.PlannedAdapterName == "PlcIoAdapter" &&
+            adapter.RequiredEvidence == "PLC I/O adapter bench validation");
+        requirements.Should().OnlyContain(adapter =>
+            !string.IsNullOrWhiteSpace(adapter.CurrentProvider) &&
+            !string.IsNullOrWhiteSpace(adapter.BoundaryNotes));
+    }
+
     private static InterlockContext ReadyManualContext()
     {
         return new InterlockContext(

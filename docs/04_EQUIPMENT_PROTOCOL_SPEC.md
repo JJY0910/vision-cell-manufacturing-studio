@@ -96,6 +96,8 @@ Future real hardware integration must stay behind `IEquipmentController` and the
 - `IPlcIoAdapter`: reads digital I/O and writes allowed outputs.
 - `HardwareAdapterStatus`: reports adapter connected/ready/endpoint state.
 
+`HardwareAdapterBoundaryCatalog` defines the current read-only adapter boundary matrix for Motion Controller, Camera, and PLC I/O roles. The matrix maps each role to its interface, current simulator provider, planned adapter name, and missing bench-validation evidence. It is displayed in Settings so operators can see that adapter replacement is planned but not validated.
+
 No vendor SDK object, PLC frame, raw fieldbus payload, or camera buffer handle may cross into WPF or Application use cases.
 
 Bench PLC I/O validation is governed by `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md`. The checklist must be completed before any future adapter is treated as validated, and it does not weaken the simulator-only status of the current fault-injection path.

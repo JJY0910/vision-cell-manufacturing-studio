@@ -429,6 +429,21 @@ public sealed class DashboardAndShellViewModelTests
         settings.ReadinessGateItems.Should().Contain(item => item.Name == "RealEquipmentController implementation");
         settings.ReadinessGateItems.Should().Contain(item => item.Name == "PLC I/O adapter bench validation");
         settings.ReadinessGateItems.Should().OnlyContain(item => item.Value == "Missing");
+        settings.AdapterBoundaryItems.Should().HaveCount(3);
+        settings.AdapterBoundaryItems.Should().Contain(item =>
+            item.Name == "Motion Controller" &&
+            item.Contract == "IMotionControllerAdapter -> MotionControllerAdapter" &&
+            item.CurrentScope.Contains("VirtualEquipmentController") &&
+            item.Readiness == "Missing: motion adapter bench validation");
+        settings.AdapterBoundaryItems.Should().Contain(item =>
+            item.Name == "Camera" &&
+            item.Contract == "ICameraAdapter -> CameraAdapter" &&
+            item.CurrentScope == "VirtualCameraDevice" &&
+            item.Readiness == "Missing: camera adapter bench validation");
+        settings.AdapterBoundaryItems.Should().Contain(item =>
+            item.Name == "PLC I/O" &&
+            item.Contract == "IPlcIoAdapter -> PlcIoAdapter" &&
+            item.Readiness == "Missing: PLC I/O adapter bench validation");
     }
 
     [Fact]
