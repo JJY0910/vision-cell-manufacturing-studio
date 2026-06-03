@@ -91,6 +91,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <DockPanel>
             <Button DockPanel.Dock="Right"
@@ -124,7 +125,13 @@
                          Style="{DynamicResource Text.StatusStrong}" />
             </StackPanel>
           </UniformGrid>
-          <Grid Grid.Row="2" Margin="0,4,0,0">
+          <StackPanel Grid.Row="2" Margin="0,4,0,8">
+            <TextBlock Text="Recovery Hint" Style="{DynamicResource Text.MetricLabel}" />
+            <TextBlock Text="{Binding SelectedAlarm.RecoveryHint, TargetNullValue=-}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+          <Grid Grid.Row="3" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="280" />

@@ -174,6 +174,7 @@ public sealed class HmiVisualQaXamlTests
         var alarm = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Alarm", "Views", "AlarmView.xaml"));
         alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");
         alarm.Should().Contain("IsEnabled=\"{Binding IsActionMemoEditable}\"");
+        alarm.Should().Contain("SelectedAlarm.RecoveryHint");
     }
 
     [Fact]

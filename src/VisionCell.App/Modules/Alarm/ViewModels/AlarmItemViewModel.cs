@@ -20,4 +20,5 @@ public sealed class AlarmItemViewModel
     public string AcknowledgedAtText => Alarm.AcknowledgedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
     public string ActionMemo => Alarm.ActionMemo ?? "-";
     public string StateText => Alarm.IsAcknowledged ? "Acknowledged" : "Active";
+    public string RecoveryHint => AlarmRecoveryGuidance.GetHint(Alarm.Code, Alarm.Area);
 }
