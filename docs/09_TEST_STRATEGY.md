@@ -79,7 +79,7 @@ tests/VisionCell.App.Tests
 - 3D inspection success path creates a synthetic height map, runs the height-map engine, records Inspect 3D, and aggregates final Judge from 2D and 3D results.
 - Invalid height-map result returns an explicit `HeightMapInspectionFailed` status and skips Judge/Persist.
 - Persist result success path saves Judge, defect, timing, Recipe, and correlation metadata after Judge.
-- Persist result success path writes overlay and height-map artifact paths before SQLite save.
+- Persist result success path writes source, overlay, and height-map artifact paths before SQLite save.
 - Persist result failure path returns explicit `ResultPersistenceFailed` status and failed Persist Result timeline state for artifact or repository failures.
 - Camera, 2D/3D inspection, controller start, and result persistence failure paths record alarm candidates through `IEquipmentAlarmRecorder`.
 - App composition registers the virtual equipment runtime profile and rejects real-hardware runtime profiles until hardware validation exists.
@@ -92,7 +92,7 @@ tests/VisionCell.App.Tests
 - Insert/query inspection result
 - Insert/query inspection defects
 - Recent inspection result ordering and limit
-- Inspection artifact writer creates overlay and height-map BMP files with relative paths
+- Inspection artifact writer creates source, overlay, and height-map BMP files with relative paths
 - Inspection artifact open preparation returns a safe resolved path only for available supported BMP artifacts under the configured root
 - Inspection artifact open preparation rejects missing, not-recorded, traversal/rooted, unsupported-type, and unavailable artifact paths
 - Repository handles relative path

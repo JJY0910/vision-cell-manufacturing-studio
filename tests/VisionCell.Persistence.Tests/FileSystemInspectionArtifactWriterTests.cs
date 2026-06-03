@@ -9,7 +9,7 @@ namespace VisionCell_Persistence_Tests;
 public sealed class FileSystemInspectionArtifactWriterTests
 {
     [Fact]
-    public async Task WriteAsync_Should_Create_Overlay_And_HeightMap_Bmp_Files_With_Relative_Paths()
+    public async Task WriteAsync_Should_Create_Source_Overlay_And_HeightMap_Bmp_Files_With_Relative_Paths()
     {
         using var directory = TemporaryDirectory.Create();
         var artifactRoot = Path.Combine(directory.Path, "inspection-artifacts");
@@ -19,34 +19,53 @@ public sealed class FileSystemInspectionArtifactWriterTests
 
         var result = await writer.WriteAsync(request, CancellationToken.None);
 
+        result.SourceImagePath.Should().Be("inspection-artifacts/20260601/aaaaaaaabbbbccccddddeeeeeeeeeeee.source.bmp");
         result.OverlayImagePath.Should().Be("inspection-artifacts/20260601/aaaaaaaabbbbccccddddeeeeeeeeeeee.overlay.bmp");
         result.HeightMapPath.Should().Be("inspection-artifacts/20260601/aaaaaaaabbbbccccddddeeeeeeeeeeee.height.bmp");
+        Path.IsPathRooted(result.SourceImagePath).Should().BeFalse();
         Path.IsPathRooted(result.OverlayImagePath).Should().BeFalse();
         Path.IsPathRooted(result.HeightMapPath).Should().BeFalse();
+        result.SourceImagePath.Should().NotContain("..");
         result.OverlayImagePath.Should().NotContain("..");
         result.HeightMapPath.Should().NotContain("..");
 
+        var sourcePath = Path.Combine(artifactRoot, "20260601", "aaaaaaaabbbbccccddddeeeeeeeeeeee.source.bmp");
         var overlayPath = Path.Combine(artifactRoot, "20260601", "aaaaaaaabbbbccccddddeeeeeeeeeeee.overlay.bmp");
         var heightMapPath = Path.Combine(artifactRoot, "20260601", "aaaaaaaabbbbccccddddeeeeeeeeeeee.height.bmp");
+        File.Exists(sourcePath).Should().BeTrue();
         File.Exists(overlayPath).Should().BeTrue();
         File.Exists(heightMapPath).Should().BeTrue();
 
+        var source = await File.ReadAllBytesAsync(sourcePath);
         var overlay = await File.ReadAllBytesAsync(overlayPath);
         var heightMap = await File.ReadAllBytesAsync(heightMapPath);
+        ReadSignature(source).Should().Be("BM");
         ReadSignature(overlay).Should().Be("BM");
         ReadSignature(heightMap).Should().Be("BM");
+        ReadWidth(source).Should().Be(10);
+        ReadHeight(source).Should().Be(8);
         ReadWidth(overlay).Should().Be(10);
         ReadHeight(overlay).Should().Be(8);
         ReadWidth(heightMap).Should().Be(10);
         ReadHeight(heightMap).Should().Be(8);
+        ReadPixel(source, 4, 4).Should().Be(((byte)84, (byte)84, (byte)84));
         ReadPixel(overlay, 4, 4).Should().Be(((byte)230, (byte)48, (byte)48));
         ReadPixel(overlay, 2, 2).Should().Be(((byte)0, (byte)210, (byte)255));
 
+        var sourceMetadata = await writer.ReadMetadataAsync(result.SourceImagePath, CancellationToken.None);
         var overlayMetadata = await writer.ReadMetadataAsync(result.OverlayImagePath, CancellationToken.None);
+        sourceMetadata.Status.Should().Be(InspectionArtifactMetadataStatus.Available);
+        sourceMetadata.DisplayPath.Should().Be(result.SourceImagePath);
         overlayMetadata.Status.Should().Be(InspectionArtifactMetadataStatus.Available);
         overlayMetadata.DisplayPath.Should().Be(result.OverlayImagePath);
         overlayMetadata.SizeBytes.Should().BeGreaterThan(0);
         overlayMetadata.LastModifiedAt.Should().NotBeNull();
+
+        var sourcePreview = await writer.ReadPreviewAsync(result.SourceImagePath, CancellationToken.None);
+        sourcePreview.Status.Should().Be(InspectionArtifactMetadataStatus.Available);
+        sourcePreview.HasImage.Should().BeTrue();
+        sourcePreview.Width.Should().Be(10);
+        sourcePreview.Height.Should().Be(8);
 
         var overlayPreview = await writer.ReadPreviewAsync(result.OverlayImagePath, CancellationToken.None);
         overlayPreview.Status.Should().Be(InspectionArtifactMetadataStatus.Available);

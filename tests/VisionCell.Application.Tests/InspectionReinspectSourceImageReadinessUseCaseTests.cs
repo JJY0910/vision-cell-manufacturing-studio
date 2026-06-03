@@ -71,6 +71,53 @@ public sealed class InspectionReinspectSourceImageReadinessUseCaseTests
         result.Message.Should().Contain("no source-image artifact reader");
     }
 
+    [Fact]
+    public async Task ResolveAsync_Should_Report_SourceArtifactArchived_When_Reader_Finds_Source_Bmp()
+    {
+        var useCase = new InspectionReinspectSourceImageReadinessUseCase(new FakeInspectionArtifactReader(
+            InspectionArtifactMetadata.Available(
+                "inspection-artifacts/20260603/result.source.bmp",
+                4096,
+                new DateTimeOffset(2026, 6, 3, 12, 0, 0, TimeSpan.Zero))));
+        var preparation = CreatePreparation("inspection-artifacts/20260603/result.source.bmp");
+
+        var result = await useCase.ResolveAsync(preparation, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.SourceArtifactArchived);
+        result.ReplayInputKind.Should().Be("Archived source BMP");
+        result.Message.Should().Contain("future replay input");
+        result.CanReplaySourceImage.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ResolveAsync_Should_Report_SourceArtifactMissing_When_Reader_Cannot_Find_Source_Bmp()
+    {
+        var useCase = new InspectionReinspectSourceImageReadinessUseCase(new FakeInspectionArtifactReader(
+            InspectionArtifactMetadata.Missing("inspection-artifacts/20260603/result.source.bmp")));
+        var preparation = CreatePreparation("inspection-artifacts/20260603/result.source.bmp");
+
+        var result = await useCase.ResolveAsync(preparation, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.SourceArtifactMissing);
+        result.StatusLabel.Should().Be("Source artifact missing");
+    }
+
+    [Fact]
+    public async Task ResolveAsync_Should_Reject_Relative_Non_Source_Bmp_When_Reader_Is_Configured()
+    {
+        var useCase = new InspectionReinspectSourceImageReadinessUseCase(new FakeInspectionArtifactReader(
+            InspectionArtifactMetadata.Available(
+                "inspection-artifacts/20260603/result.overlay.bmp",
+                4096,
+                new DateTimeOffset(2026, 6, 3, 12, 0, 0, TimeSpan.Zero))));
+        var preparation = CreatePreparation("inspection-artifacts/20260603/result.overlay.bmp");
+
+        var result = await useCase.ResolveAsync(preparation, CancellationToken.None);
+
+        result.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.UnsupportedSourceArtifactType);
+        result.Message.Should().Contain(".source.bmp");
+    }
+
     private static InspectionReinspectPreparation CreatePreparation(string sourceImagePath)
     {
         return new InspectionReinspectPreparation(
@@ -88,5 +135,36 @@ public sealed class InspectionReinspectSourceImageReadinessUseCaseTests
             new DateTimeOffset(2026, 6, 3, 12, 0, 0, TimeSpan.Zero),
             true,
             "Ready for metadata comparison.");
+    }
+
+    private sealed class FakeInspectionArtifactReader : IInspectionArtifactReader
+    {
+        private readonly InspectionArtifactMetadata _metadata;
+
+        public FakeInspectionArtifactReader(InspectionArtifactMetadata metadata)
+        {
+            _metadata = metadata;
+        }
+
+        public Task<InspectionArtifactMetadata> ReadMetadataAsync(
+            string? artifactPath,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_metadata);
+        }
+
+        public Task<InspectionArtifactPreviewResult> ReadPreviewAsync(
+            string? artifactPath,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException("Preview is not used by source readiness tests.");
+        }
+
+        public Task<InspectionArtifactOpenResult> PrepareOpenAsync(
+            InspectionArtifactOpenRequest request,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException("Open preparation is not used by source readiness tests.");
+        }
     }
 }

@@ -595,7 +595,7 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
             recipe.Version,
             finalJudgment,
             defects.Count == 0 ? "No defects" : $"{defects.Count} defect(s)",
-            CreateSourceImagePath(frame, commandRequest.CorrelationId),
+            artifacts.SourceImagePath,
             artifacts.OverlayImagePath,
             artifacts.HeightMapPath,
             completedAt - startedAt,
@@ -661,11 +661,6 @@ public sealed class InspectionRunUseCase : IInspectionRunUseCase
     private static string CreateLotId(DateTimeOffset startedAt)
     {
         return $"LOT-{startedAt:yyyyMMddHHmmss}";
-    }
-
-    private static string CreateSourceImagePath(CameraFrame frame, CorrelationId correlationId)
-    {
-        return $"camera-frame://{Uri.EscapeDataString(frame.CameraName)}/{correlationId}";
     }
 
     private CameraGrabRequest CreateCameraGrabRequest(

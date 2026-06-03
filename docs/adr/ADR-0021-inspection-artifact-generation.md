@@ -17,7 +17,7 @@ FR-200 result persistence stores nullable overlay and height-map artifact paths,
   - overlay BMP from the Gray8 source frame, ROI rectangles, defect boxes, and pass/fail banner.
   - height-map BMP from normalized synthetic height-map values.
 - Write artifacts under a configured local artifact root and return relative paths shaped like `inspection-artifacts/yyyyMMdd/{resultId}.overlay.bmp`.
-- Execute artifact generation inside the Persist Result step before SQLite save so the persisted row contains overlay and height-map paths.
+- Execute artifact generation inside the Persist Result step before SQLite save so the persisted row contains artifact paths.
 
 ## Alternatives Considered
 
@@ -28,6 +28,7 @@ FR-200 result persistence stores nullable overlay and height-map artifact paths,
 ## Consequences
 
 - Successful inspection runs now populate `overlay_image_path` and `height_map_path`.
+- 2026-06-03 follow-up: ADR-0042 also populates `source_image_path` with a generated source BMP artifact path for new inspection rows.
 - Artifact writer failures are treated as Persist Result failures and do not silently accept an incomplete evidence record.
 - The generated overlay is a deterministic evidence artifact, not the final rich HMI image viewport overlay.
 - BMP files are larger than PNG; compression/export polish remains a follow-up for report packaging.

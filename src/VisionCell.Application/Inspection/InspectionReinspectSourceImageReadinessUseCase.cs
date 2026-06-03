@@ -10,8 +10,14 @@ public interface IInspectionReinspectSourceImageReadinessUseCase
 public sealed class InspectionReinspectSourceImageReadinessUseCase : IInspectionReinspectSourceImageReadinessUseCase
 {
     private const string CameraFrameScheme = "camera-frame";
+    private readonly IInspectionArtifactReader? _artifactReader;
 
-    public Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
+    public InspectionReinspectSourceImageReadinessUseCase(IInspectionArtifactReader? artifactReader = null)
+    {
+        _artifactReader = artifactReader;
+    }
+
+    public async Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
         InspectionReinspectPreparation preparation,
         CancellationToken cancellationToken)
     {
@@ -22,20 +28,40 @@ public sealed class InspectionReinspectSourceImageReadinessUseCase : IInspection
         if (string.IsNullOrWhiteSpace(sourceImagePath) ||
             string.Equals(sourceImagePath, "-", StringComparison.Ordinal))
         {
-            return Task.FromResult(InspectionReinspectSourceImageReadinessResult.NotRecorded());
+            return InspectionReinspectSourceImageReadinessResult.NotRecorded();
         }
 
         if (Uri.TryCreate(sourceImagePath, UriKind.Absolute, out var uri))
         {
-            return Task.FromResult(ResolveUri(sourceImagePath, uri));
+            return ResolveUri(sourceImagePath, uri);
         }
 
         if (ContainsUnsafePathSegment(sourceImagePath))
         {
-            return Task.FromResult(InspectionReinspectSourceImageReadinessResult.UnsafePath(sourceImagePath));
+            return InspectionReinspectSourceImageReadinessResult.UnsafePath(sourceImagePath);
         }
 
-        return Task.FromResult(InspectionReinspectSourceImageReadinessResult.SourceArtifactReaderMissing(sourceImagePath));
+        if (_artifactReader is null)
+        {
+            return InspectionReinspectSourceImageReadinessResult.SourceArtifactReaderMissing(sourceImagePath);
+        }
+
+        if (!sourceImagePath.EndsWith(".source.bmp", StringComparison.OrdinalIgnoreCase))
+        {
+            return InspectionReinspectSourceImageReadinessResult.UnsupportedSourceArtifactType(sourceImagePath);
+        }
+
+        var metadata = await _artifactReader.ReadMetadataAsync(sourceImagePath, cancellationToken).ConfigureAwait(false);
+        return metadata.Status switch
+        {
+            InspectionArtifactMetadataStatus.Available =>
+                InspectionReinspectSourceImageReadinessResult.SourceArtifactArchived(sourceImagePath),
+            InspectionArtifactMetadataStatus.Missing =>
+                InspectionReinspectSourceImageReadinessResult.SourceArtifactMissing(sourceImagePath),
+            InspectionArtifactMetadataStatus.UnsafePath =>
+                InspectionReinspectSourceImageReadinessResult.UnsafePath(sourceImagePath),
+            _ => InspectionReinspectSourceImageReadinessResult.SourceArtifactUnavailable(sourceImagePath, metadata.Message)
+        };
     }
 
     private static InspectionReinspectSourceImageReadinessResult ResolveUri(string sourceImagePath, Uri uri)
@@ -96,6 +122,38 @@ public sealed record InspectionReinspectSourceImageReadinessResult(
             "The source image reference looks like a replay candidate, but no source-image artifact reader or replay runner is implemented.");
     }
 
+    public static InspectionReinspectSourceImageReadinessResult SourceArtifactArchived(string sourceImagePath)
+    {
+        return new InspectionReinspectSourceImageReadinessResult(
+            sourceImagePath,
+            InspectionReinspectSourceImageReadinessStatus.SourceArtifactArchived,
+            "Archived source BMP",
+            "Source artifact archived",
+            "The source image artifact exists for future replay input, but no source-image replay runner is implemented.");
+    }
+
+    public static InspectionReinspectSourceImageReadinessResult SourceArtifactMissing(string sourceImagePath)
+    {
+        return new InspectionReinspectSourceImageReadinessResult(
+            sourceImagePath,
+            InspectionReinspectSourceImageReadinessStatus.SourceArtifactMissing,
+            "Missing source artifact",
+            "Source artifact missing",
+            "The source image reference points to an artifact path, but the file is not available for replay preparation.");
+    }
+
+    public static InspectionReinspectSourceImageReadinessResult SourceArtifactUnavailable(
+        string sourceImagePath,
+        string message)
+    {
+        return new InspectionReinspectSourceImageReadinessResult(
+            sourceImagePath,
+            InspectionReinspectSourceImageReadinessStatus.SourceArtifactUnavailable,
+            "Unavailable source artifact",
+            "Source artifact unavailable",
+            message);
+    }
+
     public static InspectionReinspectSourceImageReadinessResult UnsupportedUri(string sourceImagePath, string scheme)
     {
         return new InspectionReinspectSourceImageReadinessResult(
@@ -104,6 +162,16 @@ public sealed record InspectionReinspectSourceImageReadinessResult(
             $"{scheme} URI",
             "Unsupported source URI",
             "Only an explicit source-image replay contract may resolve persisted image inputs. This URI scheme is not supported.");
+    }
+
+    public static InspectionReinspectSourceImageReadinessResult UnsupportedSourceArtifactType(string sourceImagePath)
+    {
+        return new InspectionReinspectSourceImageReadinessResult(
+            sourceImagePath,
+            InspectionReinspectSourceImageReadinessStatus.UnsupportedSourceArtifactType,
+            "Unsupported source artifact",
+            "Unsupported source artifact type",
+            "Source replay readiness currently accepts archived .source.bmp artifacts only.");
     }
 
     public static InspectionReinspectSourceImageReadinessResult UnsafePath(string sourceImagePath)
@@ -120,9 +188,13 @@ public sealed record InspectionReinspectSourceImageReadinessResult(
 public enum InspectionReinspectSourceImageReadinessStatus
 {
     Ready,
+    SourceArtifactArchived,
+    SourceArtifactMissing,
+    SourceArtifactUnavailable,
     FrameArchiveUnavailable,
     SourceArtifactReaderMissing,
     NotRecorded,
     UnsupportedUri,
+    UnsupportedSourceArtifactType,
     UnsafePath
 }

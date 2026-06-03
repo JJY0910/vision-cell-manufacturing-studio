@@ -58,6 +58,7 @@ public sealed record InspectionArtifactRoi(
     int Height);
 
 public sealed record InspectionArtifactWriteResult(
+    string SourceImagePath,
     string OverlayImagePath,
     string HeightMapPath);
 

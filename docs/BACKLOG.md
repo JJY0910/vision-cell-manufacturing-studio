@@ -378,7 +378,7 @@ Problem: Inspection results and artifact paths are persisted, but Offline Debug 
 Proposed improvement: Bind OfflineDebugView to `IInspectionResultReader` so operators can refresh recent results, select one row, and inspect source/overlay/height-map paths plus defects.
 Requirement impact: FR-202, FR-220, FR-221, FR-200, NFR-004, NFR-006, NFR-TEST-001
 Priority: P1
-Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact metadata availability is addressed by ADR-0029; artifact preview and Re-inspect preparation are addressed by ADR-0030; metadata comparison is addressed by ADR-0038; metadata comparison history persistence is addressed by ADR-0039; active-vs-historical Recipe policy metadata is addressed by ADR-0040; source-image replay readiness is addressed by ADR-0041. Source-image replay execution and new inspection-result replay persistence remain follow-up work.
+Status: Addressed by ADR-0022 and PR #45 for read-only result browsing; artifact metadata availability is addressed by ADR-0029; artifact preview and Re-inspect preparation are addressed by ADR-0030; metadata comparison is addressed by ADR-0038; metadata comparison history persistence is addressed by ADR-0039; active-vs-historical Recipe policy metadata is addressed by ADR-0040; source-image replay readiness is addressed by ADR-0041; source frame artifact archival is addressed by ADR-0042. Source-image replay execution and new inspection-result replay persistence remain follow-up work.
 
 Date: 2026-06-02
 Source: Priority 2 Alarm / Fault / Recovery Center
@@ -402,7 +402,7 @@ Problem: Offline Debug can display artifact paths, live metadata status, and det
 Proposed improvement: Extend the artifact reader into a safe open/replay boundary that maps relative artifact paths under the local data root, validates existence, and connects prepared Re-inspect context to a future sequence runner.
 Requirement impact: FR-202, FR-221, FR-222, FR-200, NFR-006, NFR-008, NFR-TEST-001
 Priority: P1
-Status: Metadata availability addressed by ADR-0029, preview rendering/preparation addressed by ADR-0030, safe operator-confirmed artifact open commands addressed by ADR-0035/issue seed 008, richer Re-inspect boundary addressed by ADR-0036, metadata comparison addressed by ADR-0038, metadata comparison history persistence addressed by ADR-0039, active-vs-historical Recipe policy metadata addressed by ADR-0040, and source-image replay readiness addressed by ADR-0041. Source-image replay execution, current-vs-historical replay execution, and new inspection-result replay persistence remain open.
+Status: Metadata availability addressed by ADR-0029, preview rendering/preparation addressed by ADR-0030, safe operator-confirmed artifact open commands addressed by ADR-0035/issue seed 008, richer Re-inspect boundary addressed by ADR-0036, metadata comparison addressed by ADR-0038, metadata comparison history persistence addressed by ADR-0039, active-vs-historical Recipe policy metadata addressed by ADR-0040, source-image replay readiness addressed by ADR-0041, and source frame artifact archival addressed by ADR-0042. Source-image replay execution, current-vs-historical replay execution, and new inspection-result replay persistence remain open.
 
 Date: 2026-06-02
 Source: UI QA reusable controls
