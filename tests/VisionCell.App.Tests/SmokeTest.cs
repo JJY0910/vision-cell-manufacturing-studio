@@ -8,6 +8,7 @@ using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
+using VisionCell.App.Configuration;
 using VisionCell.App.Interaction;
 using VisionCell.App.Modules.Alarm.ViewModels;
 using VisionCell.Core.Commands;
@@ -241,6 +242,7 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IArtifactViewerService>()
                 .Should()
                 .BeOfType<ShellArtifactViewerService>();
+            provider.GetRequiredService<EquipmentRuntimeProfile>().Mode.Should().Be(EquipmentRuntimeMode.Virtual);
         }
         finally
         {
@@ -249,6 +251,41 @@ public sealed class DashboardAndShellViewModelTests
                 Directory.Delete(root, recursive: true);
             }
         }
+    }
+
+    [Fact]
+    public void AppServiceConfiguration_Should_Reject_Real_Hardware_Profile_Until_Validated()
+    {
+        var services = new ServiceCollection();
+        var profile = new EquipmentRuntimeProfile(
+            EquipmentRuntimeMode.RealHardware,
+            "RealEquipmentController",
+            "Bench profile pending hardware validation.");
+
+        var act = () => services.AddVisionCellAppServices(
+            Path.Combine(Path.GetTempPath(), "visioncell.db"),
+            Path.Combine(Path.GetTempPath(), "recipes"),
+            equipmentRuntimeProfile: profile);
+
+        act.Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*not implemented or validated*HARDWARE_INTEGRATION_PLAN*");
+    }
+
+    [Fact]
+    public void AppServiceConfiguration_Should_Register_Virtual_Equipment_Runtime_Profile_By_Default()
+    {
+        var services = new ServiceCollection();
+
+        services.AddVisionCellAppServices(
+            Path.Combine(Path.GetTempPath(), "visioncell.db"),
+            Path.Combine(Path.GetTempPath(), "recipes"));
+
+        var descriptor = services.Single(service => service.ServiceType == typeof(EquipmentRuntimeProfile));
+        var profile = descriptor.ImplementationInstance.Should().BeOfType<EquipmentRuntimeProfile>().Subject;
+        profile.Mode.Should().Be(EquipmentRuntimeMode.Virtual);
+        profile.ProfileName.Should().Be("VirtualEquipmentController");
+        profile.ValidationScope.Should().Contain("Simulator-only");
     }
 
     [Fact]

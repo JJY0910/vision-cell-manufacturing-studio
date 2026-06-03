@@ -19,6 +19,12 @@ The project is simulator-first, but future work must allow `VirtualEquipmentCont
 - Document the future `RealEquipmentController` composition in `docs/HARDWARE_INTEGRATION_PLAN.md`.
 - Do not implement a real hardware controller, vendor SDK wrapper, fieldbus connection, or PLC protocol in this PR.
 
+2026-06-03 follow-up:
+
+- Add `EquipmentRuntimeProfile` in WPF App composition.
+- Register the virtual runtime profile by default.
+- Explicitly reject `RealHardware` profile selection until `RealEquipmentController` implementation and bench validation evidence exist.
+
 ## Alternatives
 
 - Add `RealEquipmentController` now with placeholder failures: rejected because it could look like an implemented hardware path without validation.
@@ -29,6 +35,7 @@ The project is simulator-first, but future work must allow `VirtualEquipmentCont
 
 - Future real equipment work has clear adapter seams while WPF/Application remain stable.
 - Adapter contracts enforce timeout, cancellation, explicit result paths, and correlation preservation.
+- Runtime composition cannot accidentally switch from virtual equipment to unvalidated real hardware.
 - The project still has no real hardware validation.
 
 ## Requirement impact
