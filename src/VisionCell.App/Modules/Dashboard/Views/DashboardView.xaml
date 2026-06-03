@@ -19,33 +19,24 @@
             <Button Content="Connect"
                     Command="{Binding ConnectCommand}"
                     ToolTip="{Binding ConnectDisabledReason}"
-                    Height="36"
-                    MinWidth="92"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Disconnect"
                     Command="{Binding DisconnectCommand}"
                     ToolTip="{Binding DisconnectDisabledReason}"
-                    Height="36"
-                    MinWidth="104"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}"
+                    MinWidth="104" />
             <Button Content="Manual"
                     Command="{Binding EnterManualModeCommand}"
                     ToolTip="{Binding EnterManualModeDisabledReason}"
-                    Height="36"
-                    MinWidth="82"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Auto"
                     Command="{Binding EnterAutoModeCommand}"
                     ToolTip="{Binding EnterAutoModeDisabledReason}"
-                    Height="36"
-                    MinWidth="72"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Refresh"
                     Command="{Binding RefreshCommand}"
                     ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
-                    Height="36"
-                    MinWidth="86"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>

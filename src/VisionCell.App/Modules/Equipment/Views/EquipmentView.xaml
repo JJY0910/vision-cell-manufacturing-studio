@@ -18,8 +18,7 @@
           <Button Content="Refresh"
                   Command="{Binding RefreshCommand}"
                   ToolTip="Refresh controller, safety, fault, I/O, and event state."
-                  Height="36"
-                  MinWidth="86" />
+                  Style="{DynamicResource Button.HmiCommand}" />
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
 

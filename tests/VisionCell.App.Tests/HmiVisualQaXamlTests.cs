@@ -91,6 +91,41 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void CommandBar_Action_Buttons_Should_Use_Shared_Hmi_Command_Style()
+    {
+        var expectedCounts = new Dictionary<string, int>
+        {
+            ["Modules/Dashboard/Views/DashboardView.xaml"] = 5,
+            ["Modules/Equipment/Views/EquipmentView.xaml"] = 1,
+            ["Modules/Motion/Views/MotionView.xaml"] = 2,
+            ["Modules/Teaching/Views/TeachingView.xaml"] = 2,
+            ["Modules/Recipe/Views/RecipeView.xaml"] = 2,
+            ["Modules/Inspection/Views/InspectionView.xaml"] = 3,
+            ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = 6,
+            ["Modules/Alarm/Views/AlarmView.xaml"] = 1
+        };
+
+        foreach (var (relativePath, expectedCount) in expectedCounts)
+        {
+            var xaml = XDocument.Load(GetRepoPath(new[] { "src", "VisionCell.App" }
+                .Concat(relativePath.Split('/')).ToArray()));
+            var commandButtons = xaml
+                .Descendants()
+                .Where(element => element.Name.LocalName == "CommandBar.CommandContent")
+                .SelectMany(element => element.Descendants(Wpf + "Button"))
+                .ToArray();
+
+            commandButtons.Should().HaveCount(expectedCount, $"'{relativePath}' should keep a known operator command set");
+            commandButtons
+                .Select(button => button.Attribute("Style")?.Value)
+                .Should()
+                .OnlyContain(value => value == "{DynamicResource Button.HmiCommand}");
+            commandButtons.Should().OnlyContain(button => button.Attribute("Height") == null);
+            commandButtons.Should().OnlyContain(button => button.Attribute("Margin") == null);
+        }
+    }
+
+    [Fact]
     public void Disabled_Operator_Commands_Should_Expose_Tooltips()
     {
         var offlineDebug = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "OfflineDebug", "Views", "OfflineDebugView.xaml"));

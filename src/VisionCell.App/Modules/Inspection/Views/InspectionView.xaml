@@ -20,21 +20,17 @@
           <Button Content="Refresh Recipe"
                   Command="{Binding RefreshActiveRecipeCommand}"
                   ToolTip="Refresh the active recipe precheck before starting inspection."
-                  Height="36"
-                  MinWidth="124"
-                  Margin="0,0,8,8" />
+                  Style="{DynamicResource Button.HmiCommand}"
+                  MinWidth="124" />
           <Button Content="Run Inspection"
                   Command="{Binding RunInspectionCommand}"
                   ToolTip="Run the simulator-backed inspection sequence through the Application use case."
-                  Height="36"
-                  MinWidth="132"
-                  Margin="0,0,8,8" />
+                  Style="{DynamicResource Button.HmiCommand}"
+                  MinWidth="132" />
           <Button Content="Stop"
                   Command="{Binding StopInspectionCommand}"
                   ToolTip="Request cancellation for the active inspection run."
-                  Height="36"
-                  MinWidth="76"
-                  Margin="0,0,8,8" />
+                  Style="{DynamicResource Button.HmiCommand}" />
         </WrapPanel>
       </controls:CommandBar.CommandContent>
     </controls:CommandBar>

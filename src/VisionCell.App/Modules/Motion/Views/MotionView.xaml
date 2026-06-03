@@ -20,15 +20,13 @@
             <Button Content="Refresh Snapshot"
                     Command="{Binding RefreshSnapshotCommand}"
                     ToolTip="Refresh controller, servo, axis, and command interlock state."
-                    Height="36"
-                    MinWidth="132"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}"
+                    MinWidth="132" />
             <Button Content="Refresh History"
                     Command="{Binding RefreshHistoryCommand}"
                     ToolTip="Reload recent motion command records from the local history store."
-                    Height="36"
-                    MinWidth="126"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}"
+                    MinWidth="126" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>

@@ -22,15 +22,13 @@
             <Button Content="Set Active"
                     Command="{Binding ActivateRecipeCommand}"
                     ToolTip="Set the selected indexed recipe as the active recipe."
-                    Height="36"
-                    MinWidth="112"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}"
+                    MinWidth="112" />
             <Button Content="Refresh Index"
                     Command="{Binding RefreshCommand}"
                     ToolTip="Reload the local SQLite recipe index."
-                    Height="36"
-                    MinWidth="132"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}"
+                    MinWidth="132" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>

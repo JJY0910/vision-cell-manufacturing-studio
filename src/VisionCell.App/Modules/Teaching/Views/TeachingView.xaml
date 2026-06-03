@@ -19,15 +19,11 @@
             <Button Content="Refresh"
                     Command="{Binding RefreshCommand}"
                     ToolTip="Reload saved teaching points and active recipe context."
-                    Height="36"
-                    MinWidth="96"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
             <Button Content="Go To"
                     Command="{Binding GoToSelectedCommand}"
                     ToolTip="Move to the selected teaching point through the Application motion boundary."
-                    Height="36"
-                    MinWidth="88"
-                    Margin="0,0,8,8" />
+                    Style="{DynamicResource Button.HmiCommand}" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
