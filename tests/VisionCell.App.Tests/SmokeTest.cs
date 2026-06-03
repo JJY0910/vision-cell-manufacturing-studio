@@ -98,6 +98,9 @@ public sealed class DashboardAndShellViewModelTests
 
         await equipment.RefreshAsync(CancellationToken.None);
         equipment.InjectEmergencyStopCommand.CanExecute(null).Should().BeTrue();
+        equipment.FaultInjectionDisabledReason.Should().Contain("available");
+        equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
+        equipment.IoSummaryText.Should().Contain("I/O forced: 0 /");
 
         await equipment.InjectEmergencyStopCommand.ExecuteAsync(null);
 
@@ -105,6 +108,8 @@ public sealed class DashboardAndShellViewModelTests
         equipment.SafetyStatus.Should().Contain("EStop On");
         equipment.IoBits.Should().Contain(bit => bit.Name == "DI_ESTOP_ON" && bit.Value && bit.IsForced);
         equipment.Faults.Should().Contain(fault => fault.Name == "EStop" && fault.IsActive);
+        equipment.FaultSummaryText.Should().Be("Active faults: 1 / 6");
+        equipment.IoSummaryText.Should().Contain("I/O forced: 1 /");
         equipment.Events.Should().Contain(systemEvent => systemEvent.EventType == "Fault Injection");
         alarmRecorder.Failures.Should().ContainSingle(failure => failure.ErrorCode.Code == "EQP-003");
 
@@ -113,6 +118,20 @@ public sealed class DashboardAndShellViewModelTests
         equipment.ModeStatus.Should().Be("Manual");
         equipment.SafetyStatus.Should().Contain("EStop Off");
         equipment.Faults.Should().Contain(fault => fault.Name == "EStop" && !fault.IsActive);
+        equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
+        equipment.IoSummaryText.Should().Contain("I/O forced: 0 /");
+    }
+
+    [Fact]
+    public void Equipment_FaultInjectionCommands_Should_Surface_Disabled_Reason_When_Disconnected()
+    {
+        var equipment = CreateEquipmentViewModel();
+
+        equipment.InjectEmergencyStopCommand.CanExecute(null).Should().BeFalse();
+        equipment.ClearAllFaultsCommand.CanExecute(null).Should().BeFalse();
+        equipment.FaultInjectionDisabledReason.Should().Be("Connect the simulator before injecting faults.");
+        equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
+        equipment.IoSummaryText.Should().Be("I/O forced: 0 / 0");
     }
 
     [Fact]
