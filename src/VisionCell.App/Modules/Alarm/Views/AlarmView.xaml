@@ -26,9 +26,9 @@
       </controls:CommandBar>
 
       <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,4">
-        <controls:KpiCard Title="Total Records"
+        <controls:KpiCard Title="Visible Records"
                           Value="{Binding Alarms.Count}"
-                          Detail="Recent alarm rows" />
+                          Detail="{Binding TotalAlarmDetail}" />
         <controls:KpiCard Title="Active"
                           Value="{Binding ActiveCount}"
                           Detail="{Binding AcknowledgedCount, StringFormat={}{0} acknowledged}" />
@@ -45,6 +45,7 @@
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
           <Grid>
@@ -59,12 +60,37 @@
                        HorizontalAlignment="Right"
                        Margin="16,0,0,0" />
           </Grid>
-          <controls:EmptyState Grid.Row="1"
+          <Grid Grid.Row="1" Margin="0,10,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="180" />
+              <ColumnDefinition Width="180" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Content="Active only"
+                      IsChecked="{Binding ShowActiveOnly}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,16,0" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding SeverityFilterOptions}"
+                      SelectedItem="{Binding SelectedSeverityFilter}"
+                      Margin="0,0,12,0" />
+            <ComboBox Grid.Column="2"
+                      ItemsSource="{Binding AreaFilterOptions}"
+                      SelectedItem="{Binding SelectedAreaFilter}"
+                      Margin="0,0,12,0" />
+            <TextBlock Grid.Column="3"
+                       Text="{Binding FilterSummaryText}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center" />
+          </Grid>
+          <controls:EmptyState Grid.Row="2"
                                HasItems="{Binding HasAlarms}"
                                Title="No Alarm Records"
                                Detail="{Binding StatusText}"
                                Margin="0,0,0,8" />
-          <ListView Grid.Row="2"
+          <ListView Grid.Row="3"
                     ItemsSource="{Binding Alarms}"
                     SelectedItem="{Binding SelectedAlarm}"
                     MinHeight="300"

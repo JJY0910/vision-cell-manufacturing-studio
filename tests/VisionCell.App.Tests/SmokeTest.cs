@@ -203,6 +203,70 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task Alarm_Filters_Should_Triage_By_Active_Severity_And_Area()
+    {
+        var activeCriticalMotion = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "MOT-003",
+            EquipmentAlarmSeverity.Critical,
+            EquipmentArea.Motion,
+            "Motion timeout.",
+            new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero));
+        var acknowledgedCriticalMotion = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "MOT-004",
+            EquipmentAlarmSeverity.Critical,
+            EquipmentArea.Motion,
+            "Motion warning acknowledged.",
+            new DateTimeOffset(2026, 6, 1, 12, 1, 0, TimeSpan.Zero),
+            acknowledgedAt: new DateTimeOffset(2026, 6, 1, 12, 2, 0, TimeSpan.Zero));
+        var activeWarningCamera = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "CAM-001",
+            EquipmentAlarmSeverity.Warning,
+            EquipmentArea.Camera,
+            "Camera not ready.",
+            new DateTimeOffset(2026, 6, 1, 12, 3, 0, TimeSpan.Zero));
+        var activeErrorInspection = new EquipmentAlarm(
+            Guid.NewGuid(),
+            "INS-001",
+            EquipmentAlarmSeverity.Error,
+            EquipmentArea.Inspection,
+            "Inspection failed.",
+            new DateTimeOffset(2026, 6, 1, 12, 4, 0, TimeSpan.Zero));
+        var viewModel = CreateAlarmViewModel(new FakeAlarmCenterUseCase(
+            activeCriticalMotion,
+            acknowledgedCriticalMotion,
+            activeWarningCamera,
+            activeErrorInspection));
+
+        await viewModel.RefreshAsync(CancellationToken.None);
+        viewModel.TotalAlarmCount.Should().Be(4);
+        viewModel.Alarms.Should().HaveCount(4);
+        viewModel.FilterSummaryText.Should().Contain("4 of 4 visible");
+
+        viewModel.ShowActiveOnly = true;
+        viewModel.Alarms.Should().HaveCount(3);
+        viewModel.AcknowledgedCount.Should().Be(0);
+
+        viewModel.SelectedSeverityFilter = nameof(EquipmentAlarmSeverity.Critical);
+        viewModel.SelectedAreaFilter = nameof(EquipmentArea.Motion);
+
+        viewModel.Alarms.Should().ContainSingle();
+        viewModel.SelectedAlarm.Should().NotBeNull();
+        viewModel.SelectedAlarm!.Id.Should().Be(activeCriticalMotion.Id);
+        viewModel.FilterSummaryText.Should().Contain("Active only");
+        viewModel.FilterSummaryText.Should().Contain("Severity Critical");
+        viewModel.FilterSummaryText.Should().Contain("Area Motion");
+
+        viewModel.SelectedSeverityFilter = "All";
+        viewModel.SelectedAreaFilter = nameof(EquipmentArea.Camera);
+
+        viewModel.Alarms.Should().ContainSingle();
+        viewModel.SelectedAlarm!.Id.Should().Be(activeWarningCamera.Id);
+    }
+
+    [Fact]
     public async Task AppServiceConfiguration_Should_Save_Recipe_Through_Registered_Library()
     {
         var root = Path.Combine(Path.GetTempPath(), "VisionCellAppTests", Guid.NewGuid().ToString("N"));
