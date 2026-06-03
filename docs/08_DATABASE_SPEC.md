@@ -143,6 +143,7 @@ Implementation note:
 - `VisionCell.Persistence` initializes `equipment_alarms` through migration id `006_equipment_alarms`.
 - `SqliteEquipmentAlarmRepository` implements `IEquipmentAlarmRepository` for save, latest-first list, and acknowledgement update.
 - Motion, Camera, Inspection, and result persistence failures can write alarm rows through Application `IEquipmentAlarmRecorder`.
+- `SqliteEquipmentIoTransitionRepository` implements `IEquipmentIoTransitionRepository` for simulator fault-injection I/O transition save and latest-first list.
 - `acknowledged_at` and `action_memo` are operator recovery state, not proof that a real controller alarm was reset.
 
 ### teaching_points
@@ -192,6 +193,31 @@ Implementation note:
 - `VisionCell.Persistence` initializes `schema_version`, `motion_command_history`, `teaching_points`, and `teaching_history` idempotently through `SqliteSchemaInitializer`.
 - `SqliteMotionCommandHistoryRepository` writes `MachineCommandRequest` and `MachineCommandResult` JSON with correlation ID and elapsed time.
 
+### io_transition_history
+
+```sql
+CREATE TABLE IF NOT EXISTS io_transition_history (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  address TEXT NOT NULL,
+  direction TEXT NOT NULL,
+  previous_value INTEGER NOT NULL,
+  current_value INTEGER NOT NULL,
+  previous_forced INTEGER NOT NULL,
+  current_forced INTEGER NOT NULL,
+  source TEXT NOT NULL,
+  correlation_id TEXT NULL,
+  operator_memo TEXT NULL,
+  changed_at TEXT NOT NULL
+);
+```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `io_transition_history` through migration id `007_io_transition_history`.
+- `SqliteEquipmentIoTransitionRepository` stores simulator fault-injection I/O bit transitions latest-first by `changed_at`.
+- This table does not represent real PLC scan polling, output-write audit, debounce timing, or safety relay validation.
+
 ## Migration Policy
 
 - Every schema change creates a new migration class/file.
@@ -208,6 +234,7 @@ Implementation note:
 - `IInspectionResultRepository`
 - `IMotionHistoryRepository`
 - `IEquipmentAlarmRepository`
+- `IEquipmentIoTransitionRepository`
 
 ## Data Retention
 

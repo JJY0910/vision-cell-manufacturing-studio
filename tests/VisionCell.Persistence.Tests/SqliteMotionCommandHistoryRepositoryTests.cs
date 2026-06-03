@@ -29,7 +29,7 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
         rows[0].ElapsedMs.Should().Be(42);
         rows[0].RequestJson.Should().Contain("Move Absolute");
         rows[0].CommandResultJson.Should().Contain("Success");
-        migrationCount.Should().Be(6);
+        migrationCount.Should().Be(7);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class SqliteMotionCommandHistoryRepositoryTests
         await database.SchemaInitializer.InitializeAsync(CancellationToken.None);
         var migrationCount = await database.CountRowsAsync("schema_version", CancellationToken.None);
 
-        migrationCount.Should().Be(6);
+        migrationCount.Should().Be(7);
     }
 
     [Fact]

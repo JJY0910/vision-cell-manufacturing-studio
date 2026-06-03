@@ -46,10 +46,10 @@ Priority:
 Date: 2026-06-02
 Source: Priority 4 I/O Monitor + Fault Injection
 Problem: EquipmentView can display simulator I/O and inject EStop, Door, AirPressure, Vacuum, CameraReady, and ServoAlarm faults, but no real PLC I/O history repository or bench hardware validation exists.
-Proposed improvement: Add persisted I/O transition history and a bench-only PLC adapter validation checklist after `RealEquipmentController` endpoint/profile details are confirmed.
+Proposed improvement: Add a bench-only PLC adapter validation checklist after `RealEquipmentController` endpoint/profile details are confirmed.
 Requirement impact: FR-044, FR-080, FR-081, FR-082, FR-083, FR-084, FR-184, FR-201, NFR-004, NFR-007
 Priority: P1
-Status: Simulator fault injection and WPF monitor baseline implemented; EquipmentView now surfaces active fault and forced I/O summaries. Real hardware validation remains follow-up work.
+Status: Simulator fault injection, WPF monitor baseline, active fault/forced I/O summaries, and simulator I/O transition persistence are implemented. Real hardware validation remains follow-up work.
 
 Date: 2026-06-01
 Source: Phase 1 WPF Shell / Dashboard implementation

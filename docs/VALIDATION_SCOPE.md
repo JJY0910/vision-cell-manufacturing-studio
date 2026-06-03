@@ -10,7 +10,7 @@
 - Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, and WPF AlarmView ViewModel state against simulator/Application failure paths.
 - Hardware Adapter Boundary validation covers interface contracts and fake adapter tests only.
 - App composition validation covers the virtual equipment runtime profile and rejects real-hardware profile selection until implementation and bench validation exist.
-- I/O Monitor and Fault Injection validation covers `VirtualEquipmentController`, Application fault injection use case, WPF `EquipmentViewModel`, active fault and forced I/O summaries, simulator I/O forced-state rows, interlock blocking, and Application alarm recorder calls.
+- I/O Monitor and Fault Injection validation covers `VirtualEquipmentController`, Application fault injection use case, WPF `EquipmentViewModel`, active fault and forced I/O summaries, simulator I/O forced-state rows, interlock blocking, Application alarm recorder calls, and SQLite persistence of simulator I/O transition history.
 - UI QA validation covers local WPF build/runtime loading, shared XAML resource resolution, ViewModel regression tests, static code-behind scans, and a five-second WPF launch smoke. The current HMI polish pass covers layout reachability, command tooltips, wrapping command forms, scrollable operator tables, Shell status chips, dark Event Log styling, and reusable `KpiCard` / `AxisCard` / `SequenceTimeline` / `IoBitIndicator` / `ImageViewport` / `RoiOverlayCanvas` / `ErrorBanner` / `CommandBar` / `RecipeEditorField` binding only in the local developer environment.
 
 ## Not Yet Validated
@@ -20,6 +20,7 @@
 - Alarm rows are produced from simulator/Application paths only; no real PLC/vendor alarm source or safety relay acknowledgement has been validated.
 - Hardware adapter contracts and runtime profile guards are defined, but no `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, or camera trigger implementation has been validated.
 - Fault injection is simulator-only; no real EStop circuit, door switch, vacuum sensor, air pressure switch, camera ready line, servo drive alarm, PLC output write, or safety relay reset path has been validated.
+- I/O transition history currently records simulator fault-injection changes only. Real PLC scan polling, output-write audit, line noise/debounce behavior, and retention policy are not validated.
 - No production calibration, metrology accuracy, takt-time, thermal, vibration, EMI, or long-duration burn-in validation has been performed.
 - Offline Debug Re-inspect currently prepares source lot/Recipe/judgment/cycle/defect/artifact context only. `Run Re-inspect` is intentionally disabled because historical replay runner, previous-vs-new comparison, and real sequence execution are not implemented or validated.
 - Offline Debug safe external artifact opening is implemented only for local deterministic overlay/height-map BMP artifact paths under the configured artifact root, with ViewModel tests using a fake viewer service. Real external viewer availability, OS file association behavior, network-share paths, customer-image formats, and shop-floor operator confirmation workflow have not been field validated.
