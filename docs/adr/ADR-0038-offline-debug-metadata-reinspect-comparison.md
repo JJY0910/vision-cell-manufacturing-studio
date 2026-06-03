@@ -19,6 +19,8 @@ The project still has no real equipment, and real camera/motion/vision sequence 
 - Do not call `InspectionRunUseCase` from Offline Debug.
 - Do not run live camera, motion, PLC, or vision sequence paths.
 
+2026-06-03 follow-up: ADR-0039 persists metadata comparison history in a separate table. It still does not persist a new `inspection_results` row or execute source-image replay.
+
 ## Consequences
 
 - Offline Debug now has an operator-visible `Run Re-inspect` comparison result.

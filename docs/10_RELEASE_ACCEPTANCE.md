@@ -38,7 +38,7 @@
 - [ ] 2D inspection detects at least two defect types.
 - [ ] 3D height map inspection detects at least one defect type.
 - [x] Inspection result persisted to SQLite.
-- [ ] Offline Debug loads result and re-inspects. Result browsing and metadata comparison are implemented; source-image replay and replay result persistence remain open.
+- [ ] Offline Debug loads result and re-inspects. Result browsing, metadata comparison, and metadata comparison history are implemented; source-image replay and new inspection-result replay persistence remain open.
 - [ ] CSV export works.
 - [ ] GitHub Actions build/test works.
 - [ ] At least 20 meaningful tests exist.

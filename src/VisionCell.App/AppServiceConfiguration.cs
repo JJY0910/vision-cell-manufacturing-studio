@@ -83,6 +83,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<SqliteEquipmentIoTransitionRepository>();
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
         services.AddSingleton<SqliteInspectionResultRepository>();
+        services.AddSingleton<SqliteInspectionReinspectComparisonRepository>();
         services.AddSingleton(_ => new FileSystemInspectionArtifactWriter(resolvedArtifactRootPath));
         services.AddSingleton<SqliteRecipeIndexRepository>();
         services.AddSingleton<SqliteTeachingPointRepository>();
@@ -97,6 +98,8 @@ public static class AppServiceConfiguration
         services.AddSingleton<IInspectionArtifactReader>(provider => provider.GetRequiredService<FileSystemInspectionArtifactWriter>());
         services.AddSingleton<IInspectionResultRepository>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
         services.AddSingleton<IInspectionResultReader>(provider => provider.GetRequiredService<SqliteInspectionResultRepository>());
+        services.AddSingleton<IInspectionReinspectComparisonRepository>(provider => provider.GetRequiredService<SqliteInspectionReinspectComparisonRepository>());
+        services.AddSingleton<IInspectionReinspectComparisonReader>(provider => provider.GetRequiredService<SqliteInspectionReinspectComparisonRepository>());
         services.AddSingleton<IRecipeIndexRepository>(provider => provider.GetRequiredService<SqliteRecipeIndexRepository>());
         services.AddSingleton<IRecipeDocumentStore>(provider => new JsonRecipeDocumentStore(
             recipeRootPath,
@@ -113,7 +116,8 @@ public static class AppServiceConfiguration
         services.AddSingleton<IEquipmentDashboardUseCase, EquipmentDashboardUseCase>();
         services.AddSingleton<IEquipmentFaultInjectionUseCase, EquipmentFaultInjectionUseCase>();
         services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
-        services.AddSingleton<IInspectionReinspectUseCase, InspectionReinspectUseCase>();
+        services.AddSingleton<IInspectionReinspectUseCase>(provider => new InspectionReinspectUseCase(
+            provider.GetRequiredService<IInspectionReinspectComparisonRepository>()));
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
         services.AddSingleton<IArtifactViewerService, ShellArtifactViewerService>();

@@ -27,7 +27,7 @@ public sealed class SqliteEquipmentAlarmRepositoryTests
         records[0].Message.Should().Be("Motion command timed out.");
         records[0].CorrelationId.Should().Be("corr-001");
         records[0].IsAcknowledged.Should().BeFalse();
-        migrationCount.Should().Be(7);
+        migrationCount.Should().Be(8);
     }
 
     [Fact]

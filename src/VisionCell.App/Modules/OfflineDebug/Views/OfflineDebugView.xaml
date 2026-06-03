@@ -175,6 +175,10 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding SelectedResult.SourceImagePath, StringFormat=Source: {0}, TargetNullValue=Source: -}"
                        Style="{DynamicResource Text.Status}"
@@ -203,6 +207,8 @@
 
           <Grid Grid.Row="3" Margin="0,8,0,0">
             <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
@@ -302,6 +308,40 @@
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
+            <TextBlock Grid.Row="11"
+                       Text="Re-inspect History"
+                       Style="{DynamicResource Text.SectionHeader}"
+                       Margin="0,8,0,4" />
+            <Grid Grid.Row="12">
+              <ListView ItemsSource="{Binding ReinspectComparisons}"
+                        MinHeight="120"
+                        Style="{DynamicResource ListView.HmiGrid}">
+                <ListView.View>
+                  <GridView>
+                    <GridViewColumn Header="Compared" DisplayMemberBinding="{Binding ComparedAtText}" Width="150" />
+                    <GridViewColumn Header="Lot" DisplayMemberBinding="{Binding LotId}" Width="150" />
+                    <GridViewColumn Header="Recipe" DisplayMemberBinding="{Binding RecipeText}" Width="150" />
+                    <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Status}" Width="100" />
+                    <GridViewColumn Header="Judge" DisplayMemberBinding="{Binding JudgmentTransition}" Width="120" />
+                    <GridViewColumn Header="Defects" DisplayMemberBinding="{Binding DefectTransition}" Width="90" />
+                    <GridViewColumn Header="Cycle" DisplayMemberBinding="{Binding CycleTransition}" Width="160" />
+                    <GridViewColumn Header="Persistence" DisplayMemberBinding="{Binding PersistenceStatus}" Width="220" />
+                    <GridViewColumn Header="Message" Width="420">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding Message}"
+                                     TextWrapping="Wrap"
+                                     Style="{DynamicResource Text.Status}" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                  </GridView>
+                </ListView.View>
+              </ListView>
+              <controls:EmptyState HasItems="{Binding HasReinspectComparisons}"
+                                   Title="No Re-inspect History"
+                                   Detail="Run Re-inspect to store metadata comparison history." />
+            </Grid>
           </Grid>
 
           <Grid Grid.Row="4" Margin="0,8,0,0">

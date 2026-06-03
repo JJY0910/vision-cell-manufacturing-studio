@@ -122,6 +122,36 @@ Implementation note:
 - Safe external-open preparation resolves only supported overlay/height-map BMP artifact paths under the configured artifact root; rooted paths, traversal, missing files, not-recorded paths, and unsupported artifact types return operator-visible statuses instead of launching a viewer.
 - The columns remain nullable so failed or legacy partial records can still be represented without a destructive migration.
 
+### inspection_reinspect_comparisons
+
+```sql
+CREATE TABLE IF NOT EXISTS inspection_reinspect_comparisons (
+  id TEXT PRIMARY KEY,
+  source_result_id TEXT NOT NULL,
+  replay_correlation_id TEXT NOT NULL,
+  lot_id TEXT NOT NULL,
+  recipe_id TEXT NOT NULL,
+  recipe_version TEXT NOT NULL,
+  previous_judgment TEXT NOT NULL,
+  replayed_judgment TEXT NOT NULL,
+  previous_defect_count INTEGER NOT NULL,
+  replayed_defect_count INTEGER NOT NULL,
+  previous_cycle_time_ms INTEGER NOT NULL,
+  replayed_cycle_time_ms INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  compared_at TEXT NOT NULL,
+  persistence_status TEXT NOT NULL,
+  message TEXT NOT NULL,
+  FOREIGN KEY(source_result_id) REFERENCES inspection_results(id)
+);
+```
+
+Implementation note:
+
+- `VisionCell.Persistence` initializes `inspection_reinspect_comparisons` through migration id `008_inspection_reinspect_comparisons`.
+- `SqliteInspectionReinspectComparisonRepository` implements `IInspectionReinspectComparisonRepository` and `IInspectionReinspectComparisonReader`.
+- The table stores Offline Debug metadata comparison history only. It does not claim a new `inspection_results` row, source-image replay, or live camera/motion/vision sequence execution.
+
 ### equipment_alarms
 
 ```sql
