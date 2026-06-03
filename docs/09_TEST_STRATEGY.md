@@ -105,6 +105,7 @@ tests/VisionCell.App.Tests
 - Navigation updates selected screen
 - Priority HMI screens use the shared `CommandBar` title/command surface so Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, and Alarm keep a consistent operator header.
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
+- Equipment fault injection buttons use the shared compact HMI command style and avoid one-off height/margin values.
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
 - EquipmentView reads recent I/O transition history through the Application repository port and displays empty/non-empty states
 - Bench PLC I/O validation uses `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as a manual evidence gate for future adapter work; automated tests do not prove real PLC wiring, safety relay behavior, or output-write safety.
