@@ -85,6 +85,8 @@ Simulator must support:
 
 Current simulator fault injection is exposed through `IEquipmentFaultInjector` and `EquipmentFaultInjectionUseCase`. It is a simulator diagnostics path, not a real PLC or safety relay control path.
 
+Successful simulator fault injection compares I/O snapshots before and after the command and persists changed bit transitions through `IEquipmentIoTransitionRepository`. Stored transition rows include bit name, address, direction, previous/current value, previous/current forced state, source command, correlation ID, operator memo, and timestamp. This is not PLC scan polling and does not validate real safety wiring.
+
 ## Hardware Adapter Boundary
 
 Future real hardware integration must stay behind `IEquipmentController` and the adapter contracts in `VisionCell.Equipment.Hardware`.

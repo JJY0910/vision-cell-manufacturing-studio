@@ -25,6 +25,7 @@ using VisionCell.Equipment.Cameras;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Faults;
 using VisionCell.Persistence.Alarms;
+using VisionCell.Persistence.Equipment;
 using VisionCell.Persistence.Inspection;
 using VisionCell.Persistence.Motion;
 using VisionCell.Persistence.Recipes;
@@ -78,6 +79,7 @@ public static class AppServiceConfiguration
         services.AddSingleton(_ => new SqliteConnectionFactory(databasePath));
         services.AddSingleton<SqliteSchemaInitializer>();
         services.AddSingleton<SqliteEquipmentAlarmRepository>();
+        services.AddSingleton<SqliteEquipmentIoTransitionRepository>();
         services.AddSingleton<SqliteMotionCommandHistoryRepository>();
         services.AddSingleton<SqliteInspectionResultRepository>();
         services.AddSingleton(_ => new FileSystemInspectionArtifactWriter(resolvedArtifactRootPath));
@@ -86,6 +88,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<SqliteTeachingHistoryRepository>();
         services.AddSingleton<IEquipmentAlarmRepository>(provider => provider.GetRequiredService<SqliteEquipmentAlarmRepository>());
         services.AddSingleton<IEquipmentAlarmRecorder, EquipmentAlarmRecorder>();
+        services.AddSingleton<IEquipmentIoTransitionRepository>(provider => provider.GetRequiredService<SqliteEquipmentIoTransitionRepository>());
         services.AddSingleton<IAlarmCenterUseCase, AlarmCenterUseCase>();
         services.AddSingleton<IMotionCommandHistoryRepository>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());
         services.AddSingleton<IMotionCommandHistoryReader>(provider => provider.GetRequiredService<SqliteMotionCommandHistoryRepository>());

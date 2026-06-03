@@ -37,6 +37,7 @@ using VisionCell.Motion.Commands;
 using VisionCell.Motion.Teaching;
 using VisionCell.Persistence.Inspection;
 using VisionCell.Persistence.Alarms;
+using VisionCell.Persistence.Equipment;
 using VisionCell.Simulator;
 using VisionCell.Vision.Inspection;
 using Xunit;
@@ -249,6 +250,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IEquipmentAlarmRecorder>()
                 .Should()
                 .BeOfType<EquipmentAlarmRecorder>();
+            provider.GetRequiredService<IEquipmentIoTransitionRepository>()
+                .Should()
+                .BeOfType<SqliteEquipmentIoTransitionRepository>();
             provider.GetRequiredService<IInspectionResultRepository>()
                 .Should()
                 .BeOfType<SqliteInspectionResultRepository>();

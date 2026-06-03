@@ -6,6 +6,7 @@ using VisionCell.Core.Events;
 using VisionCell.Core.Primitives;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Faults;
+using VisionCell.Equipment.Io;
 
 namespace VisionCell.Application.Equipment;
 
@@ -14,17 +15,20 @@ public sealed class EquipmentFaultInjectionUseCase : IEquipmentFaultInjectionUse
     private readonly IEquipmentFaultInjector _faultInjector;
     private readonly IEquipmentController _controller;
     private readonly IEquipmentAlarmRecorder _alarmRecorder;
+    private readonly IEquipmentIoTransitionRepository _ioTransitionRepository;
     private readonly Func<DateTimeOffset> _clock;
 
     public EquipmentFaultInjectionUseCase(
         IEquipmentFaultInjector faultInjector,
         IEquipmentController controller,
         IEquipmentAlarmRecorder? alarmRecorder = null,
+        IEquipmentIoTransitionRepository? ioTransitionRepository = null,
         Func<DateTimeOffset>? clock = null)
     {
         _faultInjector = faultInjector ?? throw new ArgumentNullException(nameof(faultInjector));
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _alarmRecorder = alarmRecorder ?? NoopEquipmentAlarmRecorder.Instance;
+        _ioTransitionRepository = ioTransitionRepository ?? NoopEquipmentIoTransitionRepository.Instance;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
@@ -41,6 +45,7 @@ public sealed class EquipmentFaultInjectionUseCase : IEquipmentFaultInjectionUse
             request,
             command.OperatorMemo);
 
+        var beforeSnapshot = await TryGetSnapshotAsync(command.SnapshotTimeout, cancellationToken).ConfigureAwait(false);
         var result = await _faultInjector.ApplyFaultAsync(faultRequest, cancellationToken).ConfigureAwait(false);
         if (result.IsSuccess && command.IsActive)
         {
@@ -48,6 +53,16 @@ public sealed class EquipmentFaultInjectionUseCase : IEquipmentFaultInjectionUse
         }
 
         var snapshotResult = await RefreshAsync(command.SnapshotTimeout, cancellationToken).ConfigureAwait(false);
+        if (result.IsSuccess && beforeSnapshot is not null && snapshotResult.Snapshot is not null)
+        {
+            await RecordIoTransitionsAsync(
+                command,
+                request.CorrelationId.ToString(),
+                beforeSnapshot.Io,
+                snapshotResult.Snapshot.Io,
+                cancellationToken).ConfigureAwait(false);
+        }
+
         return new EquipmentFaultInjectionResult(
             request,
             result,
@@ -98,6 +113,68 @@ public sealed class EquipmentFaultInjectionUseCase : IEquipmentFaultInjectionUse
             return new EquipmentDashboardSnapshotResult(
                 null,
                 SystemEvent.Create(SystemEventSeverity.Alarm, "Equipment", "SnapshotTimeout", "Snapshot refresh timed out."));
+        }
+    }
+
+    private async Task<EquipmentSnapshot?> TryGetSnapshotAsync(
+        TimeSpan snapshotTimeout,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _controller.GetSnapshotAsync(snapshotTimeout, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    private async Task RecordIoTransitionsAsync(
+        EquipmentFaultInjectionCommand command,
+        string correlationId,
+        IoSnapshot before,
+        IoSnapshot after,
+        CancellationToken cancellationToken)
+    {
+        foreach (var transition in CreateTransitions(command, correlationId, before, after))
+        {
+            await _ioTransitionRepository.SaveAsync(transition, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static IEnumerable<IoTransitionRecord> CreateTransitions(
+        EquipmentFaultInjectionCommand command,
+        string correlationId,
+        IoSnapshot before,
+        IoSnapshot after)
+    {
+        var beforeByName = before.Bits.ToDictionary(bit => bit.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var current in after.Bits)
+        {
+            if (!beforeByName.TryGetValue(current.Name, out var previous))
+            {
+                continue;
+            }
+
+            if (previous.Value == current.Value && previous.IsForced == current.IsForced)
+            {
+                continue;
+            }
+
+            yield return new IoTransitionRecord(
+                Guid.NewGuid(),
+                current.Name,
+                current.Address,
+                current.Direction,
+                previous.Value,
+                current.Value,
+                previous.IsForced,
+                current.IsForced,
+                after.UpdatedAt,
+                FormatCommand(command),
+                correlationId,
+                command.OperatorMemo);
         }
     }
 

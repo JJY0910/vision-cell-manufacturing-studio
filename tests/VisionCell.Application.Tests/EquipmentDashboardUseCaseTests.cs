@@ -96,7 +96,12 @@ public sealed class EquipmentDashboardUseCaseTests
     [Fact]
     public async Task FaultInjectionUseCase_Should_Record_Alarm_And_Return_Refreshed_Snapshot()
     {
-        var controller = new FakeEquipmentController(CreateSnapshot(connected: true));
+        var controller = new FakeEquipmentController(CreateSnapshot(
+            connected: true,
+            ioBits:
+            [
+                new IoBitSnapshot("DI_AIR_PRESSURE_OK", "X002", IoBitDirection.Input, true, false)
+            ]));
         var faultInjector = new FakeFaultInjector
         {
             Handler = (request, _) =>
@@ -104,7 +109,11 @@ public sealed class EquipmentDashboardUseCaseTests
                 controller.Snapshot = CreateSnapshot(
                     connected: true,
                     mode: MachineMode.Alarm,
-                    alarm: new AlarmSnapshot(ErrorCode.AirPressureLow, "Air pressure low fault is active.", DateTimeOffset.UtcNow));
+                    alarm: new AlarmSnapshot(ErrorCode.AirPressureLow, "Air pressure low fault is active.", DateTimeOffset.UtcNow),
+                    ioBits:
+                    [
+                        new IoBitSnapshot("DI_AIR_PRESSURE_OK", "X002", IoBitDirection.Input, false, true)
+                    ]);
                 return Task.FromResult(MachineCommandResult.Success(
                     "Air Pressure Low fault injected.",
                     TimeSpan.FromMilliseconds(7),
@@ -112,7 +121,8 @@ public sealed class EquipmentDashboardUseCaseTests
             }
         };
         var alarmRecorder = new FakeEquipmentAlarmRecorder();
-        var useCase = new EquipmentFaultInjectionUseCase(faultInjector, controller, alarmRecorder);
+        var transitionRepository = new FakeEquipmentIoTransitionRepository();
+        var useCase = new EquipmentFaultInjectionUseCase(faultInjector, controller, alarmRecorder, transitionRepository);
 
         var result = await useCase.ApplyAsync(
             new EquipmentFaultInjectionCommand(
@@ -132,6 +142,16 @@ public sealed class EquipmentDashboardUseCaseTests
             failure.ErrorCode.Code == "EQP-008" &&
             failure.Area == EquipmentArea.Safety &&
             failure.CorrelationId == result.CommandResult.CorrelationId.ToString());
+        transitionRepository.Transitions.Should().ContainSingle(transition =>
+            transition.Name == "DI_AIR_PRESSURE_OK" &&
+            transition.Address == "X002" &&
+            transition.PreviousValue &&
+            !transition.CurrentValue &&
+            !transition.PreviousForced &&
+            transition.CurrentForced &&
+            transition.Source == "Fault Injection Air Pressure Low On" &&
+            transition.CorrelationId == result.CommandResult.CorrelationId.ToString() &&
+            transition.OperatorMemo == "Air pressure input forced low.");
     }
 
     private static EquipmentDashboardUseCase CreateUseCase(FakeEquipmentController controller)
@@ -166,7 +186,8 @@ public sealed class EquipmentDashboardUseCaseTests
         bool connected = true,
         MachineMode mode = MachineMode.Manual,
         bool servoOn = true,
-        AlarmSnapshot? alarm = null)
+        AlarmSnapshot? alarm = null,
+        IReadOnlyList<IoBitSnapshot>? ioBits = null)
     {
         var timestamp = new DateTimeOffset(2026, 6, 2, 9, 0, 0, TimeSpan.Zero);
         return new EquipmentSnapshot(
@@ -174,7 +195,7 @@ public sealed class EquipmentDashboardUseCaseTests
             connected ? mode : MachineMode.Offline,
             new SafetySnapshot(DoorClosed: true, EmergencyStopActive: false, AirPressureOk: true, VacuumOn: true, ServoEnabled: servoOn),
             AxisDefaults.CreatePowerOffAxes().Select(axis => axis with { ServoOn = servoOn }).ToArray(),
-            new IoSnapshot(Array.Empty<IoBitSnapshot>(), timestamp),
+            new IoSnapshot(ioBits ?? Array.Empty<IoBitSnapshot>(), timestamp),
             new CameraSnapshot(connected, "Virtual 3D camera", timestamp),
             alarm,
             timestamp);
@@ -271,6 +292,22 @@ public sealed class EquipmentDashboardUseCaseTests
         {
             Failures.Add((errorCode, area, message, correlationId));
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeEquipmentIoTransitionRepository : IEquipmentIoTransitionRepository
+    {
+        public List<IoTransitionRecord> Transitions { get; } = new();
+
+        public Task SaveAsync(IoTransitionRecord transition, CancellationToken cancellationToken)
+        {
+            Transitions.Add(transition);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<IoTransitionRecord>> ListRecentAsync(int limit, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<IoTransitionRecord>>(Transitions.Take(limit).ToArray());
         }
     }
 }

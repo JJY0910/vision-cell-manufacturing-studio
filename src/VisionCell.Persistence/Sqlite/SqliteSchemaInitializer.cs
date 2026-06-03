@@ -10,6 +10,7 @@ public sealed class SqliteSchemaInitializer
     private const string RecipesMigrationId = "004_recipes";
     private const string InspectionResultsMigrationId = "005_inspection_results";
     private const string EquipmentAlarmsMigrationId = "006_equipment_alarms";
+    private const string IoTransitionHistoryMigrationId = "007_io_transition_history";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -33,6 +34,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, InspectionResultsMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateEquipmentAlarmsTableAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, EquipmentAlarmsMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateIoTransitionHistoryTableAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, IoTransitionHistoryMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -209,6 +212,35 @@ public sealed class SqliteSchemaInitializer
 
             CREATE INDEX IF NOT EXISTS ix_equipment_alarms_acknowledged_at
               ON equipment_alarms (acknowledged_at);
+            """;
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateIoTransitionHistoryTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS io_transition_history (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              address TEXT NOT NULL,
+              direction TEXT NOT NULL,
+              previous_value INTEGER NOT NULL,
+              current_value INTEGER NOT NULL,
+              previous_forced INTEGER NOT NULL,
+              current_forced INTEGER NOT NULL,
+              source TEXT NOT NULL,
+              correlation_id TEXT NULL,
+              operator_memo TEXT NULL,
+              changed_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ix_io_transition_history_changed_at
+              ON io_transition_history (changed_at DESC);
+
+            CREATE INDEX IF NOT EXISTS ix_io_transition_history_name
+              ON io_transition_history (name);
             """;
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
