@@ -247,7 +247,7 @@ Implementation status:
 Implementation status:
 
 - `ReportsView` currently shows an operator-readable scope state instead of a blank page.
-- Inspection result summary and CSV export remain the dedicated FR-240 Reports MVP follow-up.
+- CSV export and lot summary remain the dedicated FR-203/FR-204 Reports MVP follow-up.
 
 ### SettingsView
 

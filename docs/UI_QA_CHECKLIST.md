@@ -67,12 +67,12 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Artifact preview surfaces remain available.
 - [x] Open overlay, open height-map, load artifacts, and prepare re-inspect commands expose selection-required tooltips.
 - [x] Defect rows use an empty-state panel when a selected result has no defects.
-- [x] Re-inspect remains a preparation boundary; actual sequence replay is a follow-up.
+- [x] Re-inspect metadata comparison is visible; source-image replay and replay result persistence remain follow-up work.
 
 ## Reports
 
 - [x] Reports is no longer blank.
-- [x] Reports clearly states that summary/export is the next FR-240 slice.
+- [x] Reports clearly states that CSV export and lot summary belong to FR-203/FR-204 follow-up work.
 
 ## Settings
 
