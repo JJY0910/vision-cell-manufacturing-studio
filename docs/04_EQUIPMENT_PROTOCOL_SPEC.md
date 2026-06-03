@@ -98,6 +98,8 @@ Future real hardware integration must stay behind `IEquipmentController` and the
 
 No vendor SDK object, PLC frame, raw fieldbus payload, or camera buffer handle may cross into WPF or Application use cases.
 
+Bench PLC I/O validation is governed by `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md`. The checklist must be completed before any future adapter is treated as validated, and it does not weaken the simulator-only status of the current fault-injection path.
+
 ## Snapshot Update Policy
 
 - UI refresh target: 250ms~1000ms

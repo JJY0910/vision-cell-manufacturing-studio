@@ -74,6 +74,8 @@ The future controller must be enabled through an explicit `EquipmentRuntimeProfi
 6. Alarm and recovery validation, including EStop and servo alarm handling.
 7. Long-duration stability, thermal, vibration, and operator HMI checks.
 
+The PLC and remote I/O portion of phases 2, 3, and any later output-write checks must follow `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md`. The checklist is evidence-gating only; it does not enable `RealHardware` mode or add a real PLC adapter.
+
 ## Not Validated
 
 - No real hardware connection has been performed.
