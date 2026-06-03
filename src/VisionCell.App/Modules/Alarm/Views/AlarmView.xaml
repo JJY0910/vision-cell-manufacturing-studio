@@ -102,8 +102,24 @@
                 <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="90" />
                 <GridViewColumn Header="Severity" DisplayMemberBinding="{Binding Severity}" Width="94" />
                 <GridViewColumn Header="Area" DisplayMemberBinding="{Binding Area}" Width="110" />
-                <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="420" />
-                <GridViewColumn Header="Correlation" DisplayMemberBinding="{Binding CorrelationId}" Width="260" />
+                <GridViewColumn Header="Message" Width="420">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Message}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="Correlation" Width="260">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding CorrelationId}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
                 <GridViewColumn Header="Acknowledged" DisplayMemberBinding="{Binding AcknowledgedAtText}" Width="150" />
               </GridView>
             </ListView.View>

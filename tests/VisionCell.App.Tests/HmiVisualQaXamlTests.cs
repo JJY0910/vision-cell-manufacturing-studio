@@ -120,6 +120,37 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Long_Text_GridView_Columns_Should_Wrap()
+    {
+        var expected = new[]
+        {
+            new WrappedGridColumn("Modules/Motion/Views/MotionView.xaml", "Message", "Message"),
+            new WrappedGridColumn("Modules/Equipment/Views/EquipmentView.xaml", "Message", "Message"),
+            new WrappedGridColumn("Modules/Equipment/Views/EquipmentView.xaml", "Source", "Source"),
+            new WrappedGridColumn("Modules/Recipe/Views/RecipeView.xaml", "Summary", "ValidationSummaryText"),
+            new WrappedGridColumn("Modules/OfflineDebug/Views/OfflineDebugView.xaml", "Overlay", "OverlayImagePath"),
+            new WrappedGridColumn("Modules/OfflineDebug/Views/OfflineDebugView.xaml", "Artifacts", "ArtifactStatusSummary"),
+            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Message", "Message"),
+            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Correlation", "CorrelationId")
+        };
+
+        foreach (var expectedColumn in expected)
+        {
+            var xaml = XDocument.Load(GetRepoPath(new[] { "src", "VisionCell.App" }
+                .Concat(expectedColumn.RelativePath.Split('/')).ToArray()));
+            var columns = xaml
+                .Descendants(Wpf + "GridViewColumn")
+                .Where(column =>
+                    column.Attribute("Header")?.Value == expectedColumn.Header &&
+                    column.ToString().Contains($"{{Binding {expectedColumn.BindingPath}", StringComparison.Ordinal))
+                .ToArray();
+
+            columns.Should().NotBeEmpty($"{expectedColumn.RelativePath} should contain '{expectedColumn.Header}' bound to '{expectedColumn.BindingPath}'");
+            columns.Should().OnlyContain(column => ColumnHasWrappingTextBlock(column), $"{expectedColumn.RelativePath} long text column '{expectedColumn.Header}' should wrap");
+        }
+    }
+
+    [Fact]
     public void Module_CodeBehind_Should_Stay_Initialization_Only()
     {
         var modulesRoot = GetModulesRoot();
@@ -347,4 +378,15 @@ public sealed class HmiVisualQaXamlTests
             "Modules/Settings/Views/SettingsView.xaml"
         ];
     }
+
+    private static bool ColumnHasWrappingTextBlock(XElement column)
+    {
+        return column.Descendants(Wpf + "TextBlock")
+            .Any(textBlock => textBlock.Attribute("TextWrapping")?.Value == "Wrap");
+    }
+
+    private sealed record WrappedGridColumn(
+        string RelativePath,
+        string Header,
+        string BindingPath);
 }
