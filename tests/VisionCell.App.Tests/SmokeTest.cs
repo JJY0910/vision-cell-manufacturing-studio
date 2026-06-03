@@ -524,6 +524,18 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.PreparedReinspectSummary.Should().Contain(result.LotId);
         offlineDebug.PreparedReinspectArtifactSummary.Should().Contain(result.OverlayImagePath);
         offlineDebug.ReinspectRunDisabledReason.Should().Contain("metadata comparison");
+        offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
+            item.Step == "Metadata comparison" &&
+            item.State == "Available");
+        offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
+            item.Step == "Source-image replay" &&
+            item.State == "Not implemented");
+        offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
+            item.Step == "Replay persistence" &&
+            item.State == "Not implemented");
+        offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
+            item.Step == "Real sequence execution" &&
+            item.State == "Not validated");
         offlineDebug.RunReinspectCommand.CanExecute(null).Should().BeTrue();
         await offlineDebug.RunReinspectAsync(CancellationToken.None);
         offlineDebug.ReinspectComparison.Should().NotBeNull();

@@ -47,7 +47,7 @@ public sealed class HmiVisualQaXamlTests
         {
             ["Modules/Teaching/Views/TeachingView.xaml"] = new[] { "No Teaching Points", "No Selected Point History" },
             ["Modules/Recipe/Views/RecipeView.xaml"] = new[] { "No Recipe Index Records" },
-            ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect" },
+            ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect", "Re-inspect Readiness" },
             ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
@@ -223,6 +223,7 @@ public sealed class HmiVisualQaXamlTests
         runButton.Attribute("ToolTip")?.Value.Should().Be("{Binding ReinspectRunDisabledReason}");
         offlineDebug.ToString().Should().Contain("PreparedReinspectSummary");
         offlineDebug.ToString().Should().Contain("PreparedReinspectArtifactSummary");
+        offlineDebug.ToString().Should().Contain("ReinspectReadinessItems");
         offlineDebug.ToString().Should().Contain("ReinspectComparisonSummary");
         offlineDebug.ToString().Should().Contain("ReinspectComparisonDetail");
     }

@@ -6,7 +6,7 @@
 - GitHub Actions `Windows WPF Build and Test` runs restore/build/test on `windows-latest`.
 - WPF launch smoke verifies that `VisionCell.App.exe` starts and remains alive for five seconds.
 - Equipment behavior is validated against `VirtualEquipmentController`, virtual camera, deterministic 2D/3D vision engines, SQLite repositories, and local file-system artifact storage.
-- Offline Debug validation covers SQLite result reads, relative artifact metadata checks, deterministic BMP preview decoding, safe external artifact open preparation, Re-inspect preparation state, and Application metadata comparison results.
+- Offline Debug validation covers SQLite result reads, relative artifact metadata checks, deterministic BMP preview decoding, safe external artifact open preparation, Re-inspect preparation state, read-only Re-inspect readiness boundary rows, and Application metadata comparison results.
 - Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, selected alarm recovery guidance display, and WPF AlarmView ViewModel state against simulator/Application failure paths.
 - Hardware Adapter Boundary validation covers interface contracts and fake adapter tests only.
 - Bench PLC I/O validation is documented in `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as an evidence gate for future work; no bench run has been executed in this environment.

@@ -210,6 +210,10 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding ArtifactPreviewStatusText}"
                        Style="{DynamicResource Text.Status}"
@@ -255,11 +259,45 @@
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
             <TextBlock Grid.Row="7"
+                       Text="Re-inspect Readiness"
+                       Style="{DynamicResource Text.SectionHeader}"
+                       Margin="0,8,0,4" />
+            <ListView Grid.Row="8"
+                      ItemsSource="{Binding ReinspectReadinessItems}"
+                      MinHeight="120"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Boundary" Width="190">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Step}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.StatusStrong}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                  <GridViewColumn Header="State"
+                                  DisplayMemberBinding="{Binding State}"
+                                  Width="130" />
+                  <GridViewColumn Header="Operator Note" Width="500">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Detail}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                </GridView>
+              </ListView.View>
+            </ListView>
+            <TextBlock Grid.Row="9"
                        Text="{Binding ReinspectComparisonSummary}"
                        Style="{DynamicResource Text.StatusStrong}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
-            <TextBlock Grid.Row="8"
+            <TextBlock Grid.Row="10"
                        Text="{Binding ReinspectComparisonDetail}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
