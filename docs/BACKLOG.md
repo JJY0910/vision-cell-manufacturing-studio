@@ -426,7 +426,7 @@ Problem: The WPF shell could launch as a smaller centered window and Dashboard c
 Proposed improvement: Maximize `ShellWindow` on startup, keep the 1366x768 minimum, constrain the workspace/nav regions, and move Dashboard commands into a wrapping row below the page title.
 Requirement impact: FR-001, FR-003, FR-006, NFR-001, NFR-009, NFR-010
 Priority: P1
-Status: Addressed by the startup/layout QA slice plus Dashboard/Equipment shared `CommandBar` alignment, shared CommandBar action button styling, and Equipment compact fault-button styling; broader physical HMI panel review remains follow-up work.
+Status: Addressed by the startup/layout QA slice plus Dashboard/Equipment shared `CommandBar` alignment, shared CommandBar action button styling, secondary action button styling, and Equipment compact fault-button styling; broader physical HMI panel review remains follow-up work.
 
 Date: 2026-06-03
 Source: HMI visual QA and empty-state polish

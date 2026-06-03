@@ -97,7 +97,7 @@
                     Content="Acknowledge"
                     Command="{Binding AcknowledgeCommand}"
                     ToolTip="{Binding AcknowledgeDisabledReason}"
-                    Height="32"
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
                     MinWidth="112" />
             <TextBlock Text="Recovery Detail" Style="{DynamicResource Text.CardTitle}" />
           </DockPanel>
