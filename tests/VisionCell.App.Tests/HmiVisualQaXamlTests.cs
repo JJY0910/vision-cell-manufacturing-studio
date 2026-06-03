@@ -170,6 +170,7 @@ public sealed class HmiVisualQaXamlTests
         equipment.Should().Contain("IoSummaryText");
         equipment.Should().Contain("IoTransitions");
         equipment.Should().Contain("IoTransitionStatus");
+        equipment.Should().Contain("RefreshIoTransitionHistoryCommand");
 
         var alarm = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Alarm", "Views", "AlarmView.xaml"));
         alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");

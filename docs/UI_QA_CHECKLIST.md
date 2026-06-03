@@ -19,6 +19,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Fault State table uses the shared dark GridView style.
 - [x] I/O Monitor uses an empty-state panel before a snapshot is available.
 - [x] Fault Events uses an empty-state panel before event rows are available.
+- [x] I/O Transitions exposes visible status and a refresh action.
 
 ## Motion
 

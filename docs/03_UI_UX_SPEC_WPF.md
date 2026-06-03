@@ -123,6 +123,7 @@ Implementation status:
 - `EquipmentView` uses the shared `CommandBar` for refresh/snapshot status and displays controller mode, safety/interlock summary, camera/alarm status, active fault count, forced I/O count, I/O monitor rows, fault state rows, recent fault events, and recent read-only I/O transition history.
 - Equipment fault-injection buttons use the shared compact HMI command style so EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, and Clear All controls keep consistent operator sizing and disabled tooltips.
 - Simulator fault injection for EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, and Clear All flows through `IEquipmentFaultInjectionUseCase`; WPF does not call simulator internals directly.
+- I/O transition history exposes a manual refresh action and visible latest-row status while remaining simulator-only.
 
 ### MotionView
 
