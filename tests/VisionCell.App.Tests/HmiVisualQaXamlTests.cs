@@ -51,7 +51,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
-            ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured" },
+            ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured", "FR-203", "FR-204" },
             ["Modules/Settings/Views/SettingsView.xaml"] = new[] { "Runtime Scope" }
         };
 
@@ -88,6 +88,16 @@ public sealed class HmiVisualQaXamlTests
             xaml.Should().Contain("<controls:CommandBar", $"'{relativePath}' should use the shared HMI command surface");
             xaml.Should().Contain($"Title=\"{title}\"", $"'{relativePath}' should expose the expected operator title");
         }
+    }
+
+    [Fact]
+    public void Reports_Scope_State_Should_Not_Regress_To_Settings_Requirement()
+    {
+        var reports = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Reports", "Views", "ReportsView.xaml"));
+
+        reports.Should().Contain("FR-203");
+        reports.Should().Contain("FR-204");
+        reports.Should().NotContain("FR-240");
     }
 
     [Fact]

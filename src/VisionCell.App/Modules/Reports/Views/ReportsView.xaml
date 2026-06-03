@@ -11,12 +11,12 @@
       </Grid.RowDefinitions>
 
       <controls:CommandBar Title="Reports"
-                           StatusText="Inspection report summary/export is scheduled as the next FR-240 slice." />
+                           StatusText="CSV export and lot summary remain scoped to FR-203/FR-204." />
 
       <Border Grid.Row="1" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
         <controls:EmptyState HasItems="False"
                              Title="Reports Export Not Configured"
-                             Detail="Use Offline Debug to review persisted inspection results until the CSV export and summary report workflow is implemented." />
+                             Detail="Use Offline Debug to review persisted inspection results until the FR-203 CSV export and FR-204 lot summary workflow is implemented." />
       </Border>
     </Grid>
   </ScrollViewer>
