@@ -16,6 +16,8 @@
   <Color x:Key="Color.Moving">#3B82F6</Color>
   <Color x:Key="Color.Disabled">#6B7280</Color>
   <Color x:Key="Color.NavSelected">#334155</Color>
+  <Color x:Key="Color.NavHover">#1F3A5F</Color>
+  <Color x:Key="Color.NavFocus">#2563EB</Color>
   <Color x:Key="Color.PanelAlt">#1E293B</Color>
 
   <SolidColorBrush x:Key="Brush.AppBackground" Color="{StaticResource Color.AppBackground}" />
@@ -34,5 +36,7 @@
   <SolidColorBrush x:Key="Brush.Moving" Color="{StaticResource Color.Moving}" />
   <SolidColorBrush x:Key="Brush.Disabled" Color="{StaticResource Color.Disabled}" />
   <SolidColorBrush x:Key="Brush.NavSelected" Color="{StaticResource Color.NavSelected}" />
+  <SolidColorBrush x:Key="Brush.NavHover" Color="{StaticResource Color.NavHover}" />
+  <SolidColorBrush x:Key="Brush.NavFocus" Color="{StaticResource Color.NavFocus}" />
   <SolidColorBrush x:Key="Brush.PanelAlt" Color="{StaticResource Color.PanelAlt}" />
 </ResourceDictionary>

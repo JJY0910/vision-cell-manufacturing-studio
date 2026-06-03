@@ -64,6 +64,7 @@ public sealed partial class MotionViewModel : ObservableObject
     public string JogDisabledReason => GetDisabledReason(CommandKind.Jog);
     public string MoveAbsoluteDisabledReason => GetDisabledReason(CommandKind.MoveAbsolute);
     public string StopDisabledReason => GetDisabledReason(CommandKind.Stop);
+    public bool HasAxes => Axes.Count > 0;
 
     [ObservableProperty]
     private string _historyStatus = "History not loaded";
@@ -319,6 +320,7 @@ public sealed partial class MotionViewModel : ObservableObject
         }
 
         AxisStatus = FormatAxisSummary(snapshot);
+        OnPropertyChanged(nameof(HasAxes));
         NotifyCommandStateChanged();
     }
 

@@ -2,8 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <Grid>
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid MinWidth="0">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -15,25 +16,26 @@
                          AlertMessage="{Binding AlertMessage}"
                          HasAlert="{Binding HasAlert}">
       <controls:CommandBar.CommandContent>
-        <StackPanel Orientation="Horizontal">
+        <WrapPanel>
           <Button Content="Refresh Recipe"
                   Command="{Binding RefreshActiveRecipeCommand}"
                   ToolTip="Refresh the active recipe precheck before starting inspection."
                   Height="36"
                   MinWidth="124"
-                  Margin="0,0,8,0" />
+                  Margin="0,0,8,8" />
           <Button Content="Run Inspection"
                   Command="{Binding RunInspectionCommand}"
                   ToolTip="Run the simulator-backed inspection sequence through the Application use case."
                   Height="36"
                   MinWidth="132"
-                  Margin="0,0,8,0" />
+                  Margin="0,0,8,8" />
           <Button Content="Stop"
                   Command="{Binding StopInspectionCommand}"
                   ToolTip="Request cancellation for the active inspection run."
                   Height="36"
-                  MinWidth="76" />
-        </StackPanel>
+                  MinWidth="76"
+                  Margin="0,0,8,8" />
+        </WrapPanel>
       </controls:CommandBar.CommandContent>
     </controls:CommandBar>
 

@@ -1,7 +1,23 @@
 <UserControl x:Class="VisionCell.App.Modules.Reports.Views.ReportsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid>
-    <TextBlock Text="Reports" Style="{DynamicResource Text.PageTitle}" />
-  </Grid>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid MinWidth="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <controls:CommandBar Title="Reports"
+                           StatusText="Inspection report summary/export is scheduled as the next FR-240 slice." />
+
+      <Border Grid.Row="1" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
+        <controls:EmptyState HasItems="False"
+                             Title="Reports Export Not Configured"
+                             Detail="Use Offline Debug to review persisted inspection results until the CSV export and summary report workflow is implemented." />
+      </Border>
+    </Grid>
+  </ScrollViewer>
 </UserControl>

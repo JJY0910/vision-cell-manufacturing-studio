@@ -427,3 +427,11 @@ Proposed improvement: Maximize `ShellWindow` on startup, keep the 1366x768 minim
 Requirement impact: FR-001, FR-003, FR-006, NFR-001, NFR-009, NFR-010
 Priority: P1
 Status: Addressed by the startup/layout QA slice; broader multi-screen HMI theme and empty-state polish remains follow-up work.
+
+Date: 2026-06-03
+Source: HMI visual QA and empty-state polish
+Problem: Several WPF screens had readable functional controls but still looked unfinished because dark table headers, disabled-command reasons, navigation contrast, empty-state panels, and Reports/Settings scope states were inconsistent.
+Proposed improvement: Apply shared dark GridView/DataGrid header styling, keep disabled command tooltips visible, add reusable empty-state presentation, improve navigation hover/focus/selected contrast, and make Reports/Settings show read-only scope states until their dedicated MVP slices.
+Requirement impact: FR-006, FR-220, FR-221, FR-240, FR-260, NFR-001, NFR-006, NFR-009, NFR-010
+Priority: P1
+Status: Addressed by the HMI theme/empty-state polish slice; Reports export, persisted Settings, and actual Offline Debug re-inspection execution remain follow-up work.

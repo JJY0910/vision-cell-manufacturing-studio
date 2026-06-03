@@ -2,8 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <Grid>
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid MinWidth="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
@@ -19,29 +20,34 @@
           <WrapPanel>
             <Button Content="Refresh Results"
                     Command="{Binding RefreshResultsCommand}"
+                    ToolTip="Reload recent persisted inspection result records."
                     Height="36"
                     MinWidth="132"
-                    Margin="8,0,0,0" />
+                    Margin="0,0,8,8" />
             <Button Content="Load Artifacts"
                     Command="{Binding LoadSelectedArtifactsCommand}"
+                    ToolTip="Select an inspection result before loading overlay and height-map previews."
                     Height="36"
                     MinWidth="132"
-                    Margin="8,0,0,0" />
+                    Margin="0,0,8,8" />
             <Button Content="Open Overlay"
                     Command="{Binding OpenOverlayArtifactCommand}"
+                    ToolTip="Select an inspection result before opening the overlay artifact."
                     Height="36"
                     MinWidth="124"
-                    Margin="8,0,0,0" />
+                    Margin="0,0,8,8" />
             <Button Content="Open Height Map"
                     Command="{Binding OpenHeightMapArtifactCommand}"
+                    ToolTip="Select an inspection result before opening the height-map artifact."
                     Height="36"
                     MinWidth="148"
-                    Margin="8,0,0,0" />
+                    Margin="0,0,8,8" />
             <Button Content="Prepare Re-inspect"
                     Command="{Binding PrepareReinspectCommand}"
+                    ToolTip="Select an inspection result before preparing a simulator re-inspection context."
                     Height="36"
                     MinWidth="148"
-                    Margin="8,0,0,0" />
+                    Margin="0,0,8,8" />
           </WrapPanel>
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
@@ -81,21 +87,32 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <DockPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <TextBlock Text="Result List" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock DockPanel.Dock="Right"
+            <TextBlock Grid.Column="1"
                        Text="{Binding StatusText}"
-                       Style="{DynamicResource Text.Status}" />
-          </DockPanel>
-          <ListView Grid.Row="1"
+                       Style="{DynamicResource Text.Status}"
+                       HorizontalAlignment="Right"
+                       TextWrapping="Wrap"
+                       Margin="16,0,0,0" />
+          </Grid>
+          <controls:EmptyState Grid.Row="1"
+                               HasItems="{Binding HasResults}"
+                               Title="No Inspection Results"
+                               Detail="{Binding StatusText}"
+                               Margin="0,0,0,8" />
+          <ListView Grid.Row="2"
                     ItemsSource="{Binding Results}"
                     SelectedItem="{Binding SelectedResult}"
                     MinHeight="220"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
+                    Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
               <GridView>
                 <GridViewColumn Header="Created" DisplayMemberBinding="{Binding CreatedAtText}" Width="150" />
@@ -219,23 +236,24 @@
                        Margin="0,8,0,0" />
           </Grid>
 
-          <ListView Grid.Row="4"
-                    ItemsSource="{Binding SelectedResult.Defects}"
-                    MinHeight="120"
-                    Margin="0,8,0,0"
-                    Background="{DynamicResource Brush.PanelAlt}"
-                    BorderThickness="0"
-                    Foreground="{DynamicResource Brush.TextPrimary}">
-            <ListView.View>
-              <GridView>
-                <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}" Width="110" />
-                <GridViewColumn Header="Score" DisplayMemberBinding="{Binding ScoreText}" Width="90" />
-                <GridViewColumn Header="ROI" DisplayMemberBinding="{Binding RoiId}" Width="110" />
-                <GridViewColumn Header="BBox" DisplayMemberBinding="{Binding BoundingBoxText}" Width="140" />
-                <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="420" />
-              </GridView>
-            </ListView.View>
-          </ListView>
+          <Grid Grid.Row="4" Margin="0,8,0,0">
+            <ListView ItemsSource="{Binding SelectedResult.Defects}"
+                      MinHeight="120"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}" Width="110" />
+                  <GridViewColumn Header="Score" DisplayMemberBinding="{Binding ScoreText}" Width="90" />
+                  <GridViewColumn Header="ROI" DisplayMemberBinding="{Binding RoiId}" Width="110" />
+                  <GridViewColumn Header="BBox" DisplayMemberBinding="{Binding BoundingBoxText}" Width="140" />
+                  <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="420" />
+                </GridView>
+              </ListView.View>
+            </ListView>
+            <controls:EmptyState HasItems="{Binding SelectedResult.HasDefects}"
+                                 Title="No Defect Rows"
+                                 Detail="{Binding DefectListStatusText}" />
+          </Grid>
         </Grid>
       </Border>
     </Grid>

@@ -1,8 +1,10 @@
 <UserControl x:Class="VisionCell.App.Modules.Teaching.Views.TeachingView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <Grid>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VisionCell.App.Shared.Controls">
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid MinWidth="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
@@ -10,27 +12,25 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-          <Button Content="Refresh"
-                  Command="{Binding RefreshCommand}"
-                  ToolTip="Reload saved teaching points and active recipe context."
-                  Height="36"
-                  MinWidth="96"
-                  Margin="0,0,8,0" />
-          <Button Content="Go To"
-                  Command="{Binding GoToSelectedCommand}"
-                  ToolTip="Move to the selected teaching point through the Application motion boundary."
-                  Height="36"
-                  MinWidth="88" />
-        </StackPanel>
-        <StackPanel>
-          <TextBlock Text="Teaching" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding StatusText}"
-                     Style="{DynamicResource Text.Status}"
-                     Margin="0,4,0,0" />
-        </StackPanel>
-      </DockPanel>
+      <controls:CommandBar Title="Teaching"
+                           StatusText="{Binding StatusText}">
+        <controls:CommandBar.CommandContent>
+          <WrapPanel>
+            <Button Content="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    ToolTip="Reload saved teaching points and active recipe context."
+                    Height="36"
+                    MinWidth="96"
+                    Margin="0,0,8,8" />
+            <Button Content="Go To"
+                    Command="{Binding GoToSelectedCommand}"
+                    ToolTip="Move to the selected teaching point through the Application motion boundary."
+                    Height="36"
+                    MinWidth="88"
+                    Margin="0,0,8,8" />
+          </WrapPanel>
+        </controls:CommandBar.CommandContent>
+      </controls:CommandBar>
 
       <Border Grid.Row="1" Style="{DynamicResource Card.Panel}" Margin="0,12,0,0">
         <Grid>
@@ -112,11 +112,16 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <DockPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock Text="Teaching Points" Style="{DynamicResource Text.CardTitle}" />
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
               <TextBlock Text="{Binding Points.Count, StringFormat={}{0} points}"
                          Style="{DynamicResource Text.Status}"
                          VerticalAlignment="Center"
@@ -127,8 +132,13 @@
                       Height="32"
                       MinWidth="126" />
             </StackPanel>
-          </DockPanel>
-          <ListView Grid.Row="1"
+          </Grid>
+          <controls:EmptyState Grid.Row="1"
+                               HasItems="{Binding HasPoints}"
+                               Title="No Teaching Points"
+                               Detail="{Binding StatusText}"
+                               Margin="0,0,0,8" />
+          <ListView Grid.Row="2"
                     ItemsSource="{Binding Points}"
                     SelectedItem="{Binding SelectedPoint}"
                     Style="{DynamicResource ListView.HmiGrid}">
@@ -150,15 +160,27 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <DockPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock Text="Selected Point History" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock DockPanel.Dock="Right"
+            <TextBlock Grid.Column="1"
                        Text="{Binding HistoryStatus}"
-                       Style="{DynamicResource Text.Status}" />
-          </DockPanel>
-          <ListView Grid.Row="1"
+                       Style="{DynamicResource Text.Status}"
+                       Margin="16,0,0,0"
+                       TextWrapping="Wrap" />
+          </Grid>
+          <controls:EmptyState Grid.Row="1"
+                               HasItems="{Binding HasSelectedPointHistory}"
+                               Title="No Selected Point History"
+                               Detail="{Binding HistoryStatus}"
+                               Margin="0,0,0,8" />
+          <ListView Grid.Row="2"
                     ItemsSource="{Binding SelectedPointHistory}"
                     Style="{DynamicResource ListView.HmiGrid}">
             <ListView.View>
