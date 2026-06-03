@@ -106,8 +106,10 @@ tests/VisionCell.App.Tests
 - Error event displayed
 - Navigation updates selected screen
 - Priority HMI screens use the shared `CommandBar` title/command surface so Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, and Alarm keep a consistent operator header.
+- Priority HMI screens keep a vertical `ScrollViewer`, disabled horizontal workspace scrolling, and `Grid MinWidth=0` layout guard under App XAML tests.
 - CommandBar action buttons use the shared HMI command style and avoid one-off height/margin values across Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, Offline Debug, and Alarm.
 - Module action buttons are checked so secondary Alarm, Recipe, and Teaching actions also use shared HMI command styles instead of local height-only styling.
+- Module `*.xaml.cs` files are scanned by App tests to stay initialization-only without use case, repository, process/file, message-box, blocking-call, async, or click-handler logic.
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
 - Equipment fault injection buttons use the shared compact HMI command style and avoid one-off height/margin values.
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
