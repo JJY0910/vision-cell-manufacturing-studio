@@ -12,6 +12,7 @@ This plan defines how `VirtualEquipmentController` can be replaced by a future `
 - `VirtualCameraDevice` implements `ICameraDevice`.
 - WPF App composition registers `EquipmentRuntimeProfile.Virtual` by default.
 - A `RealHardware` runtime profile is explicitly rejected at startup until the adapter implementation and validation phases below are complete.
+- `RealHardwareReadinessGate` lists the evidence missing from a rejected real-hardware profile request so the startup guard is auditable instead of a generic block.
 
 ## New Adapter Contracts
 
@@ -38,6 +39,19 @@ RealEquipmentController : IEquipmentController
 `RealEquipmentController.GetSnapshotAsync` should compose safety, axis, I/O, camera, and alarm snapshots from the adapters. `ExecuteCommandAsync` should route controller and motion commands to the correct adapter while preserving `MachineCommandRequest.CorrelationId`.
 
 The future controller must be enabled through an explicit `EquipmentRuntimeProfile` change. It must not replace the virtual profile by default, and it must not be enabled before bench validation evidence exists.
+
+## RealHardware Readiness Gate
+
+The current App composition evaluates `RealHardwareReadinessEvidence.Unvalidated` whenever a `RealHardware` runtime profile is requested. The gate requires all of the following evidence before any future code path may even be considered for enabling:
+
+- `RealEquipmentController` implementation.
+- Motion adapter bench validation.
+- Camera adapter bench validation.
+- PLC I/O adapter bench validation.
+- Safety reset validation.
+- Review evidence for this hardware integration plan.
+
+The gate does not enable real hardware by itself. It only makes the missing evidence explicit in the rejection message. Real equipment remains blocked until implementation and validation are completed in controlled follow-up work.
 
 ## Adapter Responsibilities
 
@@ -81,6 +95,7 @@ The PLC and remote I/O portion of phases 2, 3, and any later output-write checks
 - No real hardware connection has been performed.
 - No vendor SDK, PLC protocol, fieldbus, encoder, trigger timing, safety relay, or camera acquisition path has been validated.
 - No production calibration, measurement accuracy, takt time, burn-in, or shop-floor display QA has been completed.
+- The current readiness gate uses `Unvalidated` evidence by design, so `RealHardware` profile selection remains blocked.
 
 ## Acceptance Before Real Hardware Claim
 

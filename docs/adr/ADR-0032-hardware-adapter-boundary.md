@@ -24,6 +24,7 @@ The project is simulator-first, but future work must allow `VirtualEquipmentCont
 - Add `EquipmentRuntimeProfile` in WPF App composition.
 - Register the virtual runtime profile by default.
 - Explicitly reject `RealHardware` profile selection until `RealEquipmentController` implementation and bench validation evidence exist.
+- Add `RealHardwareReadinessGate` so the rejection lists missing evidence for controller implementation, Motion/Camera/PLC bench validation, safety reset validation, and hardware integration plan review.
 
 ## Alternatives
 
@@ -36,6 +37,7 @@ The project is simulator-first, but future work must allow `VirtualEquipmentCont
 - Future real equipment work has clear adapter seams while WPF/Application remain stable.
 - Adapter contracts enforce timeout, cancellation, explicit result paths, and correlation preservation.
 - Runtime composition cannot accidentally switch from virtual equipment to unvalidated real hardware.
+- Real-hardware rejection is auditable because the App reports the missing validation evidence instead of a generic unsupported state.
 - The project still has no real hardware validation.
 
 ## Requirement impact
