@@ -386,7 +386,7 @@ Problem: Alarm records can now be stored and acknowledged from simulator/Applica
 Proposed improvement: After Hardware Adapter Boundary, connect real alarm-source adapters and distinguish operator acknowledgement from controller alarm reset confirmation.
 Requirement impact: FR-022, FR-043, FR-067, FR-141, FR-184, FR-201, FR-241, NFR-004, NFR-007
 Priority: P1
-Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; real hardware source integration remains follow-up work.
+Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; AlarmView acknowledge disabled reason and recovery memo edit-state polish addressed; real hardware source integration remains follow-up work.
 
 Date: 2026-06-02
 Source: Priority 3 Hardware Adapter Boundary

@@ -129,6 +129,10 @@ public sealed class DashboardAndShellViewModelTests
         var viewModel = CreateAlarmViewModel(useCase);
 
         await viewModel.RefreshAsync(CancellationToken.None);
+        viewModel.AcknowledgeCommand.CanExecute(null).Should().BeTrue();
+        viewModel.IsActionMemoEditable.Should().BeTrue();
+        viewModel.AcknowledgeDisabledReason.Should().Contain("Store the recovery memo");
+
         viewModel.ActionMemoText = "Checked soft limit and reset axis.";
         await viewModel.AcknowledgeSelectedAsync(CancellationToken.None);
 
@@ -138,9 +142,26 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.SelectedAlarm!.StateText.Should().Be("Acknowledged");
         viewModel.SelectedAlarm.ActionMemo.Should().Be("Checked soft limit and reset axis.");
         viewModel.StatusText.Should().Contain("acknowledged");
+        viewModel.AcknowledgeCommand.CanExecute(null).Should().BeFalse();
+        viewModel.IsActionMemoEditable.Should().BeFalse();
+        viewModel.AcknowledgeDisabledReason.Should().Contain("already acknowledged");
         viewModel.HasAlert.Should().BeFalse();
         viewModel.AlertMessage.Should().BeNull();
         useCase.Acknowledged.Should().ContainSingle(item => item.AlarmId == alarm.Id);
+    }
+
+    [Fact]
+    public async Task Alarm_RefreshAsync_Should_Surface_Acknowledge_Disabled_Reason_When_Empty()
+    {
+        var viewModel = CreateAlarmViewModel(new FakeAlarmCenterUseCase());
+
+        await viewModel.RefreshAsync(CancellationToken.None);
+
+        viewModel.SelectedAlarm.Should().BeNull();
+        viewModel.AcknowledgeCommand.CanExecute(null).Should().BeFalse();
+        viewModel.IsActionMemoEditable.Should().BeFalse();
+        viewModel.AcknowledgeDisabledReason.Should().Contain("Select an alarm");
+        viewModel.StatusText.Should().Be("No alarm records");
     }
 
     [Fact]
