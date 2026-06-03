@@ -282,6 +282,9 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionReinspectRecipePolicyUseCase>()
                 .Should()
                 .BeOfType<InspectionReinspectRecipePolicyUseCase>();
+            provider.GetRequiredService<IInspectionReinspectSourceImageReadinessUseCase>()
+                .Should()
+                .BeOfType<InspectionReinspectSourceImageReadinessUseCase>();
             provider.GetRequiredService<IInspectionArtifactWriter>()
                 .Should()
                 .BeOfType<FileSystemInspectionArtifactWriter>();
@@ -564,7 +567,7 @@ public sealed class DashboardAndShellViewModelTests
             item.State == "Available");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
             item.Step == "Source-image replay" &&
-            item.State == "Not implemented");
+            item.State == "Boundary available");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
             item.Step == "Recipe policy" &&
             item.State == "Available");
@@ -579,6 +582,10 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.ReinspectRecipePolicy!.Status.Should().Be(InspectionReinspectRecipePolicyStatus.ActiveMatchesHistorical);
         offlineDebug.ReinspectRecipePolicySummary.Should().Contain("Current and historical Recipe match");
         offlineDebug.ReinspectRecipePolicyDetail.Should().Contain("Metadata comparison");
+        offlineDebug.ReinspectSourceImageReadiness.Should().NotBeNull();
+        offlineDebug.ReinspectSourceImageReadiness!.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.FrameArchiveUnavailable);
+        offlineDebug.ReinspectSourceImageReadinessSummary.Should().Contain("Frame archive unavailable");
+        offlineDebug.ReinspectSourceImageReadinessDetail.Should().Contain(result.SourceImagePath);
         await offlineDebug.RunReinspectAsync(CancellationToken.None);
         offlineDebug.ReinspectComparison.Should().NotBeNull();
         offlineDebug.ReinspectComparison!.Status.Should().Be(InspectionReinspectComparisonStatus.Matched);
@@ -598,6 +605,7 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.PreparedReinspect.Should().BeNull();
         offlineDebug.ReinspectComparison.Should().BeNull();
         offlineDebug.ReinspectRecipePolicy.Should().BeNull();
+        offlineDebug.ReinspectSourceImageReadiness.Should().BeNull();
         offlineDebug.OverlayPreviewImageSource.Should().BeNull();
         offlineDebug.OverlayImagePixelWidth.Should().Be(0);
         offlineDebug.OverlayImagePixelHeight.Should().Be(0);
@@ -1457,6 +1465,7 @@ public sealed class DashboardAndShellViewModelTests
         FakeInspectionArtifactReader? artifactReader = null,
         FakeInspectionReinspectComparisonReader? reinspectComparisonReader = null,
         FakeInspectionReinspectRecipePolicyUseCase? reinspectRecipePolicyUseCase = null,
+        FakeInspectionReinspectSourceImageReadinessUseCase? sourceImageReadinessUseCase = null,
         FakeUserConfirmationService? confirmationService = null,
         FakeArtifactViewerService? artifactViewerService = null)
     {
@@ -1468,6 +1477,7 @@ public sealed class DashboardAndShellViewModelTests
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             reinspectComparisonReader ?? new FakeInspectionReinspectComparisonReader(),
             reinspectRecipePolicyUseCase ?? new FakeInspectionReinspectRecipePolicyUseCase(),
+            sourceImageReadinessUseCase ?? new FakeInspectionReinspectSourceImageReadinessUseCase(),
             confirmationService ?? new FakeUserConfirmationService(true),
             artifactViewerService ?? new FakeArtifactViewerService());
     }
@@ -2077,6 +2087,18 @@ public sealed class DashboardAndShellViewModelTests
                 preparation,
                 preparation.RecipeId,
                 preparation.RecipeVersion));
+        }
+    }
+
+    private sealed class FakeInspectionReinspectSourceImageReadinessUseCase : IInspectionReinspectSourceImageReadinessUseCase
+    {
+        private readonly InspectionReinspectSourceImageReadinessUseCase _inner = new();
+
+        public Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
+            InspectionReinspectPreparation preparation,
+            CancellationToken cancellationToken)
+        {
+            return _inner.ResolveAsync(preparation, cancellationToken);
         }
     }
 

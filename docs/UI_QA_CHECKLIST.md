@@ -68,8 +68,8 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Artifact preview surfaces remain available.
 - [x] Open overlay, open height-map, load artifacts, and prepare re-inspect commands expose selection-required tooltips.
 - [x] Defect rows use an empty-state panel when a selected result has no defects.
-- [x] Re-inspect metadata comparison, active-vs-historical Recipe policy metadata, and metadata history are visible; source-image replay and new inspection-result replay persistence remain follow-up work.
-- [x] Re-inspect readiness rows keep source replay, Recipe policy metadata, persistence, and real sequence validation boundaries visible.
+- [x] Re-inspect metadata comparison, source-image replay readiness, active-vs-historical Recipe policy metadata, and metadata history are visible; source-image replay execution and new inspection-result replay persistence remain follow-up work.
+- [x] Re-inspect readiness rows keep source replay readiness, Recipe policy metadata, persistence, and real sequence validation boundaries visible.
 
 ## Reports
 

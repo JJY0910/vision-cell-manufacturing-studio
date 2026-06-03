@@ -133,6 +133,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             new FakeInspectionReinspectComparisonReader(),
             new FakeInspectionReinspectRecipePolicyUseCase(),
+            new FakeInspectionReinspectSourceImageReadinessUseCase(),
             confirmation,
             viewer);
     }
@@ -251,6 +252,18 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
                 preparation,
                 preparation.RecipeId,
                 preparation.RecipeVersion));
+        }
+    }
+
+    private sealed class FakeInspectionReinspectSourceImageReadinessUseCase : IInspectionReinspectSourceImageReadinessUseCase
+    {
+        private readonly InspectionReinspectSourceImageReadinessUseCase _inner = new();
+
+        public Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
+            InspectionReinspectPreparation preparation,
+            CancellationToken cancellationToken)
+        {
+            return _inner.ResolveAsync(preparation, cancellationToken);
         }
     }
 

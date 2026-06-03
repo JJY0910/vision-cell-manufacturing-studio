@@ -21,6 +21,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private readonly IInspectionReinspectUseCase _inspectionReinspectUseCase;
     private readonly IInspectionReinspectComparisonReader _reinspectComparisonReader;
     private readonly IInspectionReinspectRecipePolicyUseCase _reinspectRecipePolicyUseCase;
+    private readonly IInspectionReinspectSourceImageReadinessUseCase _sourceImageReadinessUseCase;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IArtifactViewerService _artifactViewerService;
 
@@ -30,6 +31,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         IInspectionReinspectUseCase inspectionReinspectUseCase,
         IInspectionReinspectComparisonReader reinspectComparisonReader,
         IInspectionReinspectRecipePolicyUseCase reinspectRecipePolicyUseCase,
+        IInspectionReinspectSourceImageReadinessUseCase sourceImageReadinessUseCase,
         IUserConfirmationService confirmationService,
         IArtifactViewerService artifactViewerService)
     {
@@ -38,6 +40,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         _inspectionReinspectUseCase = inspectionReinspectUseCase ?? throw new ArgumentNullException(nameof(inspectionReinspectUseCase));
         _reinspectComparisonReader = reinspectComparisonReader ?? throw new ArgumentNullException(nameof(reinspectComparisonReader));
         _reinspectRecipePolicyUseCase = reinspectRecipePolicyUseCase ?? throw new ArgumentNullException(nameof(reinspectRecipePolicyUseCase));
+        _sourceImageReadinessUseCase = sourceImageReadinessUseCase ?? throw new ArgumentNullException(nameof(sourceImageReadinessUseCase));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         _artifactViewerService = artifactViewerService ?? throw new ArgumentNullException(nameof(artifactViewerService));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
@@ -59,8 +62,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             "Run Re-inspect compares selected historical metadata without live camera, motion, PLC, or vision sequence replay."),
         new(
             "Source-image replay",
-            "Not implemented",
-            "No customer/source image replay runner is connected to Offline Debug."),
+            "Boundary available",
+            "Prepare Re-inspect classifies the selected result source image reference; replay runner execution is not implemented."),
         new(
             "Recipe policy",
             "Available",
@@ -142,6 +145,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     [ObservableProperty]
     private InspectionReinspectRecipePolicyResult? _reinspectRecipePolicy;
 
+    [ObservableProperty]
+    private InspectionReinspectSourceImageReadinessResult? _reinspectSourceImageReadiness;
+
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
     public string ReinspectRunDisabledReason
     {
@@ -178,6 +184,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     public string ReinspectRecipePolicyDetail => ReinspectRecipePolicy is null
         ? "Prepare Re-inspect resolves current active Recipe metadata without executing source-image replay."
         : ReinspectRecipePolicy.Message;
+
+    public string ReinspectSourceImageReadinessSummary => ReinspectSourceImageReadiness is null
+        ? "Source-image replay readiness not resolved."
+        : $"{ReinspectSourceImageReadiness.StatusLabel}: {ReinspectSourceImageReadiness.ReplayInputKind}";
+
+    public string ReinspectSourceImageReadinessDetail => ReinspectSourceImageReadiness is null
+        ? "Prepare Re-inspect classifies source-image replay input without opening files or executing replay."
+        : $"{ReinspectSourceImageReadiness.SourceImagePath} | {ReinspectSourceImageReadiness.Message}";
 
     public string ReinspectComparisonSummary => ReinspectComparison is null
         ? "No re-inspect comparison executed."
@@ -266,6 +280,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     {
         ReinspectComparison = null;
         ReinspectRecipePolicy = null;
+        ReinspectSourceImageReadiness = null;
 
         RunReinspectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ReinspectRunDisabledReason));
@@ -283,6 +298,12 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ReinspectRecipePolicySummary));
         OnPropertyChanged(nameof(ReinspectRecipePolicyDetail));
+    }
+
+    partial void OnReinspectSourceImageReadinessChanged(InspectionReinspectSourceImageReadinessResult? value)
+    {
+        OnPropertyChanged(nameof(ReinspectSourceImageReadinessSummary));
+        OnPropertyChanged(nameof(ReinspectSourceImageReadinessDetail));
     }
 
     partial void OnStatusTextChanged(string value)
@@ -319,6 +340,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         PreparedReinspect = null;
         ReinspectComparison = null;
         ReinspectRecipePolicy = null;
+        ReinspectSourceImageReadiness = null;
         ArtifactPreviewStatusText = value is null
             ? "Select an inspection result to load artifacts"
             : "Artifact preview not loaded";
@@ -338,6 +360,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OnPropertyChanged(nameof(PreparedReinspectArtifactSummary));
         OnPropertyChanged(nameof(ReinspectRecipePolicySummary));
         OnPropertyChanged(nameof(ReinspectRecipePolicyDetail));
+        OnPropertyChanged(nameof(ReinspectSourceImageReadinessSummary));
+        OnPropertyChanged(nameof(ReinspectSourceImageReadinessDetail));
         OnPropertyChanged(nameof(ReinspectComparisonSummary));
         OnPropertyChanged(nameof(ReinspectComparisonDetail));
         OnPropertyChanged(nameof(DefectListStatusText));
@@ -491,17 +515,20 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
         try
         {
+            ReinspectSourceImageReadiness = await _sourceImageReadinessUseCase
+                .ResolveAsync(preparation, cancellationToken)
+                .ConfigureAwait(true);
             ReinspectRecipePolicy = await _reinspectRecipePolicyUseCase
                 .ResolveAsync(preparation, cancellationToken)
                 .ConfigureAwait(true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            ReinspectStatusText = "Re-inspect recipe policy resolution cancelled";
+            ReinspectStatusText = "Re-inspect readiness resolution cancelled";
         }
         catch (Exception ex)
         {
-            ReinspectStatusText = $"Re-inspect recipe policy resolution failed: {ex.Message}";
+            ReinspectStatusText = $"Re-inspect readiness resolution failed: {ex.Message}";
         }
     }
 

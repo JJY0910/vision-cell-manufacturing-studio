@@ -150,7 +150,7 @@ Implementation note:
 
 - `VisionCell.Persistence` initializes `inspection_reinspect_comparisons` through migration id `008_inspection_reinspect_comparisons`.
 - `SqliteInspectionReinspectComparisonRepository` implements `IInspectionReinspectComparisonRepository` and `IInspectionReinspectComparisonReader`.
-- The table stores Offline Debug metadata comparison history only. It does not claim a new `inspection_results` row, source-image replay, or live camera/motion/vision sequence execution.
+- The table stores Offline Debug metadata comparison history only. It does not claim a new `inspection_results` row, source-image replay execution, or live camera/motion/vision sequence execution.
 
 ### equipment_alarms
 

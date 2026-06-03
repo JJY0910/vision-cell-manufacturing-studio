@@ -226,6 +226,8 @@ public sealed class HmiVisualQaXamlTests
         offlineDebug.ToString().Should().Contain("PreparedReinspectArtifactSummary");
         offlineDebug.ToString().Should().Contain("ReinspectRecipePolicySummary");
         offlineDebug.ToString().Should().Contain("ReinspectRecipePolicyDetail");
+        offlineDebug.ToString().Should().Contain("ReinspectSourceImageReadinessSummary");
+        offlineDebug.ToString().Should().Contain("ReinspectSourceImageReadinessDetail");
         offlineDebug.ToString().Should().Contain("ReinspectReadinessItems");
         offlineDebug.ToString().Should().Contain("ReinspectComparisonSummary");
         offlineDebug.ToString().Should().Contain("ReinspectComparisonDetail");
