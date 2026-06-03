@@ -69,6 +69,7 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="Fault Injection" Style="{DynamicResource Text.CardTitle}" />
             <TextBlock Grid.Row="1"
@@ -76,20 +77,24 @@
                        TextWrapping="Wrap"
                        Style="{DynamicResource Text.Status}"
                        Margin="0,0,0,12" />
-            <WrapPanel Grid.Row="2">
-              <Button Content="EStop On" Command="{Binding InjectEmergencyStopCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="92" Margin="0,0,8,8" />
-              <Button Content="EStop Off" Command="{Binding ClearEmergencyStopCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="92" Margin="0,0,8,8" />
-              <Button Content="Door Open" Command="{Binding OpenDoorCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="96" Margin="0,0,8,8" />
-              <Button Content="Door Close" Command="{Binding CloseDoorCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="96" Margin="0,0,8,8" />
-              <Button Content="Air Low" Command="{Binding DropAirPressureCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="88" Margin="0,0,8,8" />
-              <Button Content="Air OK" Command="{Binding RestoreAirPressureCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="82" Margin="0,0,8,8" />
-              <Button Content="Vacuum Loss" Command="{Binding DropVacuumCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="108" Margin="0,0,8,8" />
-              <Button Content="Vacuum OK" Command="{Binding RestoreVacuumCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="98" Margin="0,0,8,8" />
-              <Button Content="Camera Not Ready" Command="{Binding DisableCameraReadyCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="138" Margin="0,0,8,8" />
-              <Button Content="Camera Ready" Command="{Binding RestoreCameraReadyCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="116" Margin="0,0,8,8" />
-              <Button Content="Servo Alarm" Command="{Binding InjectServoAlarmCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="108" Margin="0,0,8,8" />
-              <Button Content="Servo Clear" Command="{Binding ClearServoAlarmCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="104" Margin="0,0,8,8" />
-              <Button Content="Clear All" Command="{Binding ClearAllFaultsCommand}" ToolTip="{Binding InjectionStatus}" Height="36" MinWidth="96" Margin="0,0,8,8" />
+            <UniformGrid Grid.Row="2" Columns="2" Margin="0,0,0,12">
+              <TextBlock Text="{Binding FaultSummaryText}" Style="{DynamicResource Text.StatusStrong}" />
+              <TextBlock Text="{Binding IoSummaryText}" Style="{DynamicResource Text.StatusStrong}" />
+            </UniformGrid>
+            <WrapPanel Grid.Row="3">
+              <Button Content="EStop On" Command="{Binding InjectEmergencyStopCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="92" Margin="0,0,8,8" />
+              <Button Content="EStop Off" Command="{Binding ClearEmergencyStopCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="92" Margin="0,0,8,8" />
+              <Button Content="Door Open" Command="{Binding OpenDoorCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="96" Margin="0,0,8,8" />
+              <Button Content="Door Close" Command="{Binding CloseDoorCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="96" Margin="0,0,8,8" />
+              <Button Content="Air Low" Command="{Binding DropAirPressureCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="88" Margin="0,0,8,8" />
+              <Button Content="Air OK" Command="{Binding RestoreAirPressureCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="82" Margin="0,0,8,8" />
+              <Button Content="Vacuum Loss" Command="{Binding DropVacuumCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="108" Margin="0,0,8,8" />
+              <Button Content="Vacuum OK" Command="{Binding RestoreVacuumCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="98" Margin="0,0,8,8" />
+              <Button Content="Camera Not Ready" Command="{Binding DisableCameraReadyCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="138" Margin="0,0,8,8" />
+              <Button Content="Camera Ready" Command="{Binding RestoreCameraReadyCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="116" Margin="0,0,8,8" />
+              <Button Content="Servo Alarm" Command="{Binding InjectServoAlarmCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="108" Margin="0,0,8,8" />
+              <Button Content="Servo Clear" Command="{Binding ClearServoAlarmCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="104" Margin="0,0,8,8" />
+              <Button Content="Clear All" Command="{Binding ClearAllFaultsCommand}" ToolTip="{Binding FaultInjectionDisabledReason}" Height="36" MinWidth="96" Margin="0,0,8,8" />
             </WrapPanel>
           </Grid>
         </Border>

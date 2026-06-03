@@ -83,6 +83,15 @@ public sealed partial class EquipmentViewModel : ObservableObject
     private string _injectionStatus = "Connect the simulator before injecting faults.";
 
     [ObservableProperty]
+    private string _faultInjectionDisabledReason = "Connect the simulator before injecting faults.";
+
+    [ObservableProperty]
+    private string _faultSummaryText = "Active faults: 0 / 6";
+
+    [ObservableProperty]
+    private string _ioSummaryText = "I/O forced: 0 / 0";
+
+    [ObservableProperty]
     private string _lastSnapshotText = "Last snapshot: -";
 
     public bool HasIoBits => IoBits.Count > 0;
@@ -142,6 +151,9 @@ public sealed partial class EquipmentViewModel : ObservableObject
         CameraStatus = snapshot.Camera.IsReady ? $"{snapshot.Camera.Name}: Ready" : $"{snapshot.Camera.Name}: Not Ready";
         AlarmStatus = snapshot.Alarm is null ? "Alarm: None" : $"Alarm: {snapshot.Alarm.ErrorCode.Code} {snapshot.Alarm.Message}";
         LastSnapshotText = $"Last snapshot: {snapshot.Timestamp:yyyy-MM-dd HH:mm:ss}";
+        FaultInjectionDisabledReason = snapshot.IsConnected
+            ? "Fault injection commands are available for the virtual simulator."
+            : "Connect the simulator before injecting faults.";
 
         IoBits.Clear();
         foreach (var bit in snapshot.Io.Bits)
@@ -149,6 +161,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
             IoBits.Add(new IoBitStatusViewModel(bit.Name, bit.Address, bit.Direction, bit.Value, bit.IsForced));
         }
 
+        IoSummaryText = FormatIoSummary();
         OnPropertyChanged(nameof(HasIoBits));
 
         Faults.Clear();
@@ -159,6 +172,7 @@ public sealed partial class EquipmentViewModel : ObservableObject
         Faults.Add(new EquipmentFaultStatusViewModel("Camera Ready", snapshot.Camera.IsReady ? "Ready" : "Not Ready", !snapshot.Camera.IsReady));
         Faults.Add(new EquipmentFaultStatusViewModel("Servo Alarm", HasServoAlarm(snapshot) ? "Active" : "Clear", HasServoAlarm(snapshot)));
 
+        FaultSummaryText = FormatFaultSummary();
         NotifyFaultCommands();
     }
 
@@ -169,9 +183,22 @@ public sealed partial class EquipmentViewModel : ObservableObject
         Faults.Add(new EquipmentFaultStatusViewModel("Door", "Closed", false));
         Faults.Add(new EquipmentFaultStatusViewModel("Air Pressure", "OK", false));
         Faults.Add(new EquipmentFaultStatusViewModel("Vacuum", "Unknown", false));
-        Faults.Add(new EquipmentFaultStatusViewModel("Camera Ready", "Offline", true));
+        Faults.Add(new EquipmentFaultStatusViewModel("Camera Ready", "Offline", false));
         Faults.Add(new EquipmentFaultStatusViewModel("Servo Alarm", "Clear", false));
+        FaultInjectionDisabledReason = "Connect the simulator before injecting faults.";
+        FaultSummaryText = FormatFaultSummary();
+        IoSummaryText = FormatIoSummary();
         NotifyFaultCommands();
+    }
+
+    private string FormatFaultSummary()
+    {
+        return $"Active faults: {Faults.Count(fault => fault.IsActive)} / {Faults.Count}";
+    }
+
+    private string FormatIoSummary()
+    {
+        return $"I/O forced: {IoBits.Count(bit => bit.IsForced)} / {IoBits.Count}";
     }
 
     private static string FormatSafety(EquipmentSnapshot snapshot)

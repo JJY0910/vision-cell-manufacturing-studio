@@ -81,7 +81,9 @@ public sealed class HmiVisualQaXamlTests
             .OnlyContain(value => !string.IsNullOrWhiteSpace(value) && value.Contains("Select an inspection result", StringComparison.Ordinal));
 
         var equipment = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Equipment", "Views", "EquipmentView.xaml"));
-        equipment.Should().Contain("ToolTip=\"{Binding InjectionStatus}\"");
+        equipment.Should().Contain("ToolTip=\"{Binding FaultInjectionDisabledReason}\"");
+        equipment.Should().Contain("FaultSummaryText");
+        equipment.Should().Contain("IoSummaryText");
 
         var alarm = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Alarm", "Views", "AlarmView.xaml"));
         alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");
