@@ -217,7 +217,15 @@
                   <GridViewColumn Header="Time" DisplayMemberBinding="{Binding CreatedAt, StringFormat={}{0:HH:mm:ss}}" Width="72" />
                   <GridViewColumn Header="Severity" DisplayMemberBinding="{Binding Severity}" Width="78" />
                   <GridViewColumn Header="Event" DisplayMemberBinding="{Binding EventType}" Width="108" />
-                  <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="240" />
+                  <GridViewColumn Header="Message" Width="240">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Message}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
             </ListView>
@@ -255,7 +263,15 @@
                   <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="154" />
                   <GridViewColumn Header="Before" DisplayMemberBinding="{Binding PreviousState}" Width="92" />
                   <GridViewColumn Header="After" DisplayMemberBinding="{Binding CurrentState}" Width="92" />
-                  <GridViewColumn Header="Source" DisplayMemberBinding="{Binding Source}" Width="184" />
+                  <GridViewColumn Header="Source" Width="184">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Source}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                 </GridView>
               </ListView.View>
             </ListView>

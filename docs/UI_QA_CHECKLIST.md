@@ -89,6 +89,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] GridView headers stay on the dark HMI palette.
 - [x] Disabled button tooltips remain visible.
 - [x] Navigation selected, hover, and focus states use distinct dark/accent styling.
+- [x] Long diagnostic GridView columns wrap message, summary, artifact/path, source, and correlation text.
 - [x] No WPF code-behind business logic was added.
 - [x] App tests verify priority screens keep vertical ScrollViewer layout, disabled horizontal workspace scroll, and `Grid MinWidth=0`.
 - [x] App tests verify module code-behind stays initialization-only.

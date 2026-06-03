@@ -206,7 +206,15 @@
                 <GridViewColumn Header="Validation" DisplayMemberBinding="{Binding ValidationStateText}" Width="100" />
                 <GridViewColumn Header="Updated" DisplayMemberBinding="{Binding UpdatedAtText}" Width="150" />
                 <GridViewColumn Header="Checksum" DisplayMemberBinding="{Binding ChecksumShort}" Width="110" />
-                <GridViewColumn Header="Summary" DisplayMemberBinding="{Binding ValidationSummaryText}" Width="280" />
+                <GridViewColumn Header="Summary" Width="280">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding ValidationSummaryText}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
               </GridView>
             </ListView.View>
           </ListView>

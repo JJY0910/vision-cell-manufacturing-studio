@@ -122,8 +122,24 @@
                 <GridViewColumn Header="Judge" DisplayMemberBinding="{Binding JudgmentText}" Width="90" />
                 <GridViewColumn Header="Defects" DisplayMemberBinding="{Binding DefectCount}" Width="80" />
                 <GridViewColumn Header="Cycle" DisplayMemberBinding="{Binding CycleTimeText}" Width="90" />
-                <GridViewColumn Header="Overlay" DisplayMemberBinding="{Binding OverlayImagePath}" Width="280" />
-                <GridViewColumn Header="Artifacts" DisplayMemberBinding="{Binding ArtifactStatusSummary}" Width="360" />
+                <GridViewColumn Header="Overlay" Width="280">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding OverlayImagePath}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+                <GridViewColumn Header="Artifacts" Width="360">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding ArtifactStatusSummary}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
               </GridView>
             </ListView.View>
           </ListView>

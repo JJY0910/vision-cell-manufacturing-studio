@@ -230,7 +230,15 @@
                 <GridViewColumn Header="Error" DisplayMemberBinding="{Binding ErrorCode}" Width="86" />
                 <GridViewColumn Header="Elapsed" DisplayMemberBinding="{Binding ElapsedText}" Width="86" />
                 <GridViewColumn Header="Correlation" DisplayMemberBinding="{Binding CorrelationShort}" Width="110" />
-                <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="360" />
+                <GridViewColumn Header="Message" Width="360">
+                  <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Message}"
+                                 TextWrapping="Wrap"
+                                 Style="{DynamicResource Text.Status}" />
+                    </DataTemplate>
+                  </GridViewColumn.CellTemplate>
+                </GridViewColumn>
               </GridView>
             </ListView.View>
           </ListView>
