@@ -61,7 +61,7 @@
                     Content="Save Recipe"
                     Command="{Binding SaveRecipeCommand}"
                     ToolTip="Validate, save, and index the recipe editor values."
-                    Height="32"
+                    Style="{DynamicResource Button.HmiCommand.Compact}"
                     MinWidth="112" />
             <TextBlock Text="Recipe Editor" Style="{DynamicResource Text.CardTitle}" />
           </DockPanel>

@@ -125,7 +125,7 @@
               <Button Content="Refresh History"
                       Command="{Binding RefreshSelectedPointHistoryCommand}"
                       ToolTip="Reload history for the selected teaching point."
-                      Height="32"
+                      Style="{DynamicResource Button.HmiCommand.Compact}"
                       MinWidth="126" />
             </StackPanel>
           </Grid>

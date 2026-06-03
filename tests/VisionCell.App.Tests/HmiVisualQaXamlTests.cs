@@ -126,6 +126,31 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Module_Action_Buttons_Should_Use_Shared_Hmi_Button_Styles()
+    {
+        var knownModuleView = GetRepoPath("src", "VisionCell.App", "Modules", "Dashboard", "Views", "DashboardView.xaml");
+        var modulesRoot = new DirectoryInfo(Path.GetDirectoryName(knownModuleView)!).Parent!.Parent!.FullName;
+        var allowedStyles = new[]
+        {
+            "{DynamicResource Button.HmiCommand}",
+            "{DynamicResource Button.HmiCommand.Compact}"
+        };
+        var invalidButtons = Directory
+            .EnumerateFiles(modulesRoot, "*.xaml", SearchOption.AllDirectories)
+            .SelectMany(path =>
+            {
+                var xaml = XDocument.Load(path);
+                return xaml
+                    .Descendants(Wpf + "Button")
+                    .Where(button => !allowedStyles.Contains(button.Attribute("Style")?.Value, StringComparer.Ordinal))
+                    .Select(button => $"{Path.GetRelativePath(modulesRoot, path)}:{button.Attribute("Content")?.Value ?? "(no content)"}");
+            })
+            .ToArray();
+
+        invalidButtons.Should().BeEmpty("module operator buttons should use the shared HMI command styles");
+    }
+
+    [Fact]
     public void Disabled_Operator_Commands_Should_Expose_Tooltips()
     {
         var offlineDebug = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "OfflineDebug", "Views", "OfflineDebugView.xaml"));
