@@ -7,6 +7,7 @@ using VisionCell.Application.Inspection;
 using VisionCell.Application.Motion;
 using VisionCell.Application.Recipes;
 using VisionCell.Application.Teaching;
+using VisionCell.App.Configuration;
 using VisionCell.App.Interaction;
 using VisionCell.App.Modules.Alarm.ViewModels;
 using VisionCell.App.Modules.Dashboard.ViewModels;
@@ -40,7 +41,8 @@ public static class AppServiceConfiguration
         this IServiceCollection services,
         string databasePath,
         string recipeRootPath,
-        string? artifactRootPath = null)
+        string? artifactRootPath = null,
+        EquipmentRuntimeProfile? equipmentRuntimeProfile = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         if (string.IsNullOrWhiteSpace(databasePath))
@@ -56,7 +58,14 @@ public static class AppServiceConfiguration
         var resolvedArtifactRootPath = string.IsNullOrWhiteSpace(artifactRootPath)
             ? Path.Combine(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory, "inspection-artifacts")
             : artifactRootPath;
+        var resolvedEquipmentRuntimeProfile = equipmentRuntimeProfile ?? EquipmentRuntimeProfile.Virtual;
+        if (resolvedEquipmentRuntimeProfile.IsRealHardware)
+        {
+            throw new NotSupportedException(
+                "Real hardware runtime profile is not implemented or validated. Use the virtual profile and follow docs/HARDWARE_INTEGRATION_PLAN.md before enabling real equipment.");
+        }
 
+        services.AddSingleton(resolvedEquipmentRuntimeProfile);
         services.AddSingleton<VirtualEquipmentController>();
         services.AddSingleton<IEquipmentController>(provider => provider.GetRequiredService<VirtualEquipmentController>());
         services.AddSingleton<IEquipmentFaultInjector>(provider => provider.GetRequiredService<VirtualEquipmentController>());

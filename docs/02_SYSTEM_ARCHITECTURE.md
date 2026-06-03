@@ -168,6 +168,7 @@ Current implementation status:
 - Alarm / Fault / Recovery now uses Core `EquipmentAlarm`, Application `IEquipmentAlarmRecorder`/`IAlarmCenterUseCase`, and Persistence `SqliteEquipmentAlarmRepository` so non-cancelled Motion, Camera, Inspection, and result persistence failures can be stored as recoverable alarm records.
 - AlarmView is registered through Shell navigation and displays recent alarm code, severity, equipment area, message, correlation ID, acknowledgement time, and operator action memo.
 - Equipment fault injection now uses simulator-only `IEquipmentFaultInjector` plus Application `IEquipmentFaultInjectionUseCase` to update I/O, safety, camera-ready, servo-alarm, interlock, and alarm state without WPF calling simulator internals.
+- App composition now registers an explicit `EquipmentRuntimeProfile.Virtual` and rejects `RealHardware` until the hardware integration plan has implementation and validation evidence.
 - Simulator motion commands now preserve `MachineCommandRequest.CorrelationId` across success, rejected, timeout, cancelled, and stop results.
 - Rich live UI overlay rendering remains a separate follow-up slice.
 

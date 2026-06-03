@@ -10,6 +10,8 @@ This plan defines how `VirtualEquipmentController` can be replaced by a future `
 - Application use cases talk to `IEquipmentController`, `ICameraDevice`, motion command use cases, and repository ports.
 - `VirtualEquipmentController` implements `IEquipmentController`.
 - `VirtualCameraDevice` implements `ICameraDevice`.
+- WPF App composition registers `EquipmentRuntimeProfile.Virtual` by default.
+- A `RealHardware` runtime profile is explicitly rejected at startup until the adapter implementation and validation phases below are complete.
 
 ## New Adapter Contracts
 
@@ -34,6 +36,8 @@ RealEquipmentController : IEquipmentController
 ```
 
 `RealEquipmentController.GetSnapshotAsync` should compose safety, axis, I/O, camera, and alarm snapshots from the adapters. `ExecuteCommandAsync` should route controller and motion commands to the correct adapter while preserving `MachineCommandRequest.CorrelationId`.
+
+The future controller must be enabled through an explicit `EquipmentRuntimeProfile` change. It must not replace the virtual profile by default, and it must not be enabled before bench validation evidence exists.
 
 ## Adapter Responsibilities
 

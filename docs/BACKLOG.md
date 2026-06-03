@@ -394,7 +394,7 @@ Problem: Adapter contracts now define future Motion/Camera/PLC I/O boundaries, b
 Proposed improvement: Implement a bench-only `RealEquipmentController` behind `IEquipmentController` after endpoint/profile settings and vendor SDK details are confirmed.
 Requirement impact: FR-020, FR-021, FR-022, FR-080, FR-140, FR-141, FR-240, NFR-002, NFR-004, NFR-007
 Priority: P1
-Status: Adapter contract and integration plan baseline addressed by ADR-0032; real hardware implementation remains follow-up work.
+Status: Adapter contract, integration plan, and virtual-only runtime profile guard are addressed by ADR-0032 follow-up work; real hardware implementation remains follow-up work.
 
 Date: 2026-06-01
 Source: FR-221 Offline Debug artifact rendering
