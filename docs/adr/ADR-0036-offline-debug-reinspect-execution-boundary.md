@@ -4,6 +4,8 @@
 
 Accepted
 
+2026-06-03 follow-up: ADR-0038 adds a simulator/offline metadata comparison use case for `Run Re-inspect`. This ADR's live replay boundary still applies to source-image replay, current-vs-historical Recipe policy, replay result persistence, and real camera/motion/vision sequence execution.
+
 ## Context
 
 Offline Debug can list persisted inspection result rows, read artifact metadata, preview deterministic BMP artifacts, and safely open overlay/height-map files. The current `InspectionReinspectPreparation` record only carries a minimal source result identity, which is enough to show that preparation happened but not enough for an operator to understand what would be replayed or why execution is unavailable.

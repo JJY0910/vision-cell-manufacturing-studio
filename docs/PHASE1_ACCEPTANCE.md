@@ -46,7 +46,7 @@
 - [x] Offline Debug reads artifact availability metadata through an Application artifact reader.
 - [x] Offline Debug loads overlay/height-map preview pixels through an Application artifact reader.
 - [x] Offline Debug prepares safe operator-confirmed external opening for overlay/height-map artifacts through Application/App service boundaries.
-- [x] Offline Debug exposes Re-inspect preparation state without claiming real re-run execution.
+- [x] Offline Debug exposes Re-inspect preparation and metadata comparison state without claiming real camera/motion/vision re-run execution.
 
 ## Simulator
 

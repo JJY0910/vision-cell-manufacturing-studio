@@ -113,7 +113,7 @@ tests/VisionCell.App.Tests
 - Bench PLC I/O validation uses `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as a manual evidence gate for future adapter work; automated tests do not prove real PLC wiring, safety relay behavior, or output-write safety.
 - Offline Debug result refresh shows loaded, empty, and repository failure states
 - Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
-- Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, and artifact context while keeping `Run Re-inspect` disabled until a replay runner exists
+- Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, and artifact context; `Run Re-inspect` executes an Application metadata comparison without live camera/motion/vision sequence replay
 - AlarmView refresh, acknowledgement state updates, disabled acknowledge reason, and recovery memo edit locking
 
 ## Manual UI Acceptance
