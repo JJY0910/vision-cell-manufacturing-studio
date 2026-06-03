@@ -12,50 +12,43 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <StackPanel>
-          <TextBlock Text="Dashboard" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}}"
-                     Style="{DynamicResource Text.Status}"
-                     Margin="0,4,0,0" />
-        </StackPanel>
-        <WrapPanel Grid.Row="1" Margin="0,12,-8,0">
-          <Button Content="Connect"
-                  Command="{Binding ConnectCommand}"
-                  ToolTip="{Binding ConnectDisabledReason}"
-                  Height="36"
-                  MinWidth="92"
-                  Margin="0,0,8,8" />
-          <Button Content="Disconnect"
-                  Command="{Binding DisconnectCommand}"
-                  ToolTip="{Binding DisconnectDisabledReason}"
-                  Height="36"
-                  MinWidth="104"
-                  Margin="0,0,8,8" />
-          <Button Content="Manual"
-                  Command="{Binding EnterManualModeCommand}"
-                  ToolTip="{Binding EnterManualModeDisabledReason}"
-                  Height="36"
-                  MinWidth="82"
-                  Margin="0,0,8,8" />
-          <Button Content="Auto"
-                  Command="{Binding EnterAutoModeCommand}"
-                  ToolTip="{Binding EnterAutoModeDisabledReason}"
-                  Height="36"
-                  MinWidth="72"
-                  Margin="0,0,8,8" />
-          <Button Content="Refresh"
-                  Command="{Binding RefreshCommand}"
-                  ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
-                  Height="36"
-                  MinWidth="86"
-                  Margin="0,0,8,8" />
-        </WrapPanel>
-      </Grid>
+      <controls:CommandBar Title="Dashboard"
+                           StatusText="{Binding LastSnapshotAt, StringFormat=Last snapshot: {0:yyyy-MM-dd HH:mm:ss}}">
+        <controls:CommandBar.CommandContent>
+          <WrapPanel Margin="0,0,-8,0">
+            <Button Content="Connect"
+                    Command="{Binding ConnectCommand}"
+                    ToolTip="{Binding ConnectDisabledReason}"
+                    Height="36"
+                    MinWidth="92"
+                    Margin="0,0,8,8" />
+            <Button Content="Disconnect"
+                    Command="{Binding DisconnectCommand}"
+                    ToolTip="{Binding DisconnectDisabledReason}"
+                    Height="36"
+                    MinWidth="104"
+                    Margin="0,0,8,8" />
+            <Button Content="Manual"
+                    Command="{Binding EnterManualModeCommand}"
+                    ToolTip="{Binding EnterManualModeDisabledReason}"
+                    Height="36"
+                    MinWidth="82"
+                    Margin="0,0,8,8" />
+            <Button Content="Auto"
+                    Command="{Binding EnterAutoModeCommand}"
+                    ToolTip="{Binding EnterAutoModeDisabledReason}"
+                    Height="36"
+                    MinWidth="72"
+                    Margin="0,0,8,8" />
+            <Button Content="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    ToolTip="Refresh the latest controller, safety, axis, and I/O snapshot."
+                    Height="36"
+                    MinWidth="86"
+                    Margin="0,0,8,8" />
+          </WrapPanel>
+        </controls:CommandBar.CommandContent>
+      </controls:CommandBar>
 
       <ItemsControl Grid.Row="1" ItemsSource="{Binding StatusPills}" Margin="0,20,0,8">
         <ItemsControl.ItemsPanel>
