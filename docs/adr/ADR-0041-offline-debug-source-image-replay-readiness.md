@@ -8,7 +8,7 @@ Accepted
 
 Offline Debug can browse historical inspection results, open overlay/height-map artifacts, prepare a Re-inspect context, compare metadata, persist metadata comparison history, and show active-vs-historical Recipe policy metadata. The remaining FR-222 gap is true source-image replay, where the historical source pixels would be loaded and inspected again under an explicit current or historical Recipe policy.
 
-Persisted `inspection_results.source_image_path` currently stores references such as `camera-frame://...` created by the inspection sequence. That reference is useful for correlation, but it does not prove that raw source pixels are archived or readable for replay.
+Persisted `inspection_results.source_image_path` may contain legacy `camera-frame://...` references or, after ADR-0042, generated `.source.bmp` artifact paths. Camera-frame references are useful for correlation, but they do not prove that raw source pixels are archived or readable for replay.
 
 ## Decision
 
@@ -20,8 +20,9 @@ Persisted `inspection_results.source_image_path` currently stores references suc
   - unsupported URI schemes
   - parent-traversal path references
   - relative source path candidates that still lack a source-image artifact reader
+  - archived source BMP artifacts when metadata is available through `IInspectionArtifactReader`
 - Bind the readiness summary/detail into `OfflineDebugView` through `OfflineDebugViewModel`.
-- Keep `Run Re-inspect` limited to metadata comparison until a source-image artifact reader and replay runner are implemented and validated.
+- Keep `Run Re-inspect` limited to metadata comparison until a source-image replay runner is implemented and validated.
 
 ## Alternatives Considered
 
@@ -33,7 +34,7 @@ Persisted `inspection_results.source_image_path` currently stores references suc
 
 - Operators can see why source-image replay is unavailable for the selected historical result.
 - The Re-inspect preparation surface now distinguishes metadata comparison readiness from source replay readiness.
-- This still does not implement source pixel archival, customer image format loading, replay execution, or new `inspection_results` replay persistence.
+- ADR-0042 adds source pixel archival for newly generated rows, but customer image format loading, replay execution, and new `inspection_results` replay persistence remain follow-up work.
 
 ## Requirement Links
 

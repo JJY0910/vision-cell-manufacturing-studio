@@ -19,14 +19,14 @@ The project still has no real equipment, and real camera/motion/vision sequence 
 - Do not call `InspectionRunUseCase` from Offline Debug.
 - Do not run live camera, motion, PLC, or vision sequence paths.
 
-2026-06-03 follow-up: ADR-0039 persists metadata comparison history in a separate table, and ADR-0041 classifies source-image replay readiness. This still does not persist a new `inspection_results` row or execute source-image replay.
+2026-06-03 follow-up: ADR-0039 persists metadata comparison history in a separate table, ADR-0041 classifies source-image replay readiness, and ADR-0042 archives source frame artifacts for new inspection rows. This still does not persist a new replay `inspection_results` row or execute source-image replay.
 
 ## Consequences
 
 - Offline Debug now has an operator-visible `Run Re-inspect` comparison result.
 - The comparison is deterministic and CI-testable without real equipment.
 - FR-222 advances from prepare-only to previous-vs-replayed metadata comparison.
-- Full source-image replay execution, current-vs-historical replay execution, previous-vs-new persisted result records, and real equipment validation remain follow-up work. Current-vs-historical Recipe policy metadata is addressed by ADR-0040; source-image replay readiness is addressed by ADR-0041.
+- Full source-image replay execution, current-vs-historical replay execution, previous-vs-new persisted result records, and real equipment validation remain follow-up work. Current-vs-historical Recipe policy metadata is addressed by ADR-0040; source-image replay readiness is addressed by ADR-0041; source frame artifact archival is addressed by ADR-0042.
 
 ## Requirement Coverage
 

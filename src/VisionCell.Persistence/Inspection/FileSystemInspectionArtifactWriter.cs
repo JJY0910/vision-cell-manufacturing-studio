@@ -41,11 +41,17 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         Directory.CreateDirectory(directory);
 
         var resultId = request.ResultId.ToString("N");
+        var sourceFileName = $"{resultId}.source.bmp";
         var overlayFileName = $"{resultId}.overlay.bmp";
         var heightMapFileName = $"{resultId}.height.bmp";
+        var sourceAbsolutePath = GetSafeFilePath(directory, sourceFileName);
         var overlayAbsolutePath = GetSafeFilePath(directory, overlayFileName);
         var heightMapAbsolutePath = GetSafeFilePath(directory, heightMapFileName);
 
+        await File.WriteAllBytesAsync(
+            sourceAbsolutePath,
+            RenderSourceImage(request.SourceImage),
+            cancellationToken).ConfigureAwait(false);
         await File.WriteAllBytesAsync(
             overlayAbsolutePath,
             RenderOverlay(request),
@@ -56,6 +62,7 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
             cancellationToken).ConfigureAwait(false);
 
         return new InspectionArtifactWriteResult(
+            ToRelativePath(dateSegment, sourceFileName),
             ToRelativePath(dateSegment, overlayFileName),
             ToRelativePath(dateSegment, heightMapFileName));
     }
@@ -262,6 +269,22 @@ public sealed class FileSystemInspectionArtifactWriter : IInspectionArtifactWrit
         foreach (var defect in request.Defects)
         {
             DrawDefect(pixels, image.Width, image.Height, defect);
+        }
+
+        return EncodeBmp(pixels, image.Width, image.Height);
+    }
+
+    private static byte[] RenderSourceImage(InspectionArtifactImageFrame image)
+    {
+        var pixels = new Rgb[image.Width * image.Height];
+        for (var y = 0; y < image.Height; y++)
+        {
+            var rowOffset = y * image.Stride;
+            for (var x = 0; x < image.Width; x++)
+            {
+                var gray = image.Gray8Pixels[rowOffset + x];
+                pixels[(y * image.Width) + x] = new Rgb(gray, gray, gray);
+            }
         }
 
         return EncodeBmp(pixels, image.Width, image.Height);

@@ -95,6 +95,7 @@ public sealed class InspectionRunUseCaseTests
         results.Requests[0].Id.Should().Be(persistedResultId.GetValueOrDefault());
         results.Requests[0].Judgment.Should().Be(Judgment.Pass);
         results.Requests[0].CorrelationId.Should().Be(result.Request.CorrelationId.ToString());
+        results.Requests[0].SourceImagePath.Should().EndWith(".source.bmp");
         results.Requests[0].OverlayImagePath.Should().EndWith(".overlay.bmp");
         results.Requests[0].HeightMapPath.Should().EndWith(".height.bmp");
         motion.Requests.Should().ContainSingle();
@@ -794,6 +795,7 @@ public sealed class InspectionRunUseCaseTests
 
         public Func<InspectionArtifactWriteRequest, Task<InspectionArtifactWriteResult>> WriteHandler { get; init; } =
             request => Task.FromResult(new InspectionArtifactWriteResult(
+                $"inspection-artifacts/20260601/{request.ResultId:N}.source.bmp",
                 $"inspection-artifacts/20260601/{request.ResultId:N}.overlay.bmp",
                 $"inspection-artifacts/20260601/{request.ResultId:N}.height.bmp"));
 

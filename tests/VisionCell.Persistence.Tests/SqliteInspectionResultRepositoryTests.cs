@@ -38,7 +38,7 @@ public sealed class SqliteInspectionResultRepositoryTests
         records[0].LotId.Should().Be("LOT-20260601000000");
         records[0].RecipeId.Should().Be("RCP-RESULT");
         records[0].Judgment.Should().Be(Judgment.Fail);
-        records[0].SourceImagePath.Should().Contain("camera-frame");
+        records[0].SourceImagePath.Should().EndWith(".source.bmp");
         records[0].Defects.Should().HaveCount(2);
         records[0].Defects.Should().Contain(defect => defect.Type == "Lift" && defect.RoiId == "ROI-01");
     }
@@ -74,7 +74,7 @@ public sealed class SqliteInspectionResultRepositoryTests
             "1.0.0",
             judgment,
             defects.Count == 0 ? "No defects" : $"{defects.Count} defect(s)",
-            "camera-frame://Virtual%203D%20camera/test",
+            $"inspection-artifacts/20260601/{Guid.NewGuid():N}.source.bmp",
             OverlayImagePath: null,
             HeightMapPath: null,
             TimeSpan.FromMilliseconds(123),

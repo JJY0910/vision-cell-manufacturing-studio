@@ -133,7 +133,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             new FakeInspectionReinspectComparisonReader(),
             new FakeInspectionReinspectRecipePolicyUseCase(),
-            new FakeInspectionReinspectSourceImageReadinessUseCase(),
+            new FakeInspectionReinspectSourceImageReadinessUseCase(artifactReader),
             confirmation,
             viewer);
     }
@@ -149,7 +149,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
             "1.0.0",
             Judgment.Pass,
             "No defects",
-            $"camera-frame://VirtualCamera/{resultId:N}",
+            $"inspection-artifacts/20260601/{resultId:N}.source.bmp",
             $"inspection-artifacts/20260601/{resultId:N}.overlay.bmp",
             $"inspection-artifacts/20260601/{resultId:N}.height.bmp",
             TimeSpan.FromMilliseconds(123),
@@ -257,7 +257,12 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
 
     private sealed class FakeInspectionReinspectSourceImageReadinessUseCase : IInspectionReinspectSourceImageReadinessUseCase
     {
-        private readonly InspectionReinspectSourceImageReadinessUseCase _inner = new();
+        private readonly InspectionReinspectSourceImageReadinessUseCase _inner;
+
+        public FakeInspectionReinspectSourceImageReadinessUseCase(IInspectionArtifactReader artifactReader)
+        {
+            _inner = new InspectionReinspectSourceImageReadinessUseCase(artifactReader);
+        }
 
         public Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
             InspectionReinspectPreparation preparation,

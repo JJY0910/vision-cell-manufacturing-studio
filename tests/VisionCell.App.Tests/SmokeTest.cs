@@ -583,8 +583,8 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.ReinspectRecipePolicySummary.Should().Contain("Current and historical Recipe match");
         offlineDebug.ReinspectRecipePolicyDetail.Should().Contain("Metadata comparison");
         offlineDebug.ReinspectSourceImageReadiness.Should().NotBeNull();
-        offlineDebug.ReinspectSourceImageReadiness!.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.FrameArchiveUnavailable);
-        offlineDebug.ReinspectSourceImageReadinessSummary.Should().Contain("Frame archive unavailable");
+        offlineDebug.ReinspectSourceImageReadiness!.Status.Should().Be(InspectionReinspectSourceImageReadinessStatus.SourceArtifactArchived);
+        offlineDebug.ReinspectSourceImageReadinessSummary.Should().Contain("Source artifact archived");
         offlineDebug.ReinspectSourceImageReadinessDetail.Should().Contain(result.SourceImagePath);
         await offlineDebug.RunReinspectAsync(CancellationToken.None);
         offlineDebug.ReinspectComparison.Should().NotBeNull();
@@ -1469,15 +1469,16 @@ public sealed class DashboardAndShellViewModelTests
         FakeUserConfirmationService? confirmationService = null,
         FakeArtifactViewerService? artifactViewerService = null)
     {
+        var resolvedArtifactReader = artifactReader ?? new FakeInspectionArtifactReader();
         return new OfflineDebugViewModel(
             resultReader ?? new FakeInspectionResultReader(),
-            artifactReader ?? new FakeInspectionArtifactReader(),
+            resolvedArtifactReader,
             new InspectionReinspectUseCase(
                 () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             reinspectComparisonReader ?? new FakeInspectionReinspectComparisonReader(),
             reinspectRecipePolicyUseCase ?? new FakeInspectionReinspectRecipePolicyUseCase(),
-            sourceImageReadinessUseCase ?? new FakeInspectionReinspectSourceImageReadinessUseCase(),
+            sourceImageReadinessUseCase ?? new FakeInspectionReinspectSourceImageReadinessUseCase(resolvedArtifactReader),
             confirmationService ?? new FakeUserConfirmationService(true),
             artifactViewerService ?? new FakeArtifactViewerService());
     }
@@ -1626,7 +1627,7 @@ public sealed class DashboardAndShellViewModelTests
             "1.0.0",
             judgment,
             resolvedDefects.Count == 0 ? "No defects" : $"{resolvedDefects.Count} defect(s)",
-            $"camera-frame://VirtualCamera/{resultId:N}",
+            $"inspection-artifacts/20260601/{resultId:N}.source.bmp",
             $"inspection-artifacts/20260601/{resultId:N}.overlay.bmp",
             $"inspection-artifacts/20260601/{resultId:N}.height.bmp",
             TimeSpan.FromMilliseconds(123),
@@ -2092,7 +2093,12 @@ public sealed class DashboardAndShellViewModelTests
 
     private sealed class FakeInspectionReinspectSourceImageReadinessUseCase : IInspectionReinspectSourceImageReadinessUseCase
     {
-        private readonly InspectionReinspectSourceImageReadinessUseCase _inner = new();
+        private readonly InspectionReinspectSourceImageReadinessUseCase _inner;
+
+        public FakeInspectionReinspectSourceImageReadinessUseCase(IInspectionArtifactReader artifactReader)
+        {
+            _inner = new InspectionReinspectSourceImageReadinessUseCase(artifactReader);
+        }
 
         public Task<InspectionReinspectSourceImageReadinessResult> ResolveAsync(
             InspectionReinspectPreparation preparation,
