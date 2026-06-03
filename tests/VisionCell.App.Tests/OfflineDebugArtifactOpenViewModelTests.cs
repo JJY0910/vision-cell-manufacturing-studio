@@ -101,7 +101,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
             new FakeArtifactViewerService());
 
         await viewModel.RefreshResultsAsync(CancellationToken.None);
-        viewModel.PrepareReinspect();
+        await viewModel.PrepareReinspectAsync(CancellationToken.None);
         await viewModel.RunReinspectAsync(CancellationToken.None);
 
         viewModel.PreparedReinspect.Should().NotBeNull();
@@ -132,6 +132,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
                 () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
             new FakeInspectionReinspectComparisonReader(),
+            new FakeInspectionReinspectRecipePolicyUseCase(),
             confirmation,
             viewer);
     }
@@ -237,6 +238,19 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
             CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<InspectionReinspectComparisonResult>>(Array.Empty<InspectionReinspectComparisonResult>());
+        }
+    }
+
+    private sealed class FakeInspectionReinspectRecipePolicyUseCase : IInspectionReinspectRecipePolicyUseCase
+    {
+        public Task<InspectionReinspectRecipePolicyResult> ResolveAsync(
+            InspectionReinspectPreparation preparation,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(InspectionReinspectRecipePolicyResult.ActiveMatchesHistorical(
+                preparation,
+                preparation.RecipeId,
+                preparation.RecipeVersion));
         }
     }
 

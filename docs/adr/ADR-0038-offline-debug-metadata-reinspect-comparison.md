@@ -26,7 +26,7 @@ The project still has no real equipment, and real camera/motion/vision sequence 
 - Offline Debug now has an operator-visible `Run Re-inspect` comparison result.
 - The comparison is deterministic and CI-testable without real equipment.
 - FR-222 advances from prepare-only to previous-vs-replayed metadata comparison.
-- Full source-image replay, current-vs-historical Recipe policy, previous-vs-new persisted result records, and real equipment validation remain follow-up work.
+- Full source-image replay, current-vs-historical replay execution, previous-vs-new persisted result records, and real equipment validation remain follow-up work. Current-vs-historical Recipe policy metadata is addressed by ADR-0040.
 
 ## Requirement Coverage
 

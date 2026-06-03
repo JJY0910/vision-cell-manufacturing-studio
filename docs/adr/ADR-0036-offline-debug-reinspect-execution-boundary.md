@@ -4,7 +4,7 @@
 
 Accepted
 
-2026-06-03 follow-up: ADR-0038 adds a simulator/offline metadata comparison use case for `Run Re-inspect`, and ADR-0039 persists that metadata comparison history. This ADR's live replay boundary still applies to source-image replay, current-vs-historical Recipe policy, new inspection-result replay persistence, and real camera/motion/vision sequence execution.
+2026-06-03 follow-up: ADR-0038 adds a simulator/offline metadata comparison use case for `Run Re-inspect`, ADR-0039 persists that metadata comparison history, and ADR-0040 surfaces current-vs-historical Recipe policy metadata. This ADR's live replay boundary still applies to source-image replay, current-vs-historical replay execution, new inspection-result replay persistence, and real camera/motion/vision sequence execution.
 
 ## Context
 

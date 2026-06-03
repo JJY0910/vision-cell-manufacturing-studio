@@ -179,6 +179,8 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding SelectedResult.SourceImagePath, StringFormat=Source: {0}, TargetNullValue=Source: -}"
                        Style="{DynamicResource Text.Status}"
@@ -207,6 +209,8 @@
 
           <Grid Grid.Row="3" Margin="0,8,0,0">
             <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
@@ -260,15 +264,25 @@
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
             <TextBlock Grid.Row="6"
+                       Text="{Binding ReinspectRecipePolicySummary}"
+                       Style="{DynamicResource Text.StatusStrong}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="7"
+                       Text="{Binding ReinspectRecipePolicyDetail}"
+                       Style="{DynamicResource Text.Status}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0" />
+            <TextBlock Grid.Row="8"
                        Text="{Binding ReinspectRunDisabledReason, StringFormat=Run Re-inspect: {0}}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
-            <TextBlock Grid.Row="7"
+            <TextBlock Grid.Row="9"
                        Text="Re-inspect Readiness"
                        Style="{DynamicResource Text.SectionHeader}"
                        Margin="0,8,0,4" />
-            <ListView Grid.Row="8"
+            <ListView Grid.Row="10"
                       ItemsSource="{Binding ReinspectReadinessItems}"
                       MinHeight="120"
                       Style="{DynamicResource ListView.HmiGrid}">
@@ -298,21 +312,21 @@
                 </GridView>
               </ListView.View>
             </ListView>
-            <TextBlock Grid.Row="9"
+            <TextBlock Grid.Row="11"
                        Text="{Binding ReinspectComparisonSummary}"
                        Style="{DynamicResource Text.StatusStrong}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
-            <TextBlock Grid.Row="10"
+            <TextBlock Grid.Row="12"
                        Text="{Binding ReinspectComparisonDetail}"
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
-            <TextBlock Grid.Row="11"
+            <TextBlock Grid.Row="13"
                        Text="Re-inspect History"
                        Style="{DynamicResource Text.SectionHeader}"
                        Margin="0,8,0,4" />
-            <Grid Grid.Row="12">
+            <Grid Grid.Row="14">
               <ListView ItemsSource="{Binding ReinspectComparisons}"
                         MinHeight="120"
                         Style="{DynamicResource ListView.HmiGrid}">

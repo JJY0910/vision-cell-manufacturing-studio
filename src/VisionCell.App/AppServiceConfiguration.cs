@@ -118,6 +118,7 @@ public static class AppServiceConfiguration
         services.AddSingleton<IInspectionRunUseCase, InspectionRunUseCase>();
         services.AddSingleton<IInspectionReinspectUseCase>(provider => new InspectionReinspectUseCase(
             provider.GetRequiredService<IInspectionReinspectComparisonRepository>()));
+        services.AddSingleton<IInspectionReinspectRecipePolicyUseCase, InspectionReinspectRecipePolicyUseCase>();
         services.AddSingleton<ITeachingPointUseCase, TeachingPointUseCase>();
         services.AddSingleton<IUserConfirmationService, MessageBoxConfirmationService>();
         services.AddSingleton<IArtifactViewerService, ShellArtifactViewerService>();

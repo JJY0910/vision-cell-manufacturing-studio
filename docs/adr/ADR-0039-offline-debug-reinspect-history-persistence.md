@@ -16,7 +16,7 @@ The project still has no real equipment or source-image replay runner. Persistin
 - Register `SqliteInspectionReinspectComparisonRepository` in WPF composition.
 - Let `InspectionReinspectUseCase` persist metadata comparison results when a repository is configured.
 - Add a read-only Re-inspect History section in Offline Debug.
-- Keep source-image replay, current-vs-historical Recipe policy, and new inspection-result persistence out of scope.
+- Keep source-image replay, current-vs-historical replay execution, and new inspection-result persistence out of scope.
 
 ## Consequences
 
