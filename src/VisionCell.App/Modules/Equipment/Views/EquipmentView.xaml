@@ -12,20 +12,16 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <DockPanel>
-        <Button DockPanel.Dock="Right"
-                Content="Refresh"
-                Command="{Binding RefreshCommand}"
-                ToolTip="Refresh controller, safety, fault, I/O, and event state."
-                Height="36"
-                MinWidth="86" />
-        <StackPanel>
-          <TextBlock Text="Equipment" Style="{DynamicResource Text.PageTitle}" />
-          <TextBlock Text="{Binding LastSnapshotText}"
-                     Style="{DynamicResource Text.Status}"
-                     Margin="0,4,0,0" />
-        </StackPanel>
-      </DockPanel>
+      <controls:CommandBar Title="Equipment"
+                           StatusText="{Binding LastSnapshotText}">
+        <controls:CommandBar.CommandContent>
+          <Button Content="Refresh"
+                  Command="{Binding RefreshCommand}"
+                  ToolTip="Refresh controller, safety, fault, I/O, and event state."
+                  Height="36"
+                  MinWidth="86" />
+        </controls:CommandBar.CommandContent>
+      </controls:CommandBar>
 
       <UniformGrid Grid.Row="1" Columns="3" Margin="-8,20,-8,4">
         <Border Style="{DynamicResource Card.Panel}">

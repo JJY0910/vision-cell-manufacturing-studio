@@ -103,7 +103,7 @@ tests/VisionCell.App.Tests
 - State update after snapshot
 - Error event displayed
 - Navigation updates selected screen
-- Priority HMI screens use the shared `CommandBar` title/command surface so Dashboard, Motion, Teaching, Recipe, Inspection, and Alarm keep a consistent operator header.
+- Priority HMI screens use the shared `CommandBar` title/command surface so Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, and Alarm keep a consistent operator header.
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
 - EquipmentView reads recent I/O transition history through the Application repository port and displays empty/non-empty states
