@@ -165,7 +165,10 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
-              <RowDefinition Height="*" />
+              <RowDefinition Height="170" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="190" />
             </Grid.RowDefinitions>
             <TextBlock Text="Fault Events" Style="{DynamicResource Text.CardTitle}" />
             <controls:EmptyState Grid.Row="1"
@@ -182,6 +185,29 @@
                   <GridViewColumn Header="Severity" DisplayMemberBinding="{Binding Severity}" Width="78" />
                   <GridViewColumn Header="Event" DisplayMemberBinding="{Binding EventType}" Width="108" />
                   <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="240" />
+                </GridView>
+              </ListView.View>
+            </ListView>
+            <TextBlock Grid.Row="3"
+                       Text="I/O Transitions"
+                       Style="{DynamicResource Text.CardTitle}"
+                       Margin="0,16,0,0" />
+            <controls:EmptyState Grid.Row="4"
+                                 HasItems="{Binding HasIoTransitions}"
+                                 Title="No I/O Transitions"
+                                 Detail="{Binding IoTransitionStatus}"
+                                 Margin="0,0,0,8" />
+            <ListView Grid.Row="5"
+                      ItemsSource="{Binding IoTransitions}"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Time" DisplayMemberBinding="{Binding TimeText}" Width="72" />
+                  <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="74" />
+                  <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="154" />
+                  <GridViewColumn Header="Before" DisplayMemberBinding="{Binding PreviousState}" Width="92" />
+                  <GridViewColumn Header="After" DisplayMemberBinding="{Binding CurrentState}" Width="92" />
+                  <GridViewColumn Header="Source" DisplayMemberBinding="{Binding Source}" Width="184" />
                 </GridView>
               </ListView.View>
             </ListView>

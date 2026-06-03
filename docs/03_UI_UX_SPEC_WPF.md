@@ -118,7 +118,7 @@ Required visual:
 Implementation status:
 
 - `EquipmentViewModel` refreshes the simulator equipment snapshot through `IEquipmentDashboardUseCase`.
-- `EquipmentView` displays controller mode, safety/interlock summary, camera/alarm status, active fault count, forced I/O count, I/O monitor rows, fault state rows, and recent fault events.
+- `EquipmentView` displays controller mode, safety/interlock summary, camera/alarm status, active fault count, forced I/O count, I/O monitor rows, fault state rows, recent fault events, and recent read-only I/O transition history.
 - Simulator fault injection for EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, and Clear All flows through `IEquipmentFaultInjectionUseCase`; WPF does not call simulator internals directly.
 
 ### MotionView

@@ -121,6 +121,12 @@ public sealed class DashboardAndShellViewModelTests
         equipment.Faults.Should().Contain(fault => fault.Name == "EStop" && !fault.IsActive);
         equipment.FaultSummaryText.Should().Be("Active faults: 0 / 6");
         equipment.IoSummaryText.Should().Contain("I/O forced: 0 /");
+        equipment.IoTransitions.Should().NotBeEmpty();
+        equipment.IoTransitionStatus.Should().Contain("I/O transitions:");
+        equipment.IoTransitions.Should().Contain(transition =>
+            transition.Name == "DI_ESTOP_ON" &&
+            transition.PreviousState == "Off" &&
+            transition.CurrentState == "On / Forced");
     }
 
     [Fact]
@@ -1279,12 +1285,15 @@ public sealed class DashboardAndShellViewModelTests
         FakeEquipmentAlarmRecorder? alarmRecorder = null)
     {
         var resolvedController = controller ?? new VirtualEquipmentController();
+        var transitionRepository = new FakeEquipmentIoTransitionRepository();
         return new EquipmentViewModel(
             new EquipmentDashboardUseCase(resolvedController, new CommandInterlockService()),
             new EquipmentFaultInjectionUseCase(
                 resolvedController,
                 resolvedController,
-                alarmRecorder ?? new FakeEquipmentAlarmRecorder()));
+                alarmRecorder ?? new FakeEquipmentAlarmRecorder(),
+                transitionRepository),
+            transitionRepository);
     }
 
     private static AlarmViewModel CreateAlarmViewModel(FakeAlarmCenterUseCase? useCase = null)
@@ -1859,6 +1868,22 @@ public sealed class DashboardAndShellViewModelTests
         {
             Failures.Add((errorCode, area, message, correlationId));
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeEquipmentIoTransitionRepository : IEquipmentIoTransitionRepository
+    {
+        private readonly List<IoTransitionRecord> _transitions = new();
+
+        public Task SaveAsync(IoTransitionRecord transition, CancellationToken cancellationToken)
+        {
+            _transitions.Insert(0, transition);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<IoTransitionRecord>> ListRecentAsync(int limit, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<IoTransitionRecord>>(_transitions.Take(limit).ToArray());
         }
     }
 

@@ -105,6 +105,7 @@ tests/VisionCell.App.Tests
 - Navigation updates selected screen
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata
+- EquipmentView reads recent I/O transition history through the Application repository port and displays empty/non-empty states
 - Offline Debug result refresh shows loaded, empty, and repository failure states
 - Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
 - Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, and artifact context while keeping `Run Re-inspect` disabled until a replay runner exists
