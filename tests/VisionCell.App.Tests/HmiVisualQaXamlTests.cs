@@ -48,7 +48,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/Teaching/Views/TeachingView.xaml"] = new[] { "No Teaching Points", "No Selected Point History" },
             ["Modules/Recipe/Views/RecipeView.xaml"] = new[] { "No Recipe Index Records" },
             ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect", "Re-inspect Readiness" },
-            ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records" },
+            ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records", "Recovery Boundary" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
             ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured", "FR-203", "FR-204" },
@@ -186,6 +186,7 @@ public sealed class HmiVisualQaXamlTests
         alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");
         alarm.Should().Contain("IsEnabled=\"{Binding IsActionMemoEditable}\"");
         alarm.Should().Contain("SelectedAlarm.RecoveryHint");
+        alarm.Should().Contain("RecoveryBoundaryItems");
     }
 
     [Fact]

@@ -92,6 +92,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <DockPanel>
             <Button DockPanel.Dock="Right"
@@ -131,7 +132,41 @@
                        Style="{DynamicResource Text.Status}"
                        TextWrapping="Wrap" />
           </StackPanel>
-          <Grid Grid.Row="3" Margin="0,4,0,0">
+          <StackPanel Grid.Row="3" Margin="0,4,0,8">
+            <TextBlock Text="Recovery Boundary"
+                       Style="{DynamicResource Text.SectionHeader}"
+                       Margin="0,0,0,4" />
+            <ListView ItemsSource="{Binding RecoveryBoundaryItems}"
+                      MinHeight="120"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Boundary" Width="190">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Boundary}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.StatusStrong}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                  <GridViewColumn Header="State"
+                                  DisplayMemberBinding="{Binding State}"
+                                  Width="130" />
+                  <GridViewColumn Header="Operator Note" Width="500">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Detail}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                </GridView>
+              </ListView.View>
+            </ListView>
+          </StackPanel>
+          <Grid Grid.Row="4" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="280" />

@@ -160,6 +160,15 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.IsActionMemoEditable.Should().BeTrue();
         viewModel.AcknowledgeDisabledReason.Should().Contain("Store the recovery memo");
         viewModel.SelectedAlarm!.RecoveryHint.Should().Contain("soft limit");
+        viewModel.RecoveryBoundaryItems.Should().Contain(item =>
+            item.Boundary == "Operator acknowledgement" &&
+            item.State == "Available");
+        viewModel.RecoveryBoundaryItems.Should().Contain(item =>
+            item.Boundary == "Hardware reset" &&
+            item.State == "Not connected");
+        viewModel.RecoveryBoundaryItems.Should().Contain(item =>
+            item.Boundary == "PLC/vendor alarm source" &&
+            item.State == "Not validated");
 
         viewModel.ActionMemoText = "Checked soft limit and reset axis.";
         await viewModel.AcknowledgeSelectedAsync(CancellationToken.None);

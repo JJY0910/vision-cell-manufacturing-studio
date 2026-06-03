@@ -19,6 +19,31 @@ public sealed partial class AlarmViewModel : ObservableObject
     }
 
     public ObservableCollection<AlarmItemViewModel> Alarms { get; } = new();
+
+    public IReadOnlyList<AlarmRecoveryBoundaryItemViewModel> RecoveryBoundaryItems { get; } =
+    [
+        new(
+            "Operator acknowledgement",
+            "Available",
+            "Acknowledge stores acknowledgedAt and actionMemo as operator recovery history."),
+        new(
+            "Recovery memo",
+            "Available",
+            "Memo text is persisted only through the Alarm Center acknowledgement path."),
+        new(
+            "Hardware reset",
+            "Not connected",
+            "AlarmView acknowledgement does not send controller, PLC, or safety reset commands."),
+        new(
+            "PLC/vendor alarm source",
+            "Not validated",
+            "Alarm rows currently come from simulator/Application failure paths and the error-code catalog."),
+        new(
+            "Safety relay confirmation",
+            "Not validated",
+            "No physical safety relay reset or field acknowledgement evidence exists in this environment.")
+    ];
+
     public IAsyncRelayCommand RefreshCommand { get; }
     public IAsyncRelayCommand AcknowledgeCommand { get; }
 
@@ -194,3 +219,8 @@ public sealed partial class AlarmViewModel : ObservableObject
         OnPropertyChanged(nameof(HasAlarms));
     }
 }
+
+public sealed record AlarmRecoveryBoundaryItemViewModel(
+    string Boundary,
+    string State,
+    string Detail);

@@ -5,6 +5,8 @@ Date: 2026-06-02
 
 2026-06-03 follow-up: `AlarmView` now shows protocol-spec recovery guidance for the selected alarm code. This is operator guidance only; acknowledgement remains separate from hardware reset confirmation.
 
+2026-06-03 follow-up: `AlarmView` also shows read-only recovery boundary rows for operator acknowledgement, memo persistence, hardware reset, PLC/vendor alarm source, and safety relay confirmation so the operator UI does not imply unvalidated hardware reset coverage.
+
 ## Context
 
 Priority 2 requires an Alarm / Fault / Recovery Center with an `EquipmentAlarm` domain model, SQLite persistence, WPF operator view, and links from Motion/Camera/Inspection failures. Existing `AlarmSnapshot` represents the controller's current alarm state and `SystemEvent` represents transient event-log rows, but neither supports operator acknowledgement or recovery memo history.
