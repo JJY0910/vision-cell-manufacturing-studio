@@ -43,6 +43,30 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     public ObservableCollection<OfflineInspectionResultItemViewModel> Results { get; } = new();
 
+    public IReadOnlyList<ReinspectReadinessItemViewModel> ReinspectReadinessItems { get; } =
+    [
+        new(
+            "Metadata comparison",
+            "Available",
+            "Run Re-inspect compares selected historical metadata without live camera, motion, PLC, or vision sequence replay."),
+        new(
+            "Source-image replay",
+            "Not implemented",
+            "No customer/source image replay runner is connected to Offline Debug."),
+        new(
+            "Recipe policy",
+            "Not implemented",
+            "Current-vs-historical Recipe resolution remains a documented follow-up."),
+        new(
+            "Replay persistence",
+            "Not implemented",
+            "Replayed comparison results are not written back to inspection_results."),
+        new(
+            "Real sequence execution",
+            "Not validated",
+            "Real camera, motion, PLC, and inspection sequence execution requires hardware validation.")
+    ];
+
     public IAsyncRelayCommand RefreshResultsCommand { get; }
     public IAsyncRelayCommand LoadSelectedArtifactsCommand { get; }
     public IAsyncRelayCommand OpenOverlayArtifactCommand { get; }
@@ -605,6 +629,11 @@ public sealed class OfflineInspectionResultItemViewModel
             : $"{kib / 1024.0:0.0} MiB";
     }
 }
+
+public sealed record ReinspectReadinessItemViewModel(
+    string Step,
+    string State,
+    string Detail);
 
 public sealed class OfflineInspectionDefectItemViewModel
 {
