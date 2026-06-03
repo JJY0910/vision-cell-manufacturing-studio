@@ -273,6 +273,12 @@ public sealed class DashboardAndShellViewModelTests
             provider.GetRequiredService<IInspectionResultRepository>()
                 .Should()
                 .BeOfType<SqliteInspectionResultRepository>();
+            provider.GetRequiredService<IInspectionReinspectComparisonRepository>()
+                .Should()
+                .BeOfType<SqliteInspectionReinspectComparisonRepository>();
+            provider.GetRequiredService<IInspectionReinspectComparisonReader>()
+                .Should()
+                .BeOfType<SqliteInspectionReinspectComparisonRepository>();
             provider.GetRequiredService<IInspectionArtifactWriter>()
                 .Should()
                 .BeOfType<FileSystemInspectionArtifactWriter>();
@@ -495,6 +501,23 @@ public sealed class DashboardAndShellViewModelTests
     }
 
     [Fact]
+    public async Task OfflineDebug_RefreshResultsAsync_Should_Load_Reinspect_Comparison_History()
+    {
+        var comparison = CreateReinspectComparison("offline-reinspect-history-001");
+        var offlineDebug = CreateOfflineDebugViewModel(
+            new FakeInspectionResultReader(),
+            reinspectComparisonReader: new FakeInspectionReinspectComparisonReader(comparison));
+
+        await offlineDebug.RefreshResultsAsync(CancellationToken.None);
+
+        offlineDebug.HasReinspectComparisons.Should().BeTrue();
+        offlineDebug.ReinspectComparisons.Should().ContainSingle();
+        offlineDebug.ReinspectComparisons[0].ReplayCorrelationId.Should().Be(comparison.ReplayCorrelationId);
+        offlineDebug.ReinspectComparisons[0].PersistenceStatus.Should().Contain("Persisted");
+        offlineDebug.ReinspectComparisons[0].JudgmentTransition.Should().Be("Pass -> Pass");
+    }
+
+    [Fact]
     public async Task OfflineDebug_LoadSelectedArtifactsAsync_Should_Load_Previews_And_Prepare_Reinspect()
     {
         var artifactReader = new FakeInspectionArtifactReader();
@@ -540,8 +563,8 @@ public sealed class DashboardAndShellViewModelTests
             item.Step == "Source-image replay" &&
             item.State == "Not implemented");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
-            item.Step == "Replay persistence" &&
-            item.State == "Not implemented");
+            item.Step == "Metadata history persistence" &&
+            item.State == "Available");
         offlineDebug.ReinspectReadinessItems.Should().Contain(item =>
             item.Step == "Real sequence execution" &&
             item.State == "Not validated");
@@ -553,6 +576,10 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.ReinspectComparison.ReplayedJudgment.Should().Be(result.Judgment.ToString());
         offlineDebug.ReinspectComparisonSummary.Should().Contain("Matched");
         offlineDebug.ReinspectComparisonDetail.Should().Contain("Not persisted");
+        offlineDebug.HasReinspectComparisons.Should().BeTrue();
+        offlineDebug.ReinspectComparisons.Should().ContainSingle();
+        offlineDebug.ReinspectComparisons[0].ReplayCorrelationId.Should().Be(offlineDebug.ReinspectComparison.ReplayCorrelationId);
+        offlineDebug.ReinspectComparisons[0].PersistenceStatus.Should().Contain("Not persisted");
         offlineDebug.HasAlert.Should().BeFalse();
         offlineDebug.AlertMessage.Should().BeNull();
 
@@ -1417,6 +1444,7 @@ public sealed class DashboardAndShellViewModelTests
     private static OfflineDebugViewModel CreateOfflineDebugViewModel(
         FakeInspectionResultReader? resultReader = null,
         FakeInspectionArtifactReader? artifactReader = null,
+        FakeInspectionReinspectComparisonReader? reinspectComparisonReader = null,
         FakeUserConfirmationService? confirmationService = null,
         FakeArtifactViewerService? artifactViewerService = null)
     {
@@ -1426,6 +1454,7 @@ public sealed class DashboardAndShellViewModelTests
             new InspectionReinspectUseCase(
                 () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
+            reinspectComparisonReader ?? new FakeInspectionReinspectComparisonReader(),
             confirmationService ?? new FakeUserConfirmationService(true),
             artifactViewerService ?? new FakeArtifactViewerService());
     }
@@ -1580,6 +1609,26 @@ public sealed class DashboardAndShellViewModelTests
             TimeSpan.FromMilliseconds(123),
             createdAt,
             resolvedDefects);
+    }
+
+    private static InspectionReinspectComparisonResult CreateReinspectComparison(string replayCorrelationId)
+    {
+        return new InspectionReinspectComparisonResult(
+            Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            replayCorrelationId,
+            "LOT-20260601123000",
+            "RCP-OFFLINE",
+            "1.0.0",
+            "Pass",
+            "Pass",
+            0,
+            0,
+            TimeSpan.FromMilliseconds(123),
+            TimeSpan.FromMilliseconds(123),
+            InspectionReinspectComparisonStatus.Matched,
+            new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
+            "Persisted to offline re-inspect history.",
+            "Metadata comparison completed from the prepared historical result context.");
     }
 
     private static CameraFrame CreateCameraFrame(string recipeId, string version)
@@ -1985,6 +2034,23 @@ public sealed class DashboardAndShellViewModelTests
             }
 
             return Task.FromResult<IReadOnlyList<InspectionResultRecord>>(_records.Take(limit).ToArray());
+        }
+    }
+
+    private sealed class FakeInspectionReinspectComparisonReader : IInspectionReinspectComparisonReader
+    {
+        private readonly IReadOnlyList<InspectionReinspectComparisonResult> _records;
+
+        public FakeInspectionReinspectComparisonReader(params InspectionReinspectComparisonResult[] records)
+        {
+            _records = records;
+        }
+
+        public Task<IReadOnlyList<InspectionReinspectComparisonResult>> ListRecentAsync(
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<InspectionReinspectComparisonResult>>(_records.Take(limit).ToArray());
         }
     }
 

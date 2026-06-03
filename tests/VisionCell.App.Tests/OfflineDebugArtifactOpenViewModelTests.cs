@@ -131,6 +131,7 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
             new InspectionReinspectUseCase(
                 () => new DateTimeOffset(2026, 6, 1, 12, 50, 0, TimeSpan.Zero),
                 () => Guid.Parse("11111111-2222-3333-4444-555555555555")),
+            new FakeInspectionReinspectComparisonReader(),
             confirmation,
             viewer);
     }
@@ -226,6 +227,16 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
                         Path.GetTempPath(),
                         "VisionCellArtifacts",
                         $"{request.ArtifactKind}.bmp")));
+        }
+    }
+
+    private sealed class FakeInspectionReinspectComparisonReader : IInspectionReinspectComparisonReader
+    {
+        public Task<IReadOnlyList<InspectionReinspectComparisonResult>> ListRecentAsync(
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<InspectionReinspectComparisonResult>>(Array.Empty<InspectionReinspectComparisonResult>());
         }
     }
 

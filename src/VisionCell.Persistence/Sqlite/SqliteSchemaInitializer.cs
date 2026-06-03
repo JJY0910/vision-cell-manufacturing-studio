@@ -11,6 +11,7 @@ public sealed class SqliteSchemaInitializer
     private const string InspectionResultsMigrationId = "005_inspection_results";
     private const string EquipmentAlarmsMigrationId = "006_equipment_alarms";
     private const string IoTransitionHistoryMigrationId = "007_io_transition_history";
+    private const string InspectionReinspectComparisonsMigrationId = "008_inspection_reinspect_comparisons";
     private readonly SqliteConnectionFactory _connectionFactory;
 
     public SqliteSchemaInitializer(SqliteConnectionFactory connectionFactory)
@@ -36,6 +37,8 @@ public sealed class SqliteSchemaInitializer
         await RecordMigrationAsync(connection, EquipmentAlarmsMigrationId, cancellationToken).ConfigureAwait(false);
         await CreateIoTransitionHistoryTableAsync(connection, cancellationToken).ConfigureAwait(false);
         await RecordMigrationAsync(connection, IoTransitionHistoryMigrationId, cancellationToken).ConfigureAwait(false);
+        await CreateInspectionReinspectComparisonsTableAsync(connection, cancellationToken).ConfigureAwait(false);
+        await RecordMigrationAsync(connection, InspectionReinspectComparisonsMigrationId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task CreateSchemaVersionTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
@@ -241,6 +244,40 @@ public sealed class SqliteSchemaInitializer
 
             CREATE INDEX IF NOT EXISTS ix_io_transition_history_name
               ON io_transition_history (name);
+            """;
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task CreateInspectionReinspectComparisonsTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS inspection_reinspect_comparisons (
+              id TEXT PRIMARY KEY,
+              source_result_id TEXT NOT NULL,
+              replay_correlation_id TEXT NOT NULL,
+              lot_id TEXT NOT NULL,
+              recipe_id TEXT NOT NULL,
+              recipe_version TEXT NOT NULL,
+              previous_judgment TEXT NOT NULL,
+              replayed_judgment TEXT NOT NULL,
+              previous_defect_count INTEGER NOT NULL,
+              replayed_defect_count INTEGER NOT NULL,
+              previous_cycle_time_ms INTEGER NOT NULL,
+              replayed_cycle_time_ms INTEGER NOT NULL,
+              status TEXT NOT NULL,
+              compared_at TEXT NOT NULL,
+              persistence_status TEXT NOT NULL,
+              message TEXT NOT NULL,
+              FOREIGN KEY(source_result_id) REFERENCES inspection_results(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS ix_inspection_reinspect_comparisons_compared_at
+              ON inspection_reinspect_comparisons (compared_at DESC);
+
+            CREATE INDEX IF NOT EXISTS ix_inspection_reinspect_comparisons_source_result_id
+              ON inspection_reinspect_comparisons (source_result_id);
             """;
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);

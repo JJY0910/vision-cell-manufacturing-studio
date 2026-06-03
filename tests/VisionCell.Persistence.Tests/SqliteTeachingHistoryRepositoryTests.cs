@@ -34,7 +34,7 @@ public sealed class SqliteTeachingHistoryRepositoryTests
         entries[0].BeforeJson.Should().BeNull();
         entries[0].AfterJson.Should().Be("""{"name":"Load"}""");
         entries[0].CreatedAt.Should().Be(entry.CreatedAt);
-        migrationCount.Should().Be(7);
+        migrationCount.Should().Be(8);
     }
 
     [Fact]

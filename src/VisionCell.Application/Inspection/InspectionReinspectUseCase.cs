@@ -9,13 +9,23 @@ public interface IInspectionReinspectUseCase
 
 public sealed class InspectionReinspectUseCase : IInspectionReinspectUseCase
 {
+    private readonly IInspectionReinspectComparisonRepository? _comparisonRepository;
     private readonly Func<DateTimeOffset> _clock;
     private readonly Func<Guid> _idFactory;
 
     public InspectionReinspectUseCase(
         Func<DateTimeOffset>? clock = null,
         Func<Guid>? idFactory = null)
+        : this(null, clock, idFactory)
     {
+    }
+
+    public InspectionReinspectUseCase(
+        IInspectionReinspectComparisonRepository? comparisonRepository,
+        Func<DateTimeOffset>? clock = null,
+        Func<Guid>? idFactory = null)
+    {
+        _comparisonRepository = comparisonRepository;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _idFactory = idFactory ?? Guid.NewGuid;
     }
@@ -29,41 +39,70 @@ public sealed class InspectionReinspectUseCase : IInspectionReinspectUseCase
 
         if (!preparation.CanRunInspection)
         {
-            return Task.FromResult(new InspectionReinspectComparisonResult(
-                preparation.SourceResultId,
+            var blocked = CreateResult(
+                preparation,
                 "-",
-                preparation.LotId,
-                preparation.RecipeId,
-                preparation.RecipeVersion,
-                preparation.PreviousJudgment,
                 "-",
-                preparation.PreviousDefectCount,
                 0,
-                preparation.PreviousCycleTime,
                 TimeSpan.Zero,
                 InspectionReinspectComparisonStatus.Blocked,
-                _clock(),
-                "Not persisted",
-                preparation.DisabledReason));
+                preparation.DisabledReason);
+            return Task.FromResult(blocked);
         }
 
         var replayCorrelationId = $"offline-reinspect-{_idFactory():N}";
-        return Task.FromResult(new InspectionReinspectComparisonResult(
+        var result = CreateResult(
+            preparation,
+            replayCorrelationId,
+            preparation.PreviousJudgment,
+            preparation.PreviousDefectCount,
+            preparation.PreviousCycleTime,
+            InspectionReinspectComparisonStatus.Matched,
+            "Metadata comparison completed from the prepared historical result context. Live camera, motion, and vision sequence replay were not executed.");
+        if (_comparisonRepository is null)
+        {
+            return Task.FromResult(result);
+        }
+
+        var persisted = result with { PersistenceStatus = "Persisted to offline re-inspect history." };
+        return SaveAndReturnAsync(persisted, cancellationToken);
+    }
+
+    private InspectionReinspectComparisonResult CreateResult(
+        InspectionReinspectPreparation preparation,
+        string replayCorrelationId,
+        string replayedJudgment,
+        int replayedDefectCount,
+        TimeSpan replayedCycleTime,
+        InspectionReinspectComparisonStatus status,
+        string message)
+    {
+        return new InspectionReinspectComparisonResult(
             preparation.SourceResultId,
             replayCorrelationId,
             preparation.LotId,
             preparation.RecipeId,
             preparation.RecipeVersion,
             preparation.PreviousJudgment,
-            preparation.PreviousJudgment,
+            replayedJudgment,
             preparation.PreviousDefectCount,
-            preparation.PreviousDefectCount,
+            replayedDefectCount,
             preparation.PreviousCycleTime,
-            preparation.PreviousCycleTime,
-            InspectionReinspectComparisonStatus.Matched,
+            replayedCycleTime,
+            status,
             _clock(),
             "Not persisted",
-            "Metadata comparison completed from the prepared historical result context. Live camera, motion, and vision sequence replay were not executed."));
+            message);
+    }
+
+    private async Task<InspectionReinspectComparisonResult> SaveAndReturnAsync(
+        InspectionReinspectComparisonResult result,
+        CancellationToken cancellationToken)
+    {
+        await _comparisonRepository!
+            .SaveAsync(result, cancellationToken)
+            .ConfigureAwait(false);
+        return result;
     }
 }
 

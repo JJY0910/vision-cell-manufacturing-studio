@@ -31,7 +31,7 @@ public sealed class SqliteInspectionResultRepositoryTests
 
         resultCount.Should().Be(1);
         defectCount.Should().Be(2);
-        migrationCount.Should().Be(7);
+        migrationCount.Should().Be(8);
         records.Should().ContainSingle();
         records[0].Id.Should().Be(request.Id);
         records[0].CorrelationId.Should().Be(request.CorrelationId);

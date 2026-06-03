@@ -34,6 +34,24 @@ public sealed class InspectionReinspectUseCaseTests
     }
 
     [Fact]
+    public async Task RunAsync_Should_Persist_Metadata_Comparison_When_Repository_Is_Configured()
+    {
+        var repository = new FakeReinspectComparisonRepository();
+        var preparation = CreatePreparation(canRunInspection: true);
+        var useCase = new InspectionReinspectUseCase(
+            repository,
+            () => new DateTimeOffset(2026, 6, 3, 12, 0, 0, TimeSpan.Zero),
+            () => Guid.Parse("11111111-2222-3333-4444-555555555555"));
+
+        var result = await useCase.RunAsync(preparation, CancellationToken.None);
+
+        result.PersistenceStatus.Should().Contain("Persisted");
+        repository.Saved.Should().ContainSingle();
+        repository.Saved[0].ReplayCorrelationId.Should().Be(result.ReplayCorrelationId);
+        repository.Saved[0].SourceResultId.Should().Be(preparation.SourceResultId);
+    }
+
+    [Fact]
     public async Task RunAsync_Should_Return_Blocked_Result_When_Preparation_Is_Not_Runnable()
     {
         var preparation = CreatePreparation(canRunInspection: false);
@@ -68,5 +86,18 @@ public sealed class InspectionReinspectUseCaseTests
             canRunInspection
                 ? "Ready for metadata comparison; live camera, motion, and vision sequence replay are not executed."
                 : "Historical replay runner is unavailable.");
+    }
+
+    private sealed class FakeReinspectComparisonRepository : IInspectionReinspectComparisonRepository
+    {
+        public List<InspectionReinspectComparisonResult> Saved { get; } = new();
+
+        public Task SaveAsync(
+            InspectionReinspectComparisonResult result,
+            CancellationToken cancellationToken)
+        {
+            Saved.Add(result);
+            return Task.CompletedTask;
+        }
     }
 }

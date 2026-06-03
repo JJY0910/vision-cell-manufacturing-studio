@@ -13,11 +13,13 @@ namespace VisionCell.App.Modules.OfflineDebug.ViewModels;
 public sealed partial class OfflineDebugViewModel : ObservableObject
 {
     private const int ResultLimit = 50;
+    private const int ReinspectHistoryLimit = 10;
     private const string ReinspectMetadataReadyReason =
         "Ready for metadata comparison; live camera, motion, and vision sequence replay are not executed.";
     private readonly IInspectionResultReader _inspectionResultReader;
     private readonly IInspectionArtifactReader _inspectionArtifactReader;
     private readonly IInspectionReinspectUseCase _inspectionReinspectUseCase;
+    private readonly IInspectionReinspectComparisonReader _reinspectComparisonReader;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IArtifactViewerService _artifactViewerService;
 
@@ -25,12 +27,14 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         IInspectionResultReader inspectionResultReader,
         IInspectionArtifactReader inspectionArtifactReader,
         IInspectionReinspectUseCase inspectionReinspectUseCase,
+        IInspectionReinspectComparisonReader reinspectComparisonReader,
         IUserConfirmationService confirmationService,
         IArtifactViewerService artifactViewerService)
     {
         _inspectionResultReader = inspectionResultReader ?? throw new ArgumentNullException(nameof(inspectionResultReader));
         _inspectionArtifactReader = inspectionArtifactReader ?? throw new ArgumentNullException(nameof(inspectionArtifactReader));
         _inspectionReinspectUseCase = inspectionReinspectUseCase ?? throw new ArgumentNullException(nameof(inspectionReinspectUseCase));
+        _reinspectComparisonReader = reinspectComparisonReader ?? throw new ArgumentNullException(nameof(reinspectComparisonReader));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
         _artifactViewerService = artifactViewerService ?? throw new ArgumentNullException(nameof(artifactViewerService));
         RefreshResultsCommand = new AsyncRelayCommand(RefreshResultsAsync, () => !IsBusy);
@@ -42,6 +46,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     }
 
     public ObservableCollection<OfflineInspectionResultItemViewModel> Results { get; } = new();
+    public ObservableCollection<ReinspectComparisonItemViewModel> ReinspectComparisons { get; } = new();
 
     public IReadOnlyList<ReinspectReadinessItemViewModel> ReinspectReadinessItems { get; } =
     [
@@ -58,9 +63,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             "Not implemented",
             "Current-vs-historical Recipe resolution remains a documented follow-up."),
         new(
-            "Replay persistence",
-            "Not implemented",
-            "Replayed comparison results are not written back to inspection_results."),
+            "Metadata history persistence",
+            "Available",
+            "Metadata comparison rows are stored separately from inspection_results; source-image replay result persistence is not implemented."),
         new(
             "Real sequence execution",
             "Not validated",
@@ -88,6 +93,9 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasResults;
+
+    [ObservableProperty]
+    private bool _hasReinspectComparisons;
 
     [ObservableProperty]
     private int _passCount;
@@ -212,6 +220,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             StatusText = HasResults
                 ? $"{Results.Count} inspection result records loaded"
                 : "No inspection result records";
+            await RefreshReinspectComparisonHistoryAsync(cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -475,7 +484,8 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             ReinspectComparison = await _inspectionReinspectUseCase
                 .RunAsync(PreparedReinspect, cancellationToken)
                 .ConfigureAwait(true);
-            ReinspectStatusText = $"Run Re-inspect comparison completed for {ReinspectComparison.LotId}: {ReinspectComparison.Status}.";
+            AddReinspectComparisonToHistory(ReinspectComparison);
+            ReinspectStatusText = $"Run Re-inspect comparison completed for {ReinspectComparison.LotId}: {ReinspectComparison.Status}; {ReinspectComparison.PersistenceStatus}.";
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -503,6 +513,52 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         }
 
         return Results.FirstOrDefault();
+    }
+
+    private async Task RefreshReinspectComparisonHistoryAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var records = await _reinspectComparisonReader
+                .ListRecentAsync(ReinspectHistoryLimit, cancellationToken)
+                .ConfigureAwait(true);
+
+            ReinspectComparisons.Clear();
+            foreach (var record in records)
+            {
+                ReinspectComparisons.Add(new ReinspectComparisonItemViewModel(record));
+            }
+
+            HasReinspectComparisons = ReinspectComparisons.Count > 0;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            ReinspectStatusText = "Re-inspect history refresh cancelled";
+        }
+        catch (Exception ex)
+        {
+            ReinspectStatusText = $"Re-inspect history refresh failed: {ex.Message}";
+        }
+    }
+
+    private void AddReinspectComparisonToHistory(InspectionReinspectComparisonResult comparison)
+    {
+        var existing = ReinspectComparisons.FirstOrDefault(item => string.Equals(
+            item.ReplayCorrelationId,
+            comparison.ReplayCorrelationId,
+            StringComparison.Ordinal));
+        if (existing is not null)
+        {
+            ReinspectComparisons.Remove(existing);
+        }
+
+        ReinspectComparisons.Insert(0, new ReinspectComparisonItemViewModel(comparison));
+        while (ReinspectComparisons.Count > ReinspectHistoryLimit)
+        {
+            ReinspectComparisons.RemoveAt(ReinspectComparisons.Count - 1);
+        }
+
+        HasReinspectComparisons = ReinspectComparisons.Count > 0;
     }
 
     private bool CanInspectSelectedResult()
@@ -634,6 +690,36 @@ public sealed record ReinspectReadinessItemViewModel(
     string Step,
     string State,
     string Detail);
+
+public sealed class ReinspectComparisonItemViewModel
+{
+    public ReinspectComparisonItemViewModel(InspectionReinspectComparisonResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        ComparedAtText = result.ComparedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        ReplayCorrelationId = result.ReplayCorrelationId;
+        LotId = result.LotId;
+        RecipeText = $"{result.RecipeId} v{result.RecipeVersion}";
+        Status = result.Status.ToString();
+        JudgmentTransition = $"{result.PreviousJudgment} -> {result.ReplayedJudgment}";
+        DefectTransition = $"{result.PreviousDefectCount} -> {result.ReplayedDefectCount}";
+        CycleTransition = $"{result.PreviousCycleTime.TotalMilliseconds:0} ms -> {result.ReplayedCycleTime.TotalMilliseconds:0} ms";
+        PersistenceStatus = result.PersistenceStatus;
+        Message = result.Message;
+    }
+
+    public string ComparedAtText { get; }
+    public string ReplayCorrelationId { get; }
+    public string LotId { get; }
+    public string RecipeText { get; }
+    public string Status { get; }
+    public string JudgmentTransition { get; }
+    public string DefectTransition { get; }
+    public string CycleTransition { get; }
+    public string PersistenceStatus { get; }
+    public string Message { get; }
+}
 
 public sealed class OfflineInspectionDefectItemViewModel
 {
