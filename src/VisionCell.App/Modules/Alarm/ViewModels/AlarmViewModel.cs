@@ -9,7 +9,9 @@ namespace VisionCell.App.Modules.Alarm.ViewModels;
 
 public sealed partial class AlarmViewModel : ObservableObject
 {
+    private const string AllFilter = "All";
     private readonly IAlarmCenterUseCase _alarmCenterUseCase;
+    private readonly List<EquipmentAlarm> _allAlarmRecords = new();
 
     public AlarmViewModel(IAlarmCenterUseCase alarmCenterUseCase)
     {
@@ -19,6 +21,11 @@ public sealed partial class AlarmViewModel : ObservableObject
     }
 
     public ObservableCollection<AlarmItemViewModel> Alarms { get; } = new();
+    public IReadOnlyList<string> SeverityFilterOptions { get; } =
+        [AllFilter, nameof(EquipmentAlarmSeverity.Warning), nameof(EquipmentAlarmSeverity.Error), nameof(EquipmentAlarmSeverity.Critical)];
+
+    public IReadOnlyList<string> AreaFilterOptions { get; } =
+        [AllFilter, nameof(EquipmentArea.Equipment), nameof(EquipmentArea.Safety), nameof(EquipmentArea.Motion), nameof(EquipmentArea.Camera), nameof(EquipmentArea.Inspection), nameof(EquipmentArea.Database)];
 
     public IReadOnlyList<AlarmRecoveryBoundaryItemViewModel> RecoveryBoundaryItems { get; } =
     [
@@ -65,12 +72,47 @@ public sealed partial class AlarmViewModel : ObservableObject
     [ObservableProperty]
     private string _lastRefreshText = "-";
 
+    [ObservableProperty]
+    private bool _showActiveOnly;
+
+    [ObservableProperty]
+    private string _selectedSeverityFilter = AllFilter;
+
+    [ObservableProperty]
+    private string _selectedAreaFilter = AllFilter;
+
+    public int TotalAlarmCount => _allAlarmRecords.Count;
     public int ActiveCount => Alarms.Count(alarm => !alarm.Alarm.IsAcknowledged);
     public int AcknowledgedCount => Alarms.Count(alarm => alarm.Alarm.IsAcknowledged);
     public int CriticalCount => Alarms.Count(alarm => alarm.Alarm.Severity == EquipmentAlarmSeverity.Critical);
     public bool HasAlarms => Alarms.Count > 0;
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
     public bool IsActionMemoEditable => !IsBusy && SelectedAlarm is not null && !SelectedAlarm.Alarm.IsAcknowledged;
+    public string TotalAlarmDetail => $"{TotalAlarmCount} total records";
+    public string FilterSummaryText
+    {
+        get
+        {
+            var filters = new List<string>();
+            if (ShowActiveOnly)
+            {
+                filters.Add("Active only");
+            }
+
+            if (!string.Equals(SelectedSeverityFilter, AllFilter, StringComparison.Ordinal))
+            {
+                filters.Add($"Severity {SelectedSeverityFilter}");
+            }
+
+            if (!string.Equals(SelectedAreaFilter, AllFilter, StringComparison.Ordinal))
+            {
+                filters.Add($"Area {SelectedAreaFilter}");
+            }
+
+            var filterText = filters.Count == 0 ? "All alarm records" : string.Join(", ", filters);
+            return $"{filterText}: {Alarms.Count} of {TotalAlarmCount} visible.";
+        }
+    }
     public string AcknowledgeDisabledReason
     {
         get
@@ -98,17 +140,13 @@ public sealed partial class AlarmViewModel : ObservableObject
         try
         {
             var alarms = await _alarmCenterUseCase.ListRecentAsync(100, cancellationToken).ConfigureAwait(true);
-            Alarms.Clear();
-            foreach (var alarm in alarms)
-            {
-                Alarms.Add(new AlarmItemViewModel(alarm));
-            }
-
-            SelectedAlarm = SelectAlarm(previousId);
+            _allAlarmRecords.Clear();
+            _allAlarmRecords.AddRange(alarms);
+            ApplyFilters(previousId);
             LastRefreshText = DateTimeOffset.Now.ToString("HH:mm:ss");
             StatusText = Alarms.Count == 0
                 ? "No alarm records"
-                : $"{Alarms.Count} alarm records loaded";
+                : $"{Alarms.Count} of {TotalAlarmCount} alarm records visible";
             NotifyCountsChanged();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -118,6 +156,7 @@ public sealed partial class AlarmViewModel : ObservableObject
         catch (Exception ex)
         {
             Alarms.Clear();
+            _allAlarmRecords.Clear();
             SelectedAlarm = null;
             StatusText = $"Alarm refresh failed: {ex.Message}";
             NotifyCountsChanged();
@@ -185,6 +224,21 @@ public sealed partial class AlarmViewModel : ObservableObject
         NotifyAcknowledgeStateChanged();
     }
 
+    partial void OnShowActiveOnlyChanged(bool value)
+    {
+        ApplyFilters(SelectedAlarm?.Id);
+    }
+
+    partial void OnSelectedSeverityFilterChanged(string value)
+    {
+        ApplyFilters(SelectedAlarm?.Id);
+    }
+
+    partial void OnSelectedAreaFilterChanged(string value)
+    {
+        ApplyFilters(SelectedAlarm?.Id);
+    }
+
     private void NotifyAcknowledgeStateChanged()
     {
         AcknowledgeCommand.NotifyCanExecuteChanged();
@@ -211,12 +265,46 @@ public sealed partial class AlarmViewModel : ObservableObject
         return Alarms.FirstOrDefault();
     }
 
+    private void ApplyFilters(Guid? preferredId)
+    {
+        var filtered = _allAlarmRecords.AsEnumerable();
+        if (ShowActiveOnly)
+        {
+            filtered = filtered.Where(alarm => !alarm.IsAcknowledged);
+        }
+
+        if (Enum.TryParse<EquipmentAlarmSeverity>(SelectedSeverityFilter, ignoreCase: false, out var severity))
+        {
+            filtered = filtered.Where(alarm => alarm.Severity == severity);
+        }
+
+        if (Enum.TryParse<EquipmentArea>(SelectedAreaFilter, ignoreCase: false, out var area))
+        {
+            filtered = filtered.Where(alarm => alarm.Area == area);
+        }
+
+        Alarms.Clear();
+        foreach (var alarm in filtered)
+        {
+            Alarms.Add(new AlarmItemViewModel(alarm));
+        }
+
+        SelectedAlarm = SelectAlarm(preferredId);
+        StatusText = TotalAlarmCount == 0
+            ? "No alarm records"
+            : $"{Alarms.Count} of {TotalAlarmCount} alarm records visible";
+        NotifyCountsChanged();
+    }
+
     private void NotifyCountsChanged()
     {
+        OnPropertyChanged(nameof(TotalAlarmCount));
         OnPropertyChanged(nameof(ActiveCount));
         OnPropertyChanged(nameof(AcknowledgedCount));
         OnPropertyChanged(nameof(CriticalCount));
         OnPropertyChanged(nameof(HasAlarms));
+        OnPropertyChanged(nameof(TotalAlarmDetail));
+        OnPropertyChanged(nameof(FilterSummaryText));
     }
 }
 

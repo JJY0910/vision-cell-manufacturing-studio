@@ -187,6 +187,10 @@ public sealed class HmiVisualQaXamlTests
         alarm.Should().Contain("IsEnabled=\"{Binding IsActionMemoEditable}\"");
         alarm.Should().Contain("SelectedAlarm.RecoveryHint");
         alarm.Should().Contain("RecoveryBoundaryItems");
+        alarm.Should().Contain("ShowActiveOnly");
+        alarm.Should().Contain("SeverityFilterOptions");
+        alarm.Should().Contain("AreaFilterOptions");
+        alarm.Should().Contain("FilterSummaryText");
     }
 
     [Fact]

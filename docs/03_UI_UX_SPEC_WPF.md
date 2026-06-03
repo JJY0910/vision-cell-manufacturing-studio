@@ -217,7 +217,7 @@ Implementation status:
 Implementation status:
 
 - `AlarmViewModel` loads recent persisted alarm rows through `IAlarmCenterUseCase`.
-- `AlarmView` shows active/critical/acknowledged counts, recent alarm rows, selected alarm detail, protocol-spec recovery hint, and recovery action memo input.
+- `AlarmView` shows visible/active/critical/acknowledged counts, active-only/severity/area triage filters, recent alarm rows, selected alarm detail, protocol-spec recovery hint, and recovery action memo input.
 - Acknowledge writes `acknowledgedAt` and `actionMemo` through the Application use case, exposes a disabled reason when no active alarm is selected or the selected alarm is already acknowledged, and locks action memo editing when the memo cannot be saved.
 - The Recovery Detail panel shows read-only boundary rows for operator acknowledgement, recovery memo persistence, hardware reset, PLC/vendor alarm source, and safety relay confirmation.
 - Hardware reset remains separate from AlarmView acknowledgement.

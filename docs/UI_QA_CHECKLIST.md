@@ -57,6 +57,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] No alarm state is visible through an empty-state panel.
 - [x] Alarm table uses the shared dark GridView style.
 - [x] Acknowledge command remains bound through the ViewModel.
+- [x] Active-only, severity, and area filters remain bound through the ViewModel.
 - [x] Acknowledge command exposes a disabled reason and the action memo editor locks when the selected alarm cannot be acknowledged.
 - [x] Recovery action memo remains visible in the detail panel.
 - [x] Recovery boundary rows keep acknowledgement, memo, hardware reset, PLC/vendor source, and safety relay limits visible.
