@@ -6,6 +6,7 @@ using VisionCell.Core.Errors;
 using VisionCell.Core.Events;
 using VisionCell.Equipment.Controllers;
 using VisionCell.Equipment.Faults;
+using VisionCell.Equipment.Io;
 using VisionCell.App.Modules.Dashboard.ViewModels;
 
 namespace VisionCell.App.Modules.Equipment.ViewModels;
@@ -16,15 +17,19 @@ public sealed partial class EquipmentViewModel : ObservableObject
     private static readonly TimeSpan SnapshotTimeout = TimeSpan.FromMilliseconds(500);
     private readonly IEquipmentDashboardUseCase _dashboardUseCase;
     private readonly IEquipmentFaultInjectionUseCase _faultInjectionUseCase;
+    private readonly IEquipmentIoTransitionRepository _ioTransitionRepository;
 
     public EquipmentViewModel(
         IEquipmentDashboardUseCase dashboardUseCase,
-        IEquipmentFaultInjectionUseCase faultInjectionUseCase)
+        IEquipmentFaultInjectionUseCase faultInjectionUseCase,
+        IEquipmentIoTransitionRepository? ioTransitionRepository = null)
     {
         _dashboardUseCase = dashboardUseCase ?? throw new ArgumentNullException(nameof(dashboardUseCase));
         _faultInjectionUseCase = faultInjectionUseCase ?? throw new ArgumentNullException(nameof(faultInjectionUseCase));
+        _ioTransitionRepository = ioTransitionRepository ?? NoopEquipmentIoTransitionRepository.Instance;
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+        RefreshIoTransitionHistoryCommand = new AsyncRelayCommand(RefreshIoTransitionHistoryAsync);
         InjectEmergencyStopCommand = CreateFaultCommand(EquipmentFaultKind.EmergencyStop, true, "EStop input forced on.");
         ClearEmergencyStopCommand = CreateFaultCommand(EquipmentFaultKind.EmergencyStop, false, "EStop input restored.");
         OpenDoorCommand = CreateFaultCommand(EquipmentFaultKind.DoorOpen, true, "Door input forced open.");
@@ -45,8 +50,10 @@ public sealed partial class EquipmentViewModel : ObservableObject
     public ObservableCollection<IoBitStatusViewModel> IoBits { get; } = new();
     public ObservableCollection<EquipmentFaultStatusViewModel> Faults { get; } = new();
     public ObservableCollection<SystemEvent> Events { get; } = new();
+    public ObservableCollection<IoTransitionItemViewModel> IoTransitions { get; } = new();
 
     public IAsyncRelayCommand RefreshCommand { get; }
+    public IAsyncRelayCommand RefreshIoTransitionHistoryCommand { get; }
     public IAsyncRelayCommand InjectEmergencyStopCommand { get; }
     public IAsyncRelayCommand ClearEmergencyStopCommand { get; }
     public IAsyncRelayCommand OpenDoorCommand { get; }
@@ -92,15 +99,44 @@ public sealed partial class EquipmentViewModel : ObservableObject
     private string _ioSummaryText = "I/O forced: 0 / 0";
 
     [ObservableProperty]
+    private string _ioTransitionStatus = "No I/O transition history";
+
+    [ObservableProperty]
     private string _lastSnapshotText = "Last snapshot: -";
 
     public bool HasIoBits => IoBits.Count > 0;
     public bool HasEvents => Events.Count > 0;
+    public bool HasIoTransitions => IoTransitions.Count > 0;
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
     {
         var result = await _dashboardUseCase.RefreshAsync(SnapshotTimeout, cancellationToken).ConfigureAwait(true);
         ApplySnapshotResult(result);
+        await RefreshIoTransitionHistoryAsync(cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task RefreshIoTransitionHistoryAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var transitions = await _ioTransitionRepository
+                .ListRecentAsync(25, cancellationToken)
+                .ConfigureAwait(true);
+            ApplyIoTransitions(transitions);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            IoTransitionStatus = "I/O transition history refresh cancelled.";
+        }
+        catch (Exception ex)
+        {
+            IoTransitionStatus = $"I/O transition history unavailable: {ex.Message}";
+            AddEvent(SystemEvent.Create(
+                SystemEventSeverity.Warning,
+                "Equipment",
+                "I/O Transition History",
+                IoTransitionStatus));
+        }
     }
 
     private IAsyncRelayCommand CreateFaultCommand(
@@ -130,6 +166,21 @@ public sealed partial class EquipmentViewModel : ObservableObject
         AddEvent(result.CommandEvent);
         InjectionStatus = result.CommandResult.Message;
         ApplySnapshotResult(result.SnapshotResult);
+        await RefreshIoTransitionHistoryAsync(cancellationToken).ConfigureAwait(true);
+    }
+
+    private void ApplyIoTransitions(IReadOnlyList<IoTransitionRecord> transitions)
+    {
+        IoTransitions.Clear();
+        foreach (var transition in transitions)
+        {
+            IoTransitions.Add(IoTransitionItemViewModel.FromRecord(transition));
+        }
+
+        IoTransitionStatus = IoTransitions.Count == 0
+            ? "No I/O transition history"
+            : $"I/O transitions: {IoTransitions.Count} latest";
+        OnPropertyChanged(nameof(HasIoTransitions));
     }
 
     private void ApplySnapshotResult(EquipmentDashboardSnapshotResult result)

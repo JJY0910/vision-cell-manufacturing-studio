@@ -50,7 +50,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect" },
             ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
-            ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events" },
+            ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions" },
             ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured" },
             ["Modules/Settings/Views/SettingsView.xaml"] = new[] { "Runtime Scope" }
         };
@@ -84,6 +84,8 @@ public sealed class HmiVisualQaXamlTests
         equipment.Should().Contain("ToolTip=\"{Binding FaultInjectionDisabledReason}\"");
         equipment.Should().Contain("FaultSummaryText");
         equipment.Should().Contain("IoSummaryText");
+        equipment.Should().Contain("IoTransitions");
+        equipment.Should().Contain("IoTransitionStatus");
 
         var alarm = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Alarm", "Views", "AlarmView.xaml"));
         alarm.Should().Contain("ToolTip=\"{Binding AcknowledgeDisabledReason}\"");

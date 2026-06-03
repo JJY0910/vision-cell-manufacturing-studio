@@ -25,7 +25,11 @@ Real PLC integration is intentionally out of scope. The project still needs a tr
 - Simulator fault injection now records source, correlation ID, operator memo, timestamp, bit name, address, direction, previous/current value, and previous/current forced state.
 - WPF remains MVVM-only and does not perform SQLite writes.
 - Snapshot comparison is best-effort for history only. A pre-injection snapshot timeout skips transition persistence but does not block the simulator fault command.
-- Real PLC scan polling, output-write history, retention policy, and I/O transition browser UI remain follow-up work.
+- Real PLC scan polling, output-write history, retention policy, and bench hardware validation remain follow-up work.
+
+## 2026-06-03 Follow-up
+
+`EquipmentViewModel` now reads recent `IEquipmentIoTransitionRepository` rows and `EquipmentView` displays them as a read-only I/O transition history. This keeps WPF on the Application repository port and does not add PLC polling, output writes, or retention cleanup.
 
 ## Requirement Coverage
 
