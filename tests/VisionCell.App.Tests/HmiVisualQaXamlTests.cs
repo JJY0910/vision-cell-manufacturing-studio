@@ -72,6 +72,7 @@ public sealed class HmiVisualQaXamlTests
         var expectedTitles = new Dictionary<string, string>
         {
             ["Modules/Dashboard/Views/DashboardView.xaml"] = "Dashboard",
+            ["Modules/Equipment/Views/EquipmentView.xaml"] = "Equipment",
             ["Modules/Motion/Views/MotionView.xaml"] = "Motion",
             ["Modules/Teaching/Views/TeachingView.xaml"] = "Teaching",
             ["Modules/Recipe/Views/RecipeView.xaml"] = "Recipe",

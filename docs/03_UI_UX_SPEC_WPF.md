@@ -73,7 +73,7 @@ Implementation status:
 - `SequenceTimeline` is implemented and reused by InspectionView sequence step display.
 - `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces, including optional read-only overlay binding.
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
-- `CommandBar` is implemented and reused by Dashboard, Motion, Teaching, Recipe, Inspection, OfflineDebug, and Alarm screen command headers.
+- `CommandBar` is implemented and reused by Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, OfflineDebug, and Alarm screen command headers.
 - `RoiOverlayCanvas` is implemented as a read-only shared overlay surface for ViewModel-projected image-space ROI/defect rectangles.
 - `RecipeEditorField` is implemented and reused by the Recipe editor metadata, camera, Teaching, and ROI input fields.
 
@@ -118,7 +118,7 @@ Required visual:
 Implementation status:
 
 - `EquipmentViewModel` refreshes the simulator equipment snapshot through `IEquipmentDashboardUseCase`.
-- `EquipmentView` displays controller mode, safety/interlock summary, camera/alarm status, active fault count, forced I/O count, I/O monitor rows, fault state rows, recent fault events, and recent read-only I/O transition history.
+- `EquipmentView` uses the shared `CommandBar` for refresh/snapshot status and displays controller mode, safety/interlock summary, camera/alarm status, active fault count, forced I/O count, I/O monitor rows, fault state rows, recent fault events, and recent read-only I/O transition history.
 - Simulator fault injection for EStop, Door, AirPressure, Vacuum, CameraReady, ServoAlarm, and Clear All flows through `IEquipmentFaultInjectionUseCase`; WPF does not call simulator internals directly.
 
 ### MotionView
@@ -225,7 +225,7 @@ Implementation status:
 - InspectionView now has vertical scrolling so sequence timeline and image evidence remain reachable in smaller windows.
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
 - Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
-- Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard commands in the shared wrapping `CommandBar` surface.
+- Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard and Equipment refresh commands in shared `CommandBar` surfaces.
 - HMI theme polish keeps DataGrid and GridView headers on the dark HMI palette, enables tooltips on disabled command buttons, strengthens navigation hover/focus/selected contrast, and adds reusable empty-state panels for Motion, Teaching, Recipe, Equipment, Alarm, Offline Debug, Reports, and Settings surfaces.
 - Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.
 - This pass is a local WPF layout quality slice. It does not claim final shop-floor monitor, touch-panel, or real equipment HMI acceptance.
