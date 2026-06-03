@@ -300,7 +300,31 @@ public sealed class DashboardAndShellViewModelTests
 
         act.Should()
             .Throw<NotSupportedException>()
-            .WithMessage("*not implemented or validated*HARDWARE_INTEGRATION_PLAN*");
+            .WithMessage("*not implemented or validated*Missing evidence:*RealEquipmentController implementation*PLC I/O adapter bench validation*HARDWARE_INTEGRATION_PLAN*");
+    }
+
+    [Fact]
+    public void RealHardwareReadinessGate_Should_List_Required_Evidence()
+    {
+        var blocked = RealHardwareReadinessGate.Evaluate(RealHardwareReadinessEvidence.Unvalidated);
+
+        blocked.CanEnableRealHardware.Should().BeFalse();
+        blocked.MissingEvidence.Should().Contain("RealEquipmentController implementation");
+        blocked.MissingEvidence.Should().Contain("motion adapter bench validation");
+        blocked.MissingEvidence.Should().Contain("camera adapter bench validation");
+        blocked.MissingEvidence.Should().Contain("PLC I/O adapter bench validation");
+        blocked.MissingEvidence.Should().Contain("safety reset validation");
+
+        var complete = RealHardwareReadinessGate.Evaluate(new RealHardwareReadinessEvidence(
+            RealEquipmentControllerImplemented: true,
+            MotionAdapterBenchValidated: true,
+            CameraAdapterBenchValidated: true,
+            PlcIoAdapterBenchValidated: true,
+            SafetyResetValidated: true,
+            HardwareIntegrationPlanReviewed: true));
+
+        complete.CanEnableRealHardware.Should().BeTrue();
+        complete.FormatMissingEvidence().Should().Be("none");
     }
 
     [Fact]

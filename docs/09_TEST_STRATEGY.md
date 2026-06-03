@@ -83,6 +83,7 @@ tests/VisionCell.App.Tests
 - Persist result failure path returns explicit `ResultPersistenceFailed` status and failed Persist Result timeline state for artifact or repository failures.
 - Camera, 2D/3D inspection, controller start, and result persistence failure paths record alarm candidates through `IEquipmentAlarmRecorder`.
 - App composition registers the virtual equipment runtime profile and rejects real-hardware runtime profiles until hardware validation exists.
+- Real-hardware runtime profile rejection lists missing readiness evidence through `RealHardwareReadinessGate`.
 
 ### Persistence
 

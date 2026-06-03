@@ -62,8 +62,9 @@ public static class AppServiceConfiguration
         var resolvedEquipmentRuntimeProfile = equipmentRuntimeProfile ?? EquipmentRuntimeProfile.Virtual;
         if (resolvedEquipmentRuntimeProfile.IsRealHardware)
         {
+            var readiness = RealHardwareReadinessGate.Evaluate(RealHardwareReadinessEvidence.Unvalidated);
             throw new NotSupportedException(
-                "Real hardware runtime profile is not implemented or validated. Use the virtual profile and follow docs/HARDWARE_INTEGRATION_PLAN.md before enabling real equipment.");
+                $"Real hardware runtime profile is not implemented or validated. Missing evidence: {readiness.FormatMissingEvidence()}. Use the virtual profile and follow docs/HARDWARE_INTEGRATION_PLAN.md before enabling real equipment.");
         }
 
         services.AddSingleton(resolvedEquipmentRuntimeProfile);
