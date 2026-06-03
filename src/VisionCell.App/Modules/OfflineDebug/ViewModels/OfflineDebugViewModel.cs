@@ -13,6 +13,8 @@ namespace VisionCell.App.Modules.OfflineDebug.ViewModels;
 public sealed partial class OfflineDebugViewModel : ObservableObject
 {
     private const int ResultLimit = 50;
+    private const string ReinspectReplayDisabledReason =
+        "Historical re-inspect replay runner is not implemented; prepare context only.";
     private readonly IInspectionResultReader _inspectionResultReader;
     private readonly IInspectionArtifactReader _inspectionArtifactReader;
     private readonly IUserConfirmationService _confirmationService;
@@ -33,6 +35,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OpenOverlayArtifactCommand = new AsyncRelayCommand(OpenSelectedOverlayArtifactAsync, CanInspectSelectedResult);
         OpenHeightMapArtifactCommand = new AsyncRelayCommand(OpenSelectedHeightMapArtifactAsync, CanInspectSelectedResult);
         PrepareReinspectCommand = new RelayCommand(PrepareReinspect, CanInspectSelectedResult);
+        RunReinspectCommand = new RelayCommand(RunReinspect, CanRunPreparedReinspect);
     }
 
     public ObservableCollection<OfflineInspectionResultItemViewModel> Results { get; } = new();
@@ -42,6 +45,7 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     public IAsyncRelayCommand OpenOverlayArtifactCommand { get; }
     public IAsyncRelayCommand OpenHeightMapArtifactCommand { get; }
     public IRelayCommand PrepareReinspectCommand { get; }
+    public IRelayCommand RunReinspectCommand { get; }
 
     [ObservableProperty]
     private string _statusText = "Inspection results not loaded";
@@ -95,6 +99,34 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private InspectionReinspectPreparation? _preparedReinspect;
 
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
+    public string ReinspectRunDisabledReason
+    {
+        get
+        {
+            if (SelectedResult is null)
+            {
+                return "Select an inspection result before running re-inspect.";
+            }
+
+            if (PreparedReinspect is null)
+            {
+                return "Prepare re-inspect before running it.";
+            }
+
+            return PreparedReinspect.CanRunInspection
+                ? "Ready to run re-inspect."
+                : PreparedReinspect.DisabledReason;
+        }
+    }
+
+    public string PreparedReinspectSummary => PreparedReinspect is null
+        ? "No prepared re-inspect request."
+        : $"Prepared {PreparedReinspect.LotId} / {PreparedReinspect.RecipeId} v{PreparedReinspect.RecipeVersion} | Previous {PreparedReinspect.PreviousJudgment}, {PreparedReinspect.PreviousDefectCount} defects, {PreparedReinspect.PreviousCycleTime.TotalMilliseconds:0} ms";
+
+    public string PreparedReinspectArtifactSummary => PreparedReinspect is null
+        ? "Artifacts not mapped for re-inspect."
+        : $"Source: {PreparedReinspect.SourceImagePath} | Overlay: {PreparedReinspect.OverlayImagePath} | Height Map: {PreparedReinspect.HeightMapPath}";
+
     public string DefectListStatusText
     {
         get
@@ -164,7 +196,17 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OpenOverlayArtifactCommand.NotifyCanExecuteChanged();
         OpenHeightMapArtifactCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
+        RunReinspectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ReinspectRunDisabledReason));
         OnPropertyChanged(nameof(DefectListStatusText));
+    }
+
+    partial void OnPreparedReinspectChanged(InspectionReinspectPreparation? value)
+    {
+        RunReinspectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ReinspectRunDisabledReason));
+        OnPropertyChanged(nameof(PreparedReinspectSummary));
+        OnPropertyChanged(nameof(PreparedReinspectArtifactSummary));
     }
 
     partial void OnStatusTextChanged(string value)
@@ -212,6 +254,11 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
         OpenOverlayArtifactCommand.NotifyCanExecuteChanged();
         OpenHeightMapArtifactCommand.NotifyCanExecuteChanged();
         PrepareReinspectCommand.NotifyCanExecuteChanged();
+        RunReinspectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ReinspectRunDisabledReason));
+        OnPropertyChanged(nameof(PreparedReinspectSummary));
+        OnPropertyChanged(nameof(PreparedReinspectArtifactSummary));
+        OnPropertyChanged(nameof(DefectListStatusText));
     }
 
     private void UpdateAlertMessage()
@@ -347,9 +394,34 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
             SelectedResult.LotId,
             SelectedResult.RecipeId,
             SelectedResult.RecipeVersion,
+            SelectedResult.JudgmentText,
+            SelectedResult.CycleTime,
+            SelectedResult.DefectCount,
             SelectedResult.CorrelationId,
-            DateTimeOffset.UtcNow);
-        ReinspectStatusText = $"Re-inspect prepared for {SelectedResult.LotId} / {SelectedResult.RecipeId} v{SelectedResult.RecipeVersion}";
+            SelectedResult.SourceImagePath,
+            SelectedResult.OverlayImagePath,
+            SelectedResult.HeightMapPath,
+            DateTimeOffset.UtcNow,
+            false,
+            ReinspectReplayDisabledReason);
+        ReinspectStatusText = $"Re-inspect prepared for {SelectedResult.LotId} / {SelectedResult.RecipeId} v{SelectedResult.RecipeVersion}; run is disabled until replay execution is implemented.";
+    }
+
+    public void RunReinspect()
+    {
+        if (PreparedReinspect is null)
+        {
+            ReinspectStatusText = "Prepare re-inspect before running it.";
+            return;
+        }
+
+        if (!PreparedReinspect.CanRunInspection)
+        {
+            ReinspectStatusText = $"Run Re-inspect unavailable: {PreparedReinspect.DisabledReason}";
+            return;
+        }
+
+        ReinspectStatusText = "Run Re-inspect execution is waiting for the replay runner boundary.";
     }
 
     private OfflineInspectionResultItemViewModel? SelectResult(Guid? preferredId)
@@ -369,6 +441,11 @@ public sealed partial class OfflineDebugViewModel : ObservableObject
     private bool CanInspectSelectedResult()
     {
         return !IsBusy && SelectedResult is not null;
+    }
+
+    private bool CanRunPreparedReinspect()
+    {
+        return !IsBusy && PreparedReinspect?.CanRunInspection == true;
     }
 
     private static string FormatArtifactLabel(InspectionArtifactKind artifactKind)
@@ -428,6 +505,7 @@ public sealed class OfflineInspectionResultItemViewModel
         HeightMapArtifactStatus = FormatArtifactStatus("Height Map", heightMapMetadata);
         ArtifactStatusSummary = $"{OverlayArtifactStatus} | {HeightMapArtifactStatus}";
         CycleTimeText = $"{record.CycleTime.TotalMilliseconds:0} ms";
+        CycleTime = record.CycleTime;
         CreatedAtText = record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         DefectCount = record.Defects.Count;
         Defects = record.Defects
@@ -450,6 +528,7 @@ public sealed class OfflineInspectionResultItemViewModel
     public string OverlayArtifactStatus { get; }
     public string HeightMapArtifactStatus { get; }
     public string ArtifactStatusSummary { get; }
+    public TimeSpan CycleTime { get; }
     public string CycleTimeText { get; }
     public string CreatedAtText { get; }
     public int DefectCount { get; }

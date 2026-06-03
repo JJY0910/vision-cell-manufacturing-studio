@@ -6,7 +6,7 @@
 - GitHub Actions `Windows WPF Build and Test` runs restore/build/test on `windows-latest`.
 - WPF launch smoke verifies that `VisionCell.App.exe` starts and remains alive for five seconds.
 - Equipment behavior is validated against `VirtualEquipmentController`, virtual camera, deterministic 2D/3D vision engines, SQLite repositories, and local file-system artifact storage.
-- Offline Debug validation covers SQLite result reads, relative artifact metadata checks, deterministic BMP preview decoding, and Re-inspect preparation state.
+- Offline Debug validation covers SQLite result reads, relative artifact metadata checks, deterministic BMP preview decoding, safe external artifact open preparation, and Re-inspect preparation state with explicit disabled execution reason.
 - Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, and WPF AlarmView ViewModel state against simulator/Application failure paths.
 - Hardware Adapter Boundary validation covers interface contracts and fake adapter tests only.
 - I/O Monitor and Fault Injection validation covers `VirtualEquipmentController`, Application fault injection use case, WPF `EquipmentViewModel`, simulator I/O forced-state rows, interlock blocking, and Application alarm recorder calls.
@@ -20,7 +20,7 @@
 - Hardware adapter contracts are defined, but no `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, or camera trigger implementation has been validated.
 - Fault injection is simulator-only; no real EStop circuit, door switch, vacuum sensor, air pressure switch, camera ready line, servo drive alarm, PLC output write, or safety relay reset path has been validated.
 - No production calibration, metrology accuracy, takt-time, thermal, vibration, EMI, or long-duration burn-in validation has been performed.
-- Offline Debug Re-inspect currently prepares context only; it does not replay a real inspection sequence.
+- Offline Debug Re-inspect currently prepares source lot/Recipe/judgment/cycle/defect/artifact context only. `Run Re-inspect` is intentionally disabled because historical replay runner, previous-vs-new comparison, and real sequence execution are not implemented or validated.
 - Offline Debug safe external artifact opening is implemented only for local deterministic overlay/height-map BMP artifact paths under the configured artifact root, with ViewModel tests using a fake viewer service. Real external viewer availability, OS file association behavior, network-share paths, customer-image formats, and shop-floor operator confirmation workflow have not been field validated.
 - Artifact preview and external-open preparation currently support the deterministic uncompressed 24-bit BMP files produced by this project, not arbitrary customer image formats.
 - WPF visual QA has not yet been completed on actual shop-floor displays or touch panels. The current polish pass has not been validated against real operator gloves, sunlight/glare, industrial panel scaling profiles, or live production shift usage.

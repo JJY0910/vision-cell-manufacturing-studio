@@ -376,8 +376,23 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.ArtifactPreviewStatusText.Should().Contain("Artifact preview available");
         offlineDebug.PreparedReinspect.Should().NotBeNull();
         offlineDebug.PreparedReinspect!.SourceResultId.Should().Be(result.Id);
+        offlineDebug.PreparedReinspect.LotId.Should().Be(result.LotId);
         offlineDebug.PreparedReinspect.RecipeId.Should().Be(result.RecipeId);
+        offlineDebug.PreparedReinspect.RecipeVersion.Should().Be(result.RecipeVersion);
+        offlineDebug.PreparedReinspect.PreviousJudgment.Should().Be(result.Judgment.ToString());
+        offlineDebug.PreparedReinspect.PreviousCycleTime.Should().Be(result.CycleTime);
+        offlineDebug.PreparedReinspect.PreviousDefectCount.Should().Be(result.Defects.Count);
+        offlineDebug.PreparedReinspect.SourceCorrelationId.Should().Be(result.CorrelationId);
+        offlineDebug.PreparedReinspect.SourceImagePath.Should().Be(result.SourceImagePath);
+        offlineDebug.PreparedReinspect.OverlayImagePath.Should().Be(result.OverlayImagePath);
+        offlineDebug.PreparedReinspect.HeightMapPath.Should().Be(result.HeightMapPath);
+        offlineDebug.PreparedReinspect.CanRunInspection.Should().BeFalse();
+        offlineDebug.PreparedReinspect.DisabledReason.Should().Contain("replay runner");
         offlineDebug.ReinspectStatusText.Should().Contain(result.LotId);
+        offlineDebug.PreparedReinspectSummary.Should().Contain(result.LotId);
+        offlineDebug.PreparedReinspectArtifactSummary.Should().Contain(result.OverlayImagePath);
+        offlineDebug.ReinspectRunDisabledReason.Should().Contain("replay runner");
+        offlineDebug.RunReinspectCommand.CanExecute(null).Should().BeFalse();
         offlineDebug.HasAlert.Should().BeFalse();
         offlineDebug.AlertMessage.Should().BeNull();
 
@@ -389,6 +404,7 @@ public sealed class DashboardAndShellViewModelTests
         offlineDebug.OverlayImagePixelHeight.Should().Be(0);
         offlineDebug.HeightMapPreviewImageSource.Should().BeNull();
         offlineDebug.ReinspectStatusText.Should().Contain("Select an inspection result");
+        offlineDebug.ReinspectRunDisabledReason.Should().Contain("Select an inspection result");
     }
 
     [Fact]

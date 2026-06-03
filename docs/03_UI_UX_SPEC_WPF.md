@@ -196,9 +196,10 @@ Implementation status:
 Implementation status:
 
 - `OfflineDebugViewModel` loads recent persisted inspection result rows through `IInspectionResultReader` and artifact availability/preview/open-preparation data through `IInspectionArtifactReader`.
-- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, safe operator-confirmed overlay/height-map open commands, read-only defect overlays, Re-inspect preparation status, and selected defect rows.
+- `OfflineDebugView` shows result count, pass/fail counts, defect total, recent result rows, selected result metadata, source/overlay/height-map paths, artifact availability status, overlay/height-map previews, safe operator-confirmed overlay/height-map open commands, read-only defect overlays, Re-inspect preparation status, a disabled `Run Re-inspect` command with explicit reason, and selected defect rows.
 - External artifact open commands require an injected confirmation service and artifact viewer service; WPF code-behind does not resolve paths or launch processes.
-- Safe file opening, parameter replay, and actual re-inspection execution remain follow-up work.
+- `InspectionReinspectPreparation` carries source lot/Recipe/judgment/cycle/defect/artifact context for the selected result.
+- Parameter replay, previous-vs-new comparison, and actual re-inspection execution remain follow-up work.
 
 ### AlarmView
 

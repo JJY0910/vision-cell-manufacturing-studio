@@ -90,6 +90,29 @@ public sealed class OfflineDebugArtifactOpenViewModelTests
         viewModel.ArtifactOpenStatusText.Should().Contain("open unavailable");
     }
 
+    [Fact]
+    public async Task RunReinspect_Should_Surface_Disabled_Replay_Boundary()
+    {
+        var result = CreateResultRecord();
+        var viewModel = CreateViewModel(
+            result,
+            new FakeInspectionArtifactReader(),
+            new FakeUserConfirmationService(result: true),
+            new FakeArtifactViewerService());
+
+        await viewModel.RefreshResultsAsync(CancellationToken.None);
+        viewModel.PrepareReinspect();
+        viewModel.RunReinspect();
+
+        viewModel.PreparedReinspect.Should().NotBeNull();
+        viewModel.PreparedReinspect!.CanRunInspection.Should().BeFalse();
+        viewModel.PreparedReinspect.DisabledReason.Should().Contain("replay runner");
+        viewModel.RunReinspectCommand.CanExecute(null).Should().BeFalse();
+        viewModel.ReinspectStatusText.Should().Contain("Run Re-inspect unavailable");
+        viewModel.PreparedReinspectSummary.Should().Contain(result.RecipeId);
+        viewModel.PreparedReinspectArtifactSummary.Should().Contain(result.HeightMapPath);
+    }
+
     private static OfflineDebugViewModel CreateViewModel(
         InspectionResultRecord result,
         FakeInspectionArtifactReader artifactReader,
