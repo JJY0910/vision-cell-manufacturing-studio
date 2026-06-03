@@ -117,6 +117,24 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Equipment_Fault_Injection_Buttons_Should_Use_Compact_Hmi_Command_Style()
+    {
+        var equipment = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "Equipment", "Views", "EquipmentView.xaml"));
+        var faultButtons = equipment
+            .Descendants(Wpf + "Button")
+            .Where(button => button.Attribute("ToolTip")?.Value == "{Binding FaultInjectionDisabledReason}")
+            .ToArray();
+
+        faultButtons.Should().HaveCount(13);
+        faultButtons
+            .Select(button => button.Attribute("Style")?.Value)
+            .Should()
+            .OnlyContain(value => value == "{DynamicResource Button.HmiCommand.Compact}");
+        faultButtons.Should().OnlyContain(button => button.Attribute("Height") == null);
+        faultButtons.Should().OnlyContain(button => button.Attribute("Margin") == null);
+    }
+
+    [Fact]
     public void OfflineDebug_Should_Separate_Prepare_And_Run_Reinspect_Commands()
     {
         var offlineDebug = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "OfflineDebug", "Views", "OfflineDebugView.xaml"));
