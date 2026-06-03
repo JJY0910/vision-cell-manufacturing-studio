@@ -159,6 +159,7 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.AcknowledgeCommand.CanExecute(null).Should().BeTrue();
         viewModel.IsActionMemoEditable.Should().BeTrue();
         viewModel.AcknowledgeDisabledReason.Should().Contain("Store the recovery memo");
+        viewModel.SelectedAlarm!.RecoveryHint.Should().Contain("soft limit");
 
         viewModel.ActionMemoText = "Checked soft limit and reset axis.";
         await viewModel.AcknowledgeSelectedAsync(CancellationToken.None);
@@ -168,6 +169,7 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.AcknowledgedCount.Should().Be(1);
         viewModel.SelectedAlarm!.StateText.Should().Be("Acknowledged");
         viewModel.SelectedAlarm.ActionMemo.Should().Be("Checked soft limit and reset axis.");
+        viewModel.SelectedAlarm.RecoveryHint.Should().Contain("motion timeout");
         viewModel.StatusText.Should().Contain("acknowledged");
         viewModel.AcknowledgeCommand.CanExecute(null).Should().BeFalse();
         viewModel.IsActionMemoEditable.Should().BeFalse();
