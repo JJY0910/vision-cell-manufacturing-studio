@@ -50,10 +50,14 @@ public sealed class ShellWindowLayoutXamlTests
             .Single(element => element.Ancestors().Contains(commandBar) &&
                 element.Elements(Wpf + "Button").Any(button => button.Attribute("Content")?.Value == "Connect"));
 
-        commandWrapPanel.Elements(Wpf + "Button").Should().HaveCount(5);
-        commandWrapPanel.Elements(Wpf + "Button").Select(button => button.Attribute("Margin")?.Value)
+        var commandButtons = commandWrapPanel.Elements(Wpf + "Button").ToArray();
+
+        commandButtons.Should().HaveCount(5);
+        commandButtons.Select(button => button.Attribute("Style")?.Value)
             .Should()
-            .OnlyContain(margin => margin == "0,0,8,8");
+            .OnlyContain(style => style == "{DynamicResource Button.HmiCommand}");
+        commandButtons.Should().OnlyContain(button => button.Attribute("Height") == null);
+        commandButtons.Should().OnlyContain(button => button.Attribute("Margin") == null);
     }
 
     private static string GetRepoPath(params string[] segments)

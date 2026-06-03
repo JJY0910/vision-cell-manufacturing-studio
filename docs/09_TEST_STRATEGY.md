@@ -104,6 +104,7 @@ tests/VisionCell.App.Tests
 - Error event displayed
 - Navigation updates selected screen
 - Priority HMI screens use the shared `CommandBar` title/command surface so Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, and Alarm keep a consistent operator header.
+- CommandBar action buttons use the shared HMI command style and avoid one-off height/margin values across Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, Offline Debug, and Alarm.
 - Equipment fault injection updates I/O monitor rows, active fault count, forced I/O count, fault state rows, disabled command reason, and event status
 - Equipment fault injection buttons use the shared compact HMI command style and avoid one-off height/margin values.
 - Equipment fault injection persists changed simulator I/O bit transitions with source, correlation ID, timestamp, and forced-state change metadata

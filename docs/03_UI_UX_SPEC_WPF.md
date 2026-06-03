@@ -74,6 +74,7 @@ Implementation status:
 - `ImageViewport` is implemented and reused by Inspection and OfflineDebug image preview surfaces, including optional read-only overlay binding.
 - `ErrorBanner` is implemented and reused by Alarm, Inspection, OfflineDebug, and Recipe alert status surfaces.
 - `CommandBar` is implemented and reused by Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, OfflineDebug, and Alarm screen command headers.
+- CommandBar action buttons use the shared `Button.HmiCommand` style; screens may keep explicit `MinWidth` only for longer operator labels.
 - `RoiOverlayCanvas` is implemented as a read-only shared overlay surface for ViewModel-projected image-space ROI/defect rectangles.
 - `RecipeEditorField` is implemented and reused by the Recipe editor metadata, camera, Teaching, and ROI input fields.
 
@@ -227,6 +228,7 @@ Implementation status:
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
 - Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
 - Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard and Equipment refresh commands in shared `CommandBar` surfaces.
+- Priority HMI CommandBar action buttons use the shared HMI command button style instead of one-off height/margin values.
 - Equipment fault injection uses shared compact command buttons instead of one-off sizing, while preserving existing ViewModel command bindings.
 - HMI theme polish keeps DataGrid and GridView headers on the dark HMI palette, enables tooltips on disabled command buttons, strengthens navigation hover/focus/selected contrast, and adds reusable empty-state panels for Motion, Teaching, Recipe, Equipment, Alarm, Offline Debug, Reports, and Settings surfaces.
 - Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.

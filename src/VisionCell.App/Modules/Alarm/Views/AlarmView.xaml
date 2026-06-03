@@ -20,7 +20,7 @@
           <Button Content="Refresh Alarms"
                   Command="{Binding RefreshCommand}"
                   ToolTip="Reload recent alarm and recovery records from SQLite."
-                  Height="36"
+                  Style="{DynamicResource Button.HmiCommand}"
                   MinWidth="132" />
         </controls:CommandBar.CommandContent>
       </controls:CommandBar>
