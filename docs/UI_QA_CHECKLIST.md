@@ -90,6 +90,8 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Disabled button tooltips remain visible.
 - [x] Navigation selected, hover, and focus states use distinct dark/accent styling.
 - [x] No WPF code-behind business logic was added.
+- [x] App tests verify priority screens keep vertical ScrollViewer layout, disabled horizontal workspace scroll, and `Grid MinWidth=0`.
+- [x] App tests verify module code-behind stays initialization-only.
 - [ ] Physical 1920x1080 HMI panel validation remains unverified.
 - [ ] Physical 1366x768 HMI panel validation remains unverified.
 - [ ] Touch operation remains unverified.

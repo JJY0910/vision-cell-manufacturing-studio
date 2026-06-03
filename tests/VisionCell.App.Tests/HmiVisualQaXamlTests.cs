@@ -91,6 +91,74 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Priority_Hmi_Screens_Should_Keep_ScrollViewer_And_MinWidth_Layout_Guard()
+    {
+        foreach (var relativePath in GetPriorityScreenPaths())
+        {
+            var xaml = XDocument.Load(GetRepoPath(new[] { "src", "VisionCell.App" }
+                .Concat(relativePath.Split('/')).ToArray()));
+
+            var scrollViewers = xaml.Descendants(Wpf + "ScrollViewer")
+                .Select(scrollViewer => new
+                {
+                    Vertical = scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value,
+                    Horizontal = scrollViewer.Attribute("HorizontalScrollBarVisibility")?.Value
+                })
+                .ToArray();
+            var gridMinWidths = xaml.Descendants(Wpf + "Grid")
+                .Select(grid => grid.Attribute("MinWidth")?.Value)
+                .ToArray();
+
+            scrollViewers
+                .Should()
+                .ContainSingle(scrollViewer =>
+                    scrollViewer.Vertical == "Auto" &&
+                    scrollViewer.Horizontal == "Disabled",
+                    $"'{relativePath}' should keep operator screens vertically reachable without horizontal workspace drift");
+            gridMinWidths.Should().Contain("0", $"'{relativePath}' should keep constrained HMI layouts from forcing parent-width growth");
+        }
+    }
+
+    [Fact]
+    public void Module_CodeBehind_Should_Stay_Initialization_Only()
+    {
+        var modulesRoot = GetModulesRoot();
+        var forbiddenTokens = new[]
+        {
+            " async ",
+            " await ",
+            "Task<",
+            "Task ",
+            "IEquipment",
+            "UseCase",
+            "Repository",
+            "Process.",
+            "MessageBox",
+            "File.",
+            "Directory.",
+            ".Res" + "ult",
+            ".Wa" + "it(",
+            "Thread." + "Sleep",
+            "_Click"
+        };
+
+        var codeBehindFiles = Directory
+            .EnumerateFiles(modulesRoot, "*.xaml.cs", SearchOption.AllDirectories)
+            .ToArray();
+
+        codeBehindFiles.Should().NotBeEmpty();
+        foreach (var path in codeBehindFiles)
+        {
+            var code = File.ReadAllText(path);
+            code.Should().Contain("InitializeComponent();", $"{Path.GetRelativePath(modulesRoot, path)} should only initialize its view");
+            foreach (var forbidden in forbiddenTokens)
+            {
+                code.Should().NotContain(forbidden, $"{Path.GetRelativePath(modulesRoot, path)} must not contain WPF code-behind business logic");
+            }
+        }
+    }
+
+    [Fact]
     public void Reports_Scope_State_Should_Not_Regress_To_Settings_Requirement()
     {
         var reports = File.ReadAllText(GetRepoPath("src", "VisionCell.App", "Modules", "Reports", "Views", "ReportsView.xaml"));
@@ -254,5 +322,29 @@ public sealed class HmiVisualQaXamlTests
         }
 
         throw new DirectoryNotFoundException("Could not locate VisionCell repository root.");
+    }
+
+    private static string GetModulesRoot()
+    {
+        return Path.GetDirectoryName(GetRepoPath("src", "VisionCell.App", "Modules", "Dashboard", "Views", "DashboardView.xaml"))!
+            .Replace(Path.Combine("Dashboard", "Views"), string.Empty, StringComparison.Ordinal)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    }
+
+    private static IReadOnlyList<string> GetPriorityScreenPaths()
+    {
+        return
+        [
+            "Modules/Dashboard/Views/DashboardView.xaml",
+            "Modules/Equipment/Views/EquipmentView.xaml",
+            "Modules/Motion/Views/MotionView.xaml",
+            "Modules/Teaching/Views/TeachingView.xaml",
+            "Modules/Recipe/Views/RecipeView.xaml",
+            "Modules/Inspection/Views/InspectionView.xaml",
+            "Modules/Alarm/Views/AlarmView.xaml",
+            "Modules/OfflineDebug/Views/OfflineDebugView.xaml",
+            "Modules/Reports/Views/ReportsView.xaml",
+            "Modules/Settings/Views/SettingsView.xaml"
+        ];
     }
 }
