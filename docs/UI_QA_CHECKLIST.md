@@ -92,6 +92,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 - [x] Long diagnostic GridView columns wrap message, summary, artifact/path, source, and correlation text.
 - [x] No WPF code-behind business logic was added.
 - [x] App tests verify priority screens keep vertical ScrollViewer layout, disabled horizontal workspace scroll, and `Grid MinWidth=0`.
+- [x] App tests verify priority screen star columns use `MinWidth=0` so nested split panels do not force horizontal workspace growth.
 - [x] App tests verify module code-behind stays initialization-only.
 - [ ] Physical 1920x1080 HMI panel validation remains unverified.
 - [ ] Physical 1366x768 HMI panel validation remains unverified.

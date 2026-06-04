@@ -120,6 +120,32 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Priority_Hmi_Screens_Should_Keep_Star_Columns_From_Forcing_Workspace_Width()
+    {
+        var missingMinWidth = new List<string>();
+
+        foreach (var relativePath in GetPriorityScreenPaths())
+        {
+            var xaml = XDocument.Load(GetRepoPath(new[] { "src", "VisionCell.App" }
+                .Concat(relativePath.Split('/')).ToArray()));
+            var starColumns = xaml
+                .Descendants(Wpf + "ColumnDefinition")
+                .Where(column => column.Attribute("Width")?.Value.Contains("*", StringComparison.Ordinal) == true)
+                .ToArray();
+
+            foreach (var column in starColumns)
+            {
+                if (column.Attribute("MinWidth")?.Value != "0")
+                {
+                    missingMinWidth.Add($"{relativePath}:{column}");
+                }
+            }
+        }
+
+        missingMinWidth.Should().BeEmpty("star columns should use MinWidth=0 so long HMI content cannot force horizontal workspace growth");
+    }
+
+    [Fact]
     public void Long_Text_GridView_Columns_Should_Wrap()
     {
         var expected = new[]

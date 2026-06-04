@@ -113,7 +113,7 @@
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Teaching Points" Style="{DynamicResource Text.CardTitle}" />
@@ -161,7 +161,7 @@
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Selected Point History" Style="{DynamicResource Text.CardTitle}" />

@@ -241,6 +241,7 @@ Implementation status:
 - HMI theme polish keeps DataGrid and GridView headers on the dark HMI palette, enables tooltips on disabled command buttons, strengthens navigation hover/focus/selected contrast, and adds reusable empty-state panels for Motion, Teaching, Recipe, Equipment, Alarm, Offline Debug, Reports, and Settings surfaces.
 - Bottom Event Log uses a shared dark HMI `DataGrid.HmiGrid` style with consistent headers, rows, and scrollbars.
 - App XAML tests guard priority screen `ScrollViewer`/`MinWidth=0` layout structure and module code-behind initialization-only behavior so future HMI screens do not quietly move business logic into `.xaml.cs`.
+- Priority HMI split layouts set `MinWidth=0` on star `ColumnDefinition` entries, and App XAML tests guard this so long tables/status text cannot force horizontal workspace growth.
 - This pass is a local WPF layout quality slice. It does not claim final shop-floor monitor, touch-panel, or real equipment HMI acceptance.
 
 ### ReportsView
