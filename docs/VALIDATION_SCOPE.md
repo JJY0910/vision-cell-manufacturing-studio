@@ -7,7 +7,7 @@
 - WPF launch smoke verifies that `VisionCell.App.exe` starts and remains alive for five seconds.
 - Equipment behavior is validated against `VirtualEquipmentController`, virtual camera, deterministic 2D/3D vision engines, SQLite repositories, and local file-system artifact storage.
 - Offline Debug validation covers SQLite result reads, relative source/overlay/height-map artifact metadata checks, deterministic BMP preview decoding, safe external artifact open preparation, Re-inspect preparation state, source-image replay readiness classification, read-only Re-inspect readiness boundary rows, active-vs-historical Recipe policy metadata, Application metadata comparison results, and SQLite metadata comparison history persistence.
-- Alarm Center validation covers Core alarm mapping, Application failure recorder calls, SQLite alarm save/list/acknowledge, active/severity/area triage filtering, selected alarm recovery guidance display, read-only acknowledgement/reset boundary rows, and WPF AlarmView ViewModel state against simulator/Application failure paths.
+- Alarm Center validation covers Core alarm mapping, Core error-code catalog mappings, Application failure recorder calls, SQLite alarm save/list/acknowledge, active/severity/area triage filtering, selected alarm recovery guidance display, read-only error-code catalog display, read-only acknowledgement/reset boundary rows, and WPF AlarmView ViewModel state against simulator/Application failure paths.
 - Hardware Adapter Boundary validation covers interface contracts, simulated adapter contract tests, read-only adapter boundary catalog rows, and Settings matrix binding only.
 - Bench PLC I/O validation is documented in `docs/BENCH_PLC_IO_VALIDATION_CHECKLIST.md` as an evidence gate for future work; no bench run has been executed in this environment.
 - App composition validation covers the virtual equipment runtime profile and rejects real-hardware profile selection with explicit missing readiness evidence until implementation and bench validation exist.
@@ -18,7 +18,7 @@
 
 - No real Pemtron, PLC, motion controller, camera, light controller, or 3D sensor hardware has been connected.
 - No real fieldbus, serial, Ethernet, vendor SDK, trigger timing, encoder, servo alarm, or safety relay path has been validated.
-- Alarm rows and recovery hints are produced from simulator/Application paths and the documented error-code catalog only; no real PLC/vendor alarm source, safety relay acknowledgement, or hardware reset confirmation has been validated.
+- Alarm rows, catalog rows, and recovery hints are produced from simulator/Application paths and the documented static error-code catalog only; no real PLC/vendor alarm source, safety relay acknowledgement, or hardware reset confirmation has been validated.
 - Hardware adapter contracts, read-only boundary matrix rows, and runtime profile guards are defined, but no `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, or camera trigger implementation has been validated.
 - `RealHardwareReadinessGate` currently evaluates unvalidated evidence by design; it is not proof that any real hardware path is implemented.
 - The bench PLC checklist exists only as a required procedure. It is not evidence that a real PLC, remote I/O rack, safety relay, or output write has been validated.

@@ -76,6 +76,45 @@ public sealed class MachineCommandResultTests
     }
 
     [Fact]
+    public void ErrorCodeCatalog_Should_Surface_Documented_Code_Area_Severity_And_Recovery()
+    {
+        var catalog = ErrorCodeCatalog.Entries;
+
+        catalog.Select(entry => entry.Code).Should().BeEquivalentTo(
+        [
+            "EQP-001",
+            "EQP-002",
+            "EQP-003",
+            "EQP-004",
+            "EQP-005",
+            "EQP-006",
+            "EQP-007",
+            "EQP-008",
+            "EQP-009",
+            "MOT-001",
+            "MOT-002",
+            "MOT-003",
+            "MOT-004",
+            "MOT-005",
+            "CAM-001",
+            "CAM-002",
+            "CAM-003",
+            "VIS-001",
+            "VIS-002",
+            "DB-001"
+        ]);
+
+        var estop = ErrorCodeCatalog.Find("EQP-003");
+        estop.Should().NotBeNull();
+        estop!.Area.Should().Be(EquipmentArea.Safety);
+        estop.Severity.Should().Be(EquipmentAlarmSeverity.Critical);
+        estop.RecoveryAction.Should().Contain("Release EStop");
+
+        var unknown = ErrorCodeCatalog.GetRecoveryAction("PLC-999", EquipmentArea.Safety);
+        unknown.Should().Contain("safety inputs");
+    }
+
+    [Fact]
     public void Acknowledge_Should_Return_Acknowledged_Alarm_With_Memo()
     {
         var alarm = new EquipmentAlarm(

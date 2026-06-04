@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using VisionCell.App.Shared.ViewModels;
 using VisionCell.Application.Alarms;
 using VisionCell.Core.Alarms;
+using VisionCell.Core.Errors;
 
 namespace VisionCell.App.Modules.Alarm.ViewModels;
 
@@ -21,6 +22,11 @@ public sealed partial class AlarmViewModel : ObservableObject
     }
 
     public ObservableCollection<AlarmItemViewModel> Alarms { get; } = new();
+    public IReadOnlyList<AlarmErrorCodeCatalogItemViewModel> ErrorCodeCatalogItems { get; } =
+        ErrorCodeCatalog.Entries
+            .Select(entry => new AlarmErrorCodeCatalogItemViewModel(entry))
+            .ToArray();
+
     public IReadOnlyList<string> SeverityFilterOptions { get; } =
         [AllFilter, nameof(EquipmentAlarmSeverity.Warning), nameof(EquipmentAlarmSeverity.Error), nameof(EquipmentAlarmSeverity.Critical)];
 
@@ -89,6 +95,7 @@ public sealed partial class AlarmViewModel : ObservableObject
     public bool HasAlert => !string.IsNullOrWhiteSpace(AlertMessage);
     public bool IsActionMemoEditable => !IsBusy && SelectedAlarm is not null && !SelectedAlarm.Alarm.IsAcknowledged;
     public string TotalAlarmDetail => $"{TotalAlarmCount} total records";
+    public string ErrorCodeCatalogSummary => $"{ErrorCodeCatalogItems.Count} documented alarm/error codes";
     public string FilterSummaryText
     {
         get

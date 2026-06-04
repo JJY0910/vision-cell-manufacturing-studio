@@ -48,7 +48,7 @@ public sealed class HmiVisualQaXamlTests
             ["Modules/Teaching/Views/TeachingView.xaml"] = new[] { "No Teaching Points", "No Selected Point History" },
             ["Modules/Recipe/Views/RecipeView.xaml"] = new[] { "No Recipe Index Records" },
             ["Modules/OfflineDebug/Views/OfflineDebugView.xaml"] = new[] { "No Inspection Results", "No Defect Rows", "Run Re-inspect", "Re-inspect Readiness", "Re-inspect History", "No Re-inspect History" },
-            ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records", "Recovery Boundary" },
+            ["Modules/Alarm/Views/AlarmView.xaml"] = new[] { "No Alarm Records", "Error Code Catalog", "ErrorCodeCatalogItems", "Recovery Boundary" },
             ["Modules/Motion/Views/MotionView.xaml"] = new[] { "No Axis Snapshot", "No Motion Command History" },
             ["Modules/Equipment/Views/EquipmentView.xaml"] = new[] { "No I/O Snapshot", "No Fault Events", "No I/O Transitions", "Interlock Impact", "InterlockImpacts" },
             ["Modules/Reports/Views/ReportsView.xaml"] = new[] { "Reports Export Not Configured", "FR-203", "FR-204" },
@@ -131,7 +131,9 @@ public sealed class HmiVisualQaXamlTests
             new WrappedGridColumn("Modules/OfflineDebug/Views/OfflineDebugView.xaml", "Overlay", "OverlayImagePath"),
             new WrappedGridColumn("Modules/OfflineDebug/Views/OfflineDebugView.xaml", "Artifacts", "ArtifactStatusSummary"),
             new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Message", "Message"),
-            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Correlation", "CorrelationId")
+            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Correlation", "CorrelationId"),
+            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Cause", "Cause"),
+            new WrappedGridColumn("Modules/Alarm/Views/AlarmView.xaml", "Recovery", "RecoveryAction")
         };
 
         foreach (var expectedColumn in expected)
@@ -286,6 +288,8 @@ public sealed class HmiVisualQaXamlTests
         alarm.Should().Contain("IsEnabled=\"{Binding IsActionMemoEditable}\"");
         alarm.Should().Contain("SelectedAlarm.RecoveryHint");
         alarm.Should().Contain("RecoveryBoundaryItems");
+        alarm.Should().Contain("ErrorCodeCatalogItems");
+        alarm.Should().Contain("ErrorCodeCatalogSummary");
         alarm.Should().Contain("ShowActiveOnly");
         alarm.Should().Contain("SeverityFilterOptions");
         alarm.Should().Contain("AreaFilterOptions");

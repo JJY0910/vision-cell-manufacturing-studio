@@ -23,7 +23,7 @@
 - [x] Failure injection panel (simulator I/O baseline; real PLC/safety validation pending)
 - [ ] Motion command history chart/export polish
 - [ ] CSV report export
-- [ ] Error code catalog
+- [x] Error code catalog (static Core catalog and AlarmView read-only HMI table; real PLC/vendor alarm-source catalog remains future hardware work)
 - [ ] FR-004 command interlock baseline implemented; requires future visual QA and hardware adapter validation
 - [ ] Shell clock/status ticker injectable service
 - [ ] Dashboard visual quality review at 1366x768 and 1920x1080
@@ -386,7 +386,7 @@ Problem: Alarm records can now be stored and acknowledged from simulator/Applica
 Proposed improvement: After Hardware Adapter Boundary, connect real alarm-source adapters and distinguish operator acknowledgement from controller alarm reset confirmation.
 Requirement impact: FR-022, FR-043, FR-067, FR-141, FR-184, FR-201, FR-241, NFR-004, NFR-007
 Priority: P1
-Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; AlarmView acknowledge disabled reason and recovery memo edit-state polish addressed; AlarmView active/severity/area triage filters addressed by ADR-0043; real hardware source integration remains follow-up work.
+Status: Domain/Application/Persistence/WPF baseline addressed by ADR-0031; AlarmView acknowledge disabled reason and recovery memo edit-state polish addressed; AlarmView active/severity/area triage filters addressed by ADR-0043; static error-code catalog display addressed by ADR-0048; real hardware source integration remains follow-up work.
 
 Date: 2026-06-02
 Source: Priority 3 Hardware Adapter Boundary
