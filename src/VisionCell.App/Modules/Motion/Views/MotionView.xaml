@@ -203,7 +203,7 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Recent Motion Commands" Style="{DynamicResource Text.CardTitle}" />
             <TextBlock Grid.Column="1"

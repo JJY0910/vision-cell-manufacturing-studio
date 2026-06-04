@@ -51,7 +51,7 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="Alarm Records" Style="{DynamicResource Text.CardTitle}" />
             <TextBlock Grid.Column="1"
@@ -65,7 +65,7 @@
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="180" />
               <ColumnDefinition Width="180" />
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
             </Grid.ColumnDefinitions>
             <CheckBox Content="Active only"
                       IsChecked="{Binding ShowActiveOnly}"
@@ -178,7 +178,7 @@
           <StackPanel Grid.Row="3" Margin="0,4,0,8">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="0" />
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <TextBlock Text="Error Code Catalog"
@@ -255,7 +255,7 @@
           </StackPanel>
           <Grid Grid.Row="5" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" MinWidth="0" />
               <ColumnDefinition Width="280" />
             </Grid.ColumnDefinitions>
             <StackPanel>

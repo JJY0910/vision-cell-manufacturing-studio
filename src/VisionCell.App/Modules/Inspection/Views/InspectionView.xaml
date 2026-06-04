@@ -72,8 +72,8 @@
 
     <Grid Grid.Row="2" Margin="0,16,0,0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="2*" />
-        <ColumnDefinition Width="3*" />
+        <ColumnDefinition Width="2*" MinWidth="0" />
+        <ColumnDefinition Width="3*" MinWidth="0" />
       </Grid.ColumnDefinitions>
 
       <controls:ImageViewport Title="Last Grab"
