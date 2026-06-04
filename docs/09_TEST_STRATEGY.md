@@ -110,6 +110,7 @@ tests/VisionCell.App.Tests
 - Priority HMI screens keep a vertical `ScrollViewer`, disabled horizontal workspace scrolling, and `Grid MinWidth=0` layout guard under App XAML tests.
 - Priority HMI screens keep star `ColumnDefinition` entries guarded with `MinWidth=0` so nested split panels do not force horizontal workspace growth.
 - CommandBar action buttons use the shared HMI command style and avoid one-off height/margin values across Dashboard, Equipment, Motion, Teaching, Recipe, Inspection, Offline Debug, and Alarm.
+- Dashboard overview status uses shared `KpiCard` controls and is guarded by App XAML tests.
 - Inspection summary status uses shared `KpiCard` controls and is guarded by App XAML tests.
 - Module action buttons are checked so secondary Alarm, Recipe, and Teaching actions also use shared HMI command styles instead of local height-only styling.
 - Long diagnostic GridView columns are checked for wrapping templates so motion messages, equipment events, I/O transition sources, recipe validation summaries, Offline Debug artifact/path status, and Alarm message/correlation text remain readable.

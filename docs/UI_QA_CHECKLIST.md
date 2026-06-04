@@ -8,6 +8,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 
 - [x] Top status chips are visible in the Shell top bar.
 - [x] Connect, Disconnect, Manual, Auto, and Refresh commands wrap instead of clipping at constrained width.
+- [x] Dashboard overview band uses shared `KpiCard` controls.
 - [x] Axis Snapshot remains in the Dashboard workspace.
 - [x] I/O Snapshot uses the shared dark GridView style.
 - [x] Event Log uses the shared dark DataGrid style.
