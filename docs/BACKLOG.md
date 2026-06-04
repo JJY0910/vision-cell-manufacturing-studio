@@ -434,4 +434,4 @@ Problem: Several WPF screens had readable functional controls but still looked u
 Proposed improvement: Apply shared dark GridView/DataGrid header styling, keep disabled command tooltips visible, add reusable empty-state presentation, improve navigation hover/focus/selected contrast, and make Reports/Settings show read-only scope states until their dedicated MVP slices.
 Requirement impact: FR-006, FR-220, FR-221, FR-240, FR-260, NFR-001, NFR-006, NFR-009, NFR-010
 Priority: P1
-Status: Addressed by the HMI theme/empty-state polish slice, follow-up star-column layout guard, and Inspection shared KPI card polish; Reports export, persisted Settings, and actual Offline Debug re-inspection execution remain follow-up work.
+Status: Addressed by the HMI theme/empty-state polish slice, follow-up star-column layout guard, Dashboard shared KPI card polish, and Inspection shared KPI card polish; Reports export, persisted Settings, and actual Offline Debug re-inspection execution remain follow-up work.

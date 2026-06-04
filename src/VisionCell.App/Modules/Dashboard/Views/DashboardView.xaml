@@ -55,28 +55,15 @@
       </ItemsControl>
 
       <UniformGrid Grid.Row="2" Columns="3" Margin="-8,4,-8,4">
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Equipment Overview" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="Connection" Style="{DynamicResource Text.MetricLabel}" />
-            <TextBlock Text="{Binding ConnectionStatus}" Style="{DynamicResource Text.MetricValue}" Margin="0,0,0,10" />
-            <TextBlock Text="Controller response" Style="{DynamicResource Text.MetricLabel}" />
-            <TextBlock Text="{Binding ControllerLatencyStatus}" Style="{DynamicResource Text.StatusStrong}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Safety Summary" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding SafetyStatus}" TextWrapping="Wrap" Style="{DynamicResource Text.StatusStrong}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{DynamicResource Card.Panel}">
-          <StackPanel>
-            <TextBlock Text="Camera / Recipe" Style="{DynamicResource Text.CardTitle}" />
-            <TextBlock Text="{Binding CameraStatus}" Style="{DynamicResource Text.StatusStrong}" Margin="0,0,0,10" />
-            <TextBlock Text="{Binding ActiveRecipeStatus}" Style="{DynamicResource Text.Status}" />
-          </StackPanel>
-        </Border>
+        <controls:KpiCard Title="Equipment Overview"
+                          Value="{Binding ConnectionStatus}"
+                          Detail="{Binding ControllerLatencyStatus}" />
+        <controls:KpiCard Title="Safety Summary"
+                          Value="{Binding SafetyStatus}"
+                          Detail="Safety inputs" />
+        <controls:KpiCard Title="Camera / Recipe"
+                          Value="{Binding CameraStatus}"
+                          Detail="{Binding ActiveRecipeStatus}" />
       </UniformGrid>
 
       <Grid Grid.Row="3" Margin="0,8,0,0">
