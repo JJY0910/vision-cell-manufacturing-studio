@@ -135,6 +135,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <DockPanel>
             <Button DockPanel.Dock="Right"
@@ -175,6 +176,50 @@
                        TextWrapping="Wrap" />
           </StackPanel>
           <StackPanel Grid.Row="3" Margin="0,4,0,8">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="Error Code Catalog"
+                         Style="{DynamicResource Text.SectionHeader}"
+                         Margin="0,0,0,4" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding ErrorCodeCatalogSummary}"
+                         Style="{DynamicResource Text.Status}"
+                         Margin="16,0,0,0" />
+            </Grid>
+            <ListView ItemsSource="{Binding ErrorCodeCatalogItems}"
+                      MinHeight="170"
+                      Style="{DynamicResource ListView.HmiGrid}">
+              <ListView.View>
+                <GridView>
+                  <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="90" />
+                  <GridViewColumn Header="Severity" DisplayMemberBinding="{Binding Severity}" Width="94" />
+                  <GridViewColumn Header="Area" DisplayMemberBinding="{Binding Area}" Width="110" />
+                  <GridViewColumn Header="Cause" Width="260">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Cause}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                  <GridViewColumn Header="Recovery" Width="520">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding RecoveryAction}"
+                                   TextWrapping="Wrap"
+                                   Style="{DynamicResource Text.Status}" />
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
+                </GridView>
+              </ListView.View>
+            </ListView>
+          </StackPanel>
+          <StackPanel Grid.Row="4" Margin="0,4,0,8">
             <TextBlock Text="Recovery Boundary"
                        Style="{DynamicResource Text.SectionHeader}"
                        Margin="0,0,0,4" />
@@ -208,7 +253,7 @@
               </ListView.View>
             </ListView>
           </StackPanel>
-          <Grid Grid.Row="4" Margin="0,4,0,0">
+          <Grid Grid.Row="5" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="280" />

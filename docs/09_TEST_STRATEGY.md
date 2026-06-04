@@ -26,6 +26,7 @@ tests/VisionCell.App.Tests
 
 - Value object validation
 - Error code mapping
+- Error code catalog code/area/severity/recovery mappings
 - Machine mode transition rules
 
 ### Motion
@@ -122,7 +123,7 @@ tests/VisionCell.App.Tests
 - Offline Debug artifact open commands require confirmation, call the injected viewer service only after a ready preparation result, and do not open on missing/unsafe paths or declined confirmation
 - Offline Debug Re-inspect preparation maps source result lot, Recipe, judgment, cycle time, defect, artifact context, source-image replay readiness, and active-vs-historical Recipe policy; `Run Re-inspect` executes and persists an Application metadata comparison without live camera/motion/vision sequence replay
 - Offline Debug Re-inspect readiness rows keep metadata comparison, source-image replay readiness, Recipe policy metadata, metadata history persistence, and real sequence execution boundaries visible in XAML/ViewModel tests.
-- AlarmView refresh, active/severity/area triage filters, acknowledgement state updates, disabled acknowledge reason, selected alarm recovery hint, recovery memo edit locking, and read-only recovery boundary rows
+- AlarmView refresh, active/severity/area triage filters, acknowledgement state updates, disabled acknowledge reason, selected alarm recovery hint, read-only error code catalog rows, recovery memo edit locking, and read-only recovery boundary rows
 
 ## Manual UI Acceptance
 

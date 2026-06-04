@@ -70,6 +70,12 @@ public sealed record EquipmentSnapshot(
 | VIS-002 | Error | Inspection failed | Review image/params |
 | DB-001 | Error | Persistence failed | Check database path |
 
+Implementation note:
+
+- `ErrorCodeCatalog` keeps the documented EQP/MOT/CAM/VIS/DB code, severity, area, cause, and recovery-action mappings in Core.
+- `EquipmentAlarmFactory` and the WPF Alarm Center recovery catalog read from the same catalog so operator guidance and persisted alarm rows do not drift.
+- This catalog is static protocol metadata. It is not evidence of a PLC/vendor alarm-source adapter or a real hardware reset path.
+
 ## Simulator Failure Injection
 
 Simulator must support:

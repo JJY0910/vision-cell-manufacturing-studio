@@ -190,6 +190,15 @@ public sealed class DashboardAndShellViewModelTests
         viewModel.RecoveryBoundaryItems.Should().Contain(item =>
             item.Boundary == "PLC/vendor alarm source" &&
             item.State == "Not validated");
+        viewModel.ErrorCodeCatalogSummary.Should().Be("20 documented alarm/error codes");
+        viewModel.ErrorCodeCatalogItems.Should().Contain(item =>
+            item.Code == "MOT-003" &&
+            item.Area == nameof(EquipmentArea.Motion) &&
+            item.RecoveryAction.Contains("motion timeout"));
+        viewModel.ErrorCodeCatalogItems.Should().Contain(item =>
+            item.Code == "EQP-003" &&
+            item.Severity == nameof(EquipmentAlarmSeverity.Critical) &&
+            item.Cause.Contains("Emergency stop"));
 
         viewModel.ActionMemoText = "Checked soft limit and reset axis.";
         await viewModel.AcknowledgeSelectedAsync(CancellationToken.None);
