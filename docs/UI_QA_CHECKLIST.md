@@ -48,6 +48,7 @@ Scope: local WPF layout and XAML regression coverage for the HMI theme/empty-sta
 ## Inspection
 
 - [x] Precheck status is visible in the KPI band.
+- [x] Inspection KPI band uses shared `KpiCard` controls.
 - [x] Last Grab viewport remains visible.
 - [x] Timeline/result area remains available below the KPI band.
 - [x] Run/stop command buttons wrap in the command bar.

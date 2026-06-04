@@ -78,6 +78,7 @@ Implementation status:
 - Secondary module action buttons use `Button.HmiCommand.Compact` so editor/detail-panel actions keep the same disabled-tooltip and spacing behavior.
 - `RoiOverlayCanvas` is implemented as a read-only shared overlay surface for ViewModel-projected image-space ROI/defect rectangles.
 - `RecipeEditorField` is implemented and reused by the Recipe editor metadata, camera, Teaching, and ROI input fields.
+- `KpiCard` is reused by Motion, Recipe, Inspection, and Alarm summary bands so status metrics keep one HMI card style.
 
 ## Screens
 
@@ -232,6 +233,7 @@ Implementation status:
 - Motion and Teaching command editors use wrapping field groups instead of fixed-width single-row grids so operator inputs remain reachable when the workspace is constrained.
 - InspectionView now has vertical scrolling so sequence timeline and image evidence remain reachable in smaller windows.
 - HMI GridView tables use a shared `ListView.HmiGrid` style with explicit horizontal and vertical scrollbars for long alarm, recipe, teaching, motion, and I/O rows.
+- Inspection summary status now uses shared `KpiCard` controls instead of one-off metric panels.
 - Long diagnostic GridView columns use wrapping text templates for motion messages, equipment events, I/O transition sources, recipe validation summaries, Offline Debug artifact/path status, and alarm message/correlation rows.
 - Shell top status uses compact status chips for current screen, mode, controller, active Recipe, and alarm summary.
 - Shell startup/layout QA keeps the window maximized on launch, constrains the workspace with clipping/stretch behavior, gives the navigation rail its own vertical scroll area, and keeps Dashboard and Equipment refresh commands in shared `CommandBar` surfaces.
