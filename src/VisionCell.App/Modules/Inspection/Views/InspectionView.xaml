@@ -36,38 +36,18 @@
     </controls:CommandBar>
 
     <UniformGrid Grid.Row="1" Columns="4" Margin="-8,12,-8,0">
-      <Border Style="{DynamicResource Card.Panel}">
-        <StackPanel>
-          <TextBlock Text="Active Recipe" Style="{DynamicResource Text.CardTitle}" />
-          <TextBlock Text="{Binding ActiveRecipeText}"
-                     Style="{DynamicResource Text.MetricValue}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-      <Border Style="{DynamicResource Card.Panel}">
-        <StackPanel>
-          <TextBlock Text="Precheck" Style="{DynamicResource Text.CardTitle}" />
-          <TextBlock Text="{Binding PrecheckStatusText}"
-                     Style="{DynamicResource Text.StatusStrong}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-      <Border Style="{DynamicResource Card.Panel}">
-        <StackPanel>
-          <TextBlock Text="Last Check" Style="{DynamicResource Text.CardTitle}" />
-          <TextBlock Text="{Binding LastCheckText}"
-                     Style="{DynamicResource Text.MetricValue}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-      <Border Style="{DynamicResource Card.Panel}">
-        <StackPanel>
-          <TextBlock Text="Correlation" Style="{DynamicResource Text.CardTitle}" />
-          <TextBlock Text="{Binding LastRunCorrelationId}"
-                     Style="{DynamicResource Text.MetricValue}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
+      <controls:KpiCard Title="Active Recipe"
+                        Value="{Binding ActiveRecipeText}"
+                        Detail="Context" />
+      <controls:KpiCard Title="Precheck"
+                        Value="{Binding PrecheckStatusText}"
+                        Detail="{Binding StatusText}" />
+      <controls:KpiCard Title="Last Check"
+                        Value="{Binding LastCheckText}"
+                        Detail="Updated" />
+      <controls:KpiCard Title="Correlation"
+                        Value="{Binding LastRunCorrelationId}"
+                        Detail="Run ID" />
     </UniformGrid>
 
     <Grid Grid.Row="2" Margin="0,16,0,0">

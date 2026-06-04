@@ -263,6 +263,27 @@ public sealed class HmiVisualQaXamlTests
     }
 
     [Fact]
+    public void Inspection_Summary_Band_Should_Use_Shared_KpiCards()
+    {
+        var inspection = XDocument.Load(GetRepoPath("src", "VisionCell.App", "Modules", "Inspection", "Views", "InspectionView.xaml"));
+        var kpiCards = inspection
+            .Descendants()
+            .Where(element => element.Name.LocalName == "KpiCard")
+            .ToArray();
+
+        kpiCards.Should().HaveCount(4);
+        kpiCards.Select(card => card.Attribute("Title")?.Value)
+            .Should()
+            .BeEquivalentTo(["Active Recipe", "Precheck", "Last Check", "Correlation"]);
+        kpiCards.Select(card => card.Attribute("Value")?.Value)
+            .Should()
+            .Contain("{Binding ActiveRecipeText}")
+            .And.Contain("{Binding PrecheckStatusText}")
+            .And.Contain("{Binding LastCheckText}")
+            .And.Contain("{Binding LastRunCorrelationId}");
+    }
+
+    [Fact]
     public void Module_Action_Buttons_Should_Use_Shared_Hmi_Button_Styles()
     {
         var knownModuleView = GetRepoPath("src", "VisionCell.App", "Modules", "Dashboard", "Views", "DashboardView.xaml");
