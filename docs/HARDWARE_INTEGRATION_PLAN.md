@@ -2,7 +2,7 @@
 
 ## Scope
 
-This plan defines how `VirtualEquipmentController` can be replaced by a future `RealEquipmentController` without changing WPF ViewModels or Application use cases. It does not implement any real Pemtron, PLC, motion controller, camera, light controller, fieldbus, or vendor SDK connection.
+This plan defines how `VirtualEquipmentController` can be replaced by a future `RealEquipmentController` without changing WPF ViewModels or Application use cases. It does not implement any real equipment, PLC, motion controller, camera, light controller, fieldbus, or vendor SDK connection.
 
 ## Current Boundary
 

@@ -3,13 +3,13 @@
 Target path:
 
 ```powershell
-C:\Dev\VisionCell-Pemtron-WPF-Codex
+C:\Dev\VisionCell-WPF-Codex
 ```
 
 Tree:
 
 ```text
-VisionCell-Pemtron-WPF-Codex/
+VisionCell-WPF-Codex/
 ├─ README.md
 ├─ AGENTS.md
 ├─ CODEX_BOOTSTRAP_PROMPT.md

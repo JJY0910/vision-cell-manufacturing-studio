@@ -16,7 +16,7 @@
 
 ## Not Yet Validated
 
-- No real Pemtron, PLC, motion controller, camera, light controller, or 3D sensor hardware has been connected.
+- No real equipment, PLC, motion controller, camera, light controller, or 3D sensor hardware has been connected.
 - No real fieldbus, serial, Ethernet, vendor SDK, trigger timing, encoder, servo alarm, or safety relay path has been validated.
 - Alarm rows, catalog rows, and recovery hints are produced from simulator/Application paths and the documented static error-code catalog only; no real PLC/vendor alarm source, safety relay acknowledgement, or hardware reset confirmation has been validated.
 - Hardware adapter contracts, read-only boundary matrix rows, and runtime profile guards are defined, but no `RealEquipmentController`, vendor SDK, PLC protocol, fieldbus, or camera trigger implementation has been validated.

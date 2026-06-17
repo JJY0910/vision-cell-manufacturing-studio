@@ -14,13 +14,13 @@
 ## 권장 로컬 위치
 
 ```powershell
-C:\Dev\VisionCell-Pemtron-WPF-Codex
+C:\Dev\VisionCell-WPF-Codex
 ```
 
 ## 빠른 시작
 
 ```powershell
-cd C:\Dev\VisionCell-Pemtron-WPF-Codex
+cd C:\Dev\VisionCell-WPF-Codex
 powershell -ExecutionPolicy Bypass -File .\tools\bootstrap\init-solution.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\git\init-git-and-github.ps1 -RepoName vision-cell-manufacturing-studio -Visibility private
 ```

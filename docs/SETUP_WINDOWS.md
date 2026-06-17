@@ -73,7 +73,7 @@ gh auth status
 From the repository root:
 
 ```powershell
-cd C:\dev\VisionCell-Pemtron-WPF-Codex
+cd C:\dev\VisionCell-WPF-Codex
 dotnet restore .\VisionCell.sln
 dotnet build .\VisionCell.sln -c Debug --no-restore
 dotnet test .\VisionCell.sln -c Debug --no-build

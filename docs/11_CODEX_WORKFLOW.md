@@ -6,7 +6,7 @@
 
 ## Local Codex 역할
 
-- `C:\Dev\VisionCell-Pemtron-WPF-Codex` 폴더를 열고 작업
+- `C:\Dev\VisionCell-WPF-Codex` 폴더를 열고 작업
 - WPF 앱 빌드/실행
 - Visual Studio/.NET SDK 기반 테스트
 - UI 수정/리팩터링/버그 수정
